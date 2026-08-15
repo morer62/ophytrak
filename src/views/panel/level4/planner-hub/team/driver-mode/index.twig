@@ -1,0 +1,570 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+<style>
+.driver-page{--driver-green:#0f8f74;--driver-ink:#13201c;--driver-muted:#667085;--driver-line:#d9e4df;background:#f4f7f6;color:var(--driver-ink);margin:-1.5rem;padding:1.25rem;min-height:calc(100vh - 70px)}
+.driver-page svg{display:inline-block;height:18px;vertical-align:-3px;width:18px}
+.driver-toolbar{align-items:center;display:flex;gap:12px;justify-content:space-between;margin:0 auto 16px;max-width:1180px}
+.driver-toolbar h1{font-size:1.55rem;font-weight:850;letter-spacing:0;margin:0}
+.driver-toolbar p{color:var(--driver-muted);font-size:.95rem;margin:.2rem 0 0}
+.driver-toolbar-actions{display:flex;gap:8px}
+.driver-shell{background:#fff;border:1px solid var(--driver-line);border-radius:18px;box-shadow:0 18px 46px rgba(15,23,42,.08);margin:0 auto;max-width:1180px;overflow:hidden}
+.driver-topbar{align-items:center;background:#10231f;color:#fff;display:flex;gap:14px;justify-content:space-between;padding:18px 20px}
+.driver-brand{align-items:center;display:flex;font-size:1.15rem;font-weight:900;gap:10px;letter-spacing:0}
+.driver-pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);border-radius:999px;font-size:.85rem;font-weight:800;padding:7px 12px;white-space:nowrap}
+.driver-tabs{background:#f8fbfa;border-bottom:1px solid var(--driver-line);display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.driver-tab{align-items:center;color:#5c6b66;display:flex;font-size:.88rem;font-weight:800;gap:8px;justify-content:center;min-height:54px;padding:10px}
+.driver-tab.active{box-shadow:inset 0 -3px 0 var(--driver-green);color:var(--driver-green)}
+.driver-map{background:#dfeee9;min-height:280px;position:relative}
+.driver-map iframe{border:0;display:block;filter:saturate(.9);height:320px;width:100%}
+.driver-map-empty{align-items:center;background:linear-gradient(135deg,#e8f3ef,#d5e8e3);display:flex;justify-content:center;min-height:280px;padding:24px;text-align:center}
+.driver-map-label{align-items:center;background:#10231f;border-radius:10px;color:#fff;display:flex;font-size:.82rem;font-weight:900;gap:8px;left:16px;padding:10px 12px;position:absolute;top:16px;z-index:2}
+.driver-content{padding:20px}
+.driver-summary{display:grid;gap:12px;grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:20px}
+.driver-summary-card{background:#f8fbfa;border:1px solid var(--driver-line);border-radius:12px;padding:14px}
+.driver-summary-card span{color:var(--driver-muted);display:block;font-size:.72rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+.driver-summary-card strong{display:block;font-size:1.45rem;margin-top:4px}
+.driver-list-title{align-items:flex-end;display:flex;justify-content:space-between;margin-bottom:12px}
+.driver-list-title h2{font-size:1.2rem;font-weight:900;margin:0}
+.driver-list-title p{color:var(--driver-muted);margin:0}
+.driver-table-wrap{border:1px solid var(--driver-line);border-radius:14px;overflow:hidden}
+.driver-table{background:#fff;margin:0;width:100%}
+.driver-table th{background:#f8fbfa;color:#5f6f69;font-size:.72rem;font-weight:900;letter-spacing:.04em;padding:12px;text-transform:uppercase;white-space:nowrap}
+.driver-table td{border-top:1px solid #edf2f0;padding:12px;vertical-align:middle}
+.driver-table tr:first-child td{border-top:0}
+.driver-table-order{font-weight:900}
+.driver-table-customer{color:var(--driver-muted);font-size:.84rem}
+.driver-table-address{font-size:.9rem;font-weight:750;line-height:1.35;max-width:360px}
+.driver-detail-btn{align-items:center;background:#fff;border:1px solid var(--driver-green);border-radius:10px;color:var(--driver-green);display:inline-flex;font-size:.84rem;font-weight:900;gap:6px;justify-content:center;min-height:36px;padding:7px 10px;text-decoration:none;white-space:nowrap}
+.driver-detail-btn:hover{background:#effbf7;color:var(--driver-green);text-decoration:none}
+.driver-card{background:#fff;border:1px solid var(--driver-line);border-radius:14px;margin-bottom:12px;padding:16px}
+.driver-card-header{align-items:flex-start;display:flex;gap:12px;justify-content:space-between;margin-bottom:14px}
+.driver-card-title{align-items:flex-start;display:flex;gap:12px;min-width:0}
+.driver-number{align-items:center;background:#e8fbf4;border:1px solid #b8ebd8;border-radius:12px;color:var(--driver-green);display:flex;flex:0 0 44px;font-weight:900;height:44px;justify-content:center}
+.driver-shop{color:var(--driver-green);display:block;font-size:.72rem;font-weight:900;letter-spacing:.05em;text-transform:uppercase}
+.driver-status{background:#ecfdf5;border:1px solid #bbf7d0;border-radius:999px;color:#047857;font-size:.72rem;font-weight:900;padding:6px 10px;text-transform:uppercase;white-space:nowrap}
+.driver-card-body{display:grid;gap:14px;grid-template-columns:minmax(0,1fr) 260px}
+.driver-address-label{color:var(--driver-muted);font-size:.78rem;font-weight:800;text-transform:uppercase}
+.driver-address{font-size:1rem;font-weight:850;line-height:1.35}
+.driver-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.driver-links a{color:var(--driver-green);font-size:.85rem;font-weight:800;text-decoration:none}
+.driver-actions{display:flex;flex-direction:column;gap:9px}
+.driver-action{align-items:center;background:var(--driver-green);border:1px solid var(--driver-green);border-radius:10px;color:#fff;display:inline-flex;font-weight:900;gap:8px;justify-content:center;min-height:42px;padding:9px 12px;text-decoration:none;width:100%}
+.driver-action.secondary{background:#fff;color:var(--driver-green)}
+.driver-action.danger{border-color:#dc2626;color:#dc2626}
+.driver-action:hover{filter:brightness(.96);text-decoration:none}
+.driver-proof-input{font-size:.86rem}
+.driver-proof-hint{color:var(--driver-muted);font-size:.78rem;line-height:1.35}
+.driver-fab{display:none}
+.driver-modal .modal-content{border:0;border-radius:16px;overflow:hidden}
+.driver-modal.show{background:rgba(15,23,42,.5);display:block}
+.driver-modal .modal-header{background:#10231f;color:#fff}
+.driver-modal .modal-title{font-weight:900}
+.driver-modal .btn-close{filter:invert(1)}
+.driver-modal-section{border:1px solid var(--driver-line);border-radius:12px;margin-bottom:12px;padding:12px}
+.driver-modal-label{color:var(--driver-muted);font-size:.74rem;font-weight:900;text-transform:uppercase}
+.driver-tabs button{background:transparent;border:0}.driver-package-code{color:#63716d;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;font-weight:800}.driver-contact-actions{display:flex;gap:8px;margin-top:10px}.driver-icon-action{align-items:center;background:#eef6f3;border:0;border-radius:50%;color:var(--driver-green);display:inline-flex;height:38px;justify-content:center;width:38px}.driver-proof-panel,.driver-occurrence-panel{display:none}.driver-flow-panel.active{display:block}.driver-proof-choice{display:grid;gap:10px;grid-template-columns:1fr 1fr}.driver-proof-choice label{border:1px solid var(--driver-line);border-radius:10px;padding:10px;text-align:center}.driver-photo-preview{border:1px dashed #9eb8b0;border-radius:12px;display:none;margin-bottom:10px;max-height:180px;object-fit:cover;width:100%}.driver-bottom-actions{display:grid;grid-template-columns:1fr 1fr;margin:-1rem -1rem 0}.driver-bottom-actions button{border-radius:0;min-height:54px}.driver-bottom-actions .occurrence{background:#fff;border:1px solid #e06434;color:#c84d1e}.driver-bottom-actions .delivered{background:#e35420;border:1px solid #e35420;color:#fff}.driver-back{background:none;border:0;color:#52645e;font-weight:800;padding:0 0 14px}
+@media (max-width: 767px){
+  .driver-page{margin:-1.5rem -1.5rem 0;padding:14px 12px}
+  .driver-toolbar{align-items:flex-start;flex-direction:column}
+  .driver-toolbar h1{font-size:1.35rem}
+  .driver-toolbar-actions{width:100%}
+  .driver-toolbar-actions .btn{flex:1}
+  .driver-shell{border-radius:14px}
+  .driver-topbar{padding:15px}
+  .driver-brand{font-size:1rem}
+  .driver-tabs{grid-template-columns:1fr 1fr 1fr}
+  .driver-tab{font-size:.78rem;gap:5px;min-height:50px}
+  .driver-map iframe,.driver-map-empty{height:230px;min-height:230px}
+  .driver-content{padding:14px}
+  .driver-summary{grid-template-columns:1fr 1fr 1fr}
+  .driver-summary-card{padding:10px}
+  .driver-summary-card span{font-size:.62rem}
+  .driver-summary-card strong{font-size:1.18rem}
+  .driver-list-title{align-items:flex-start;flex-direction:column;gap:2px}
+  .driver-table-wrap{border-radius:12px}
+  .driver-table thead{display:none}
+  .driver-table,.driver-table tbody,.driver-table tr,.driver-table td{display:block;width:100%}
+  .driver-table tr{border-top:1px solid var(--driver-line);padding:10px}
+  .driver-table tr:first-child{border-top:0}
+  .driver-table td{border:0;padding:4px 0}
+  .driver-table td.driver-mobile-inline{align-items:center;display:flex;justify-content:space-between;gap:10px}
+  .driver-table-address{max-width:none}
+  .driver-card{padding:14px}
+  .driver-card-header{gap:10px}
+  .driver-card-title{gap:10px}
+  .driver-number{flex-basis:38px;height:38px}
+  .driver-status{font-size:.64rem;max-width:45%;overflow:hidden;text-overflow:ellipsis}
+  .driver-card-body{grid-template-columns:1fr}
+  .driver-map{display:none}.driver-summary{display:none}.driver-list-title{margin-top:2px}.driver-table-wrap{border:0;overflow:visible}.driver-table tr{background:#fff;border:0;border-radius:14px;box-shadow:0 5px 18px rgba(20,45,38,.08);margin-bottom:12px;padding:14px}.driver-table td:first-child{display:none}.driver-table td:last-child{padding-top:10px}.driver-detail-btn{width:100%}.driver-fab{align-items:center;background:#e85a1f;border-radius:50%;bottom:24px;box-shadow:0 8px 22px rgba(190,70,24,.4);color:#fff;display:flex;height:58px;justify-content:center;position:fixed;right:22px;width:58px;z-index:1040}.driver-fab svg{height:25px;width:25px}.driver-modal .modal-dialog{align-items:stretch;height:100%;margin:0;max-width:none;min-height:100%;width:100%}.driver-modal .modal-content{border-radius:0;min-height:100vh}.driver-modal .modal-header{background:#fff;color:#17231f}.driver-modal .btn-close{filter:none}.driver-modal .modal-body{padding:18px 16px}.driver-modal-section{border:0;border-bottom:1px solid #e7eeeb;border-radius:0;padding:12px 0}.driver-bottom-actions{bottom:0;position:sticky}.driver-toolbar-actions .desktop-package-scanner{display:none}
+}
+</style>
+<div class="driver-page">
+    <div class="driver-toolbar">
+        <div>
+            <h1>{{ trans('store_logistics.driver_mode') }}</h1>
+            <p>{{ trans('store_logistics.driver_mode_subtitle') }}</p>
+        </div>
+        <div class="driver-toolbar-actions">
+            <button type="button" class="btn btn-success desktop-package-scanner" data-bs-toggle="modal" data-bs-target="#packageScannerModal"><i data-feather="camera"></i> {{ trans('store_logistics.scan_package_qr') }}</button>
+            <a href="{{ path('panel/planner-hub/team/my-work') }}" class="btn btn-outline-secondary">{{ trans('store_logistics.my_work') }}</a>
+            <a href="{{ path('panel/planner-hub/team/chat') }}" class="btn btn-outline-success">{{ trans('store_logistics.team_chat') }}</a>
+        </div>
+    </div>
+
+    <section class="driver-shell">
+        <header class="driver-topbar">
+            <div class="d-flex align-items-center gap-3">
+                <div class="driver-brand"><i data-feather="navigation"></i>{{ trans('store_logistics.route_board') }}</div>
+            </div>
+            <div class="driver-pill"><i data-feather="user" class="me-1"></i>{{ deliveryTasks|length }} {{ trans('store_logistics.open') }}</div>
+        </header>
+
+        {% if isCarrierOrganization %}
+        <section class="p-3 p-md-4 bg-white border-bottom">
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3"><div><span class="badge bg-warning text-dark mb-2">{{ trans('store_logistics.carrier_workspace') }}</span><h2 class="h5 fw-bold mb-1">{{ trans('store_logistics.carrier_custody') }}</h2><p class="text-muted mb-0">{{ trans('store_logistics.carrier_custody_help') }}</p></div><button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#packageScannerModal"><i data-feather="maximize"></i> {{ trans('store_logistics.scan_pickup_qr') }}</button></div>
+            <form method="post" class="row g-2 mb-4"><input type="hidden" name="action" value="carrier_manual_request"><div class="col-md-7"><input class="form-control" name="package_code" placeholder="OPH-1637-2014-01" required></div><div class="col-md-3"><input class="form-control" name="notes" placeholder="{{ trans('store_logistics.request_note') }}"></div><div class="col-md-2"><button class="btn btn-outline-dark w-100">{{ trans('store_logistics.request_custody') }}</button></div><div class="col-12"><small class="text-muted">{{ trans('store_logistics.manual_requires_seller') }}</small></div></form>
+            <div class="row g-3">
+            {% for package in carrierPackages %}
+                <div class="col-xl-4 col-md-6"><article class="driver-card h-100 mb-0"><div class="d-flex justify-content-between gap-2"><div><div class="driver-package-code">{{ package.package_code }}</div><strong>{{ package.seller_name }}</strong></div><span class="driver-status">{{ package.custody_status|replace({'_':' '}) }}</span></div><div class="driver-address mt-3"><i data-feather="map-pin"></i> {{ package.shipping_address_1 }}, {{ package.shipping_city }} {{ package.shipping_state }} {{ package.shipping_zip }}</div><div class="small text-muted mt-2">{{ package.guest_name }} · {{ package.guest_phone }}</div><button class="driver-detail-btn w-100 mt-3" data-bs-toggle="modal" data-bs-target="#carrierPackage{{ package.id }}">{{ trans('store_logistics.update_package_stage') }}</button></article></div>
+                <div class="modal fade driver-modal" id="carrierPackage{{ package.id }}" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h3 class="modal-title fs-5">{{ package.package_code }}</h3><button class="btn-close" data-bs-dismiss="modal"></button></div><form method="post" enctype="multipart/form-data" class="modal-body carrier-stage-form"><input type="hidden" name="action" value="carrier_advance"><input type="hidden" name="package_id" value="{{ package.id }}"><input type="hidden" name="latitude"><input type="hidden" name="longitude"><label class="form-label">{{ trans('store_logistics.next_package_event') }}</label><select class="form-select mb-3" name="carrier_stage" required>{% if package.custody_status in ['PICKUP_ASSIGNED','WITH_SELLER'] %}<option value="picked_up">{{ trans('store_logistics.picked_up_from_seller') }}</option>{% endif %}{% if package.custody_status in ['PICKED_UP','CUSTOMER_ABSENT','CUSTOMER_REJECTED','DELIVERY_CANCELLED'] %}<option value="received_hub">{{ trans('store_logistics.received_at_hub') }}</option>{% endif %}{% if package.custody_status == 'RECEIVED_AT_HUB' %}<option value="sorted_hub">{{ trans('store_logistics.sorted_at_hub') }}</option>{% endif %}{% if package.custody_status in ['SORTED_AT_HUB','CUSTOMER_ABSENT'] %}<option value="out_for_delivery">{{ trans('store_logistics.out_for_delivery') }}</option>{% endif %}{% if package.custody_status == 'OUT_FOR_DELIVERY' %}<option value="delivered">{{ trans('store_logistics.delivered') }}</option><option value="customer_absent">{{ trans('store_logistics.customer_absent') }}</option><option value="customer_rejected">{{ trans('store_logistics.customer_rejected') }}</option><option value="delivery_cancelled">{{ trans('store_logistics.delivery_cancelled') }}</option>{% endif %}</select><label class="form-label">{{ trans('store_logistics.evidence_photo') }} *</label><input type="file" class="form-control mb-3" name="evidence_photo" accept="image/jpeg,image/png,image/webp" capture="environment" required><div class="carrier-receiver-fields"><input class="form-control mb-2" name="receiver_name" placeholder="{{ trans('store_logistics.receiver_name') }}"><div class="row g-2"><div class="col-6"><select class="form-select" name="document_type"><option value="ID">ID / RG</option><option value="TAX_ID">CPF / Tax ID</option></select></div><div class="col-6"><input class="form-control" name="document_number" placeholder="{{ trans('store_logistics.document_number') }}"></div></div><input type="hidden" name="receiver_type" value="RECIPIENT"></div><textarea class="form-control my-3" name="notes" rows="3" placeholder="{{ trans('store_logistics.observations') }}"></textarea><button class="driver-action">{{ trans('ui.save') }}</button></form></div></div></div>
+            {% else %}<div class="col-12"><div class="alert alert-light border mb-0">{{ trans('store_logistics.no_carrier_packages') }}</div></div>{% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <div class="driver-tabs" role="tablist">
+            <button class="driver-tab active" data-driver-tab="pending"><span>{{ trans('store_logistics.pending') }} ({{ deliveryTasks|length }})</span></button>
+            <button class="driver-tab" data-driver-tab="incidents"><span>{{ trans('store_logistics.incidents') }} ({{ incidentTasks|length }})</span></button>
+            <button class="driver-tab" data-driver-tab="completed"><span>{{ trans('store_logistics.completed') }} ({{ completedTasks|length }})</span></button>
+        </div>
+
+        <div class="driver-map">
+            <div class="driver-map-label"><i data-feather="map" class="me-1"></i>{{ trans('store_logistics.optimized_route') }}</div>
+            {% if deliveryTasks|length > 0 %}
+                {% set firstTask = deliveryTasks[0] %}
+                {% if firstTask.latest_location %}
+                    <iframe loading="lazy" src="https://maps.google.com/maps?q={{ firstTask.latest_location.latitude }},{{ firstTask.latest_location.longitude }}&z=13&output=embed"></iframe>
+                {% elseif firstTask.shipping_address_1 %}
+                    <iframe loading="lazy" src="https://maps.google.com/maps?q={{ (firstTask.shipping_address_1 ~ ' ' ~ firstTask.shipping_city ~ ' ' ~ firstTask.shipping_state ~ ' ' ~ firstTask.shipping_zip)|url_encode }}&z=12&output=embed"></iframe>
+                {% else %}
+                    <div class="driver-map-empty">
+                        <div><strong>{{ trans('store_logistics.no_route_address') }}</strong><br><span class="text-muted">{{ trans('store_logistics.assigned_addresses_hint') }}</span></div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="driver-map-empty">
+                    <div><strong>{{ trans('store_logistics.no_open_deliveries') }}</strong><br><span class="text-muted">{{ trans('store_logistics.new_routes_hint') }}</span></div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="driver-content">
+            <div class="driver-summary">
+                <div class="driver-summary-card"><span>{{ trans('store_logistics.open_deliveries') }}</span><strong>{{ deliveryTasks|length }}</strong></div>
+                <div class="driver-summary-card"><span>{{ trans('store_logistics.ready_to_start') }}</span><strong>{{ readyToStartCount }}</strong></div>
+                <div class="driver-summary-card"><span>{{ trans('store_logistics.on_route') }}</span><strong>{{ onRouteCount }}</strong></div>
+            </div>
+            <div class="driver-list-title">
+                <h2>{{ trans('store_logistics.delivery_list') }}</h2>
+                <p>{{ deliveryTasks|length }} {{ trans('store_logistics.pending_delivery_tasks') }}</p>
+            </div>
+
+            {% if deliveryTasks|length > 0 %}
+                <div class="driver-table-wrap">
+                    <table class="driver-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>{{ trans('store_logistics.order') }}</th>
+                                <th>{{ trans('store_logistics.customer') }}</th>
+                                <th>{{ trans('store_logistics.address') }}</th>
+                                <th>{{ trans('ui.status') }}</th>
+                                <th>{{ trans('ui.actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for task in allDeliveryTasks %}
+                            {% set taskTab = task.order_status in ['DELIVERY_ATTEMPTED','RETURNED_TO_BUSINESS','RETURN_REQUESTED','RETURN_APPROVED'] ? 'incidents' : (task.order_status in ['DELIVERED','COMPLETED','CANCELLED','RETURNED','CLOSED'] or task.status in ['COMPLETED','CANCELED'] ? 'completed' : 'pending') %}
+                            <tr data-driver-task-tab="{{ taskTab }}" data-order-status="{{ task.order_status }}" data-task-id="{{ task.id }}" data-public-token="{{ task.public_token }}" data-package-code="{{ task.package_code }}" data-order-id="{{ task.id_store_order }}" {{ taskTab != 'pending' ? 'hidden' : '' }}>
+                                <td class="driver-mobile-inline"><span class="driver-number">{{ loop.index }}</span><span class="driver-status d-md-none">{{ task.order_status|replace({'_':' '})|title }}</span></td>
+                                <td>
+                                    <div class="driver-package-code">{{ task.package_code|default('OPH-' ~ task.id_store_order) }}</div>
+                                    <div class="driver-table-customer">{{ trans('store_logistics.store_order') }} #{{ task.id_store_order }}</div>
+                                </td>
+                                <td>
+                                    <div class="driver-table-order">{{ task.guest_name ?: task.guest_email }}</div>
+                                    {% if task.guest_name and task.guest_email %}
+                                        <div class="driver-table-customer">{{ task.guest_email }}</div>
+                                    {% endif %}
+                                </td>
+                                <td><div class="driver-table-address"><i data-feather="map-pin"></i> {{ task.shipping_address_1 }}, {{ task.shipping_city }} {{ task.shipping_state }} {{ task.shipping_zip }}</div><div class="driver-contact-actions">{% if task.guest_phone %}<a class="driver-icon-action" href="tel:{{ task.guest_phone }}"><i data-feather="phone"></i></a>{% endif %}{% if task.client_user_id %}<a class="driver-icon-action" href="{{ path('panel/planner-hub/team/chat?to=' ~ task.client_user_id) }}"><i data-feather="message-square"></i></a>{% endif %}</div></td>
+                                <td><span class="driver-status d-none d-md-inline-flex">{{ task.order_status|replace({'_':' '})|title }}</span></td>
+                                <td>
+                                    <button type="button" class="driver-detail-btn" data-driver-modal-target="#driverTaskModal{{ task.id }}" data-bs-toggle="modal" data-bs-target="#driverTaskModal{{ task.id }}"><i data-feather="list"></i>{{ trans('ui.details') }}</button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-dark border-secondary">{{ trans('store_logistics.no_delivery_tasks') }}</div>
+            {% endif %}
+
+            {% for task in allDeliveryTasks %}
+                <div class="modal fade driver-modal" id="driverTaskModal{{ task.id }}" tabindex="-1" aria-labelledby="driverTaskModalLabel{{ task.id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 class="modal-title fs-5" id="driverTaskModalLabel{{ task.id }}">{{ trans('store_logistics.order_information') }}</h3>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ trans('ui.close') }}"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="driver-modal-section">
+                                    <div class="driver-package-code mb-2">{{ task.package_code|default('OPH-' ~ task.id_store_order) }}</div><div class="driver-modal-label">{{ trans('store_logistics.recipient_information') }}</div>
+                                    <div class="fw-bold">{{ task.guest_name ?: task.guest_email }}</div>
+                                    {% if task.guest_name and task.guest_email %}<div class="text-muted small">{{ task.guest_email }}</div>{% endif %}
+                                </div>
+                                <div class="driver-modal-section">
+                                    <div class="driver-modal-label">{{ trans('store_logistics.address') }}</div>
+                                    <div class="fw-bold">{{ task.shipping_address_1 }}, {{ task.shipping_city }} {{ task.shipping_state }} {{ task.shipping_zip }}</div>
+                                    <div class="driver-links">
+                                        {% if task.shipping_address_1 %}
+                                            <a target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ (task.shipping_address_1 ~ ' ' ~ task.shipping_city ~ ' ' ~ task.shipping_state ~ ' ' ~ task.shipping_zip)|url_encode }}">{{ trans('store_logistics.open_map') }}</a>
+                                        {% endif %}
+                                        {% if task.public_token %}
+                                            <a target="_blank" href="{{ path('store/order-access?token=' ~ task.public_token) }}">{{ trans('store_logistics.open_client_status') }}</a>
+                                        {% endif %}
+                                        {% if task.latest_location %}
+                                            <a target="_blank" href="https://www.google.com/maps?q={{ task.latest_location.latitude }},{{ task.latest_location.longitude }}">{{ trans('store_logistics.latest_gps_ping') }}</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="driver-modal-section mb-0">
+                                    <div class="driver-modal-label mb-2">{{ trans('ui.actions') }}</div>
+                                    <div class="driver-actions">
+                                        {% if task.order_status == 'READY_FOR_DELIVERY' or task.order_status == 'REDELIVERY_SCHEDULED' %}
+                                            <form method="post" action="{{ path('panel/planner-hub/team/my-work') }}" class="driver-task-form" enctype="multipart/form-data">
+                                                <input type="hidden" name="task_id" value="{{ task.id }}">
+                                                <input type="hidden" name="action" value="out_for_delivery">
+                                                <input type="hidden" name="location_lat">
+                                                <input type="hidden" name="location_long">
+                                                <input type="hidden" name="location_accuracy">
+                                                <input type="hidden" name="location_platform" value="web_mobile_driver_mode">
+                                                <input type="hidden" name="location_source" value="browser_geolocation">
+                                                <input type="hidden" name="location_permission_status" value="prompt">
+                                                <input type="hidden" name="location_context" value="driver_mode">
+                                                <input type="file" name="dispatch_proof" class="form-control form-control-sm driver-proof-input mb-2" accept="image/jpeg,image/png,image/webp" capture="environment" required>
+                                                <div class="driver-proof-hint mb-2">{{ trans('store_logistics.dispatch_photo_required') }}</div>
+                                                <button class="driver-action" title="{{ trans('store_logistics.start_route') }}"><i data-feather="navigation"></i> {{ trans('store_logistics.start_delivery') }}</button>
+                                            </form>
+                                        {% elseif task.order_status == 'OUT_FOR_DELIVERY' %}
+                                            <form method="post" action="{{ path('panel/planner-hub/team/my-work') }}" class="driver-task-form driver-delivery-form" enctype="multipart/form-data">
+                                                <input type="hidden" name="task_id" value="{{ task.id }}">
+                                                <input type="hidden" name="action" value="delivered">
+                                                <input type="hidden" name="location_lat">
+                                                <input type="hidden" name="location_long">
+                                                <input type="hidden" name="location_accuracy">
+                                                <input type="hidden" name="location_platform" value="web_mobile_driver_mode">
+                                                <input type="hidden" name="location_source" value="browser_geolocation">
+                                                <input type="hidden" name="location_permission_status" value="prompt">
+                                                <input type="hidden" name="location_context" value="driver_mode">
+                                                <div class="driver-flow-panel driver-proof-panel">
+                                                    <button type="button" class="driver-back" data-driver-back><i data-feather="arrow-left"></i> {{ trans('store_logistics.back') }}</button><h4 class="h5 fw-bold">{{ trans('store_logistics.delivery_proof') }}</h4>
+                                                    <label class="form-label">{{ trans('store_logistics.receiver_type') }} *</label><select name="receiver_type" class="form-select mb-3"><option value="">{{ trans('store_logistics.select_option') }}</option><option value="BUYER">{{ trans('store_logistics.buyer') }}</option><option value="HOUSEHOLD">{{ trans('store_logistics.household_member') }}</option><option value="DOORMAN">{{ trans('store_logistics.doorman') }}</option><option value="OTHER">{{ trans('store_logistics.other_receiver') }}</option></select>
+                                                    <label class="form-label">{{ trans('store_logistics.receiver_name') }} *</label><input name="receiver_name" class="form-control mb-3" maxlength="150">
+                                                    <label class="form-label">{{ trans('store_logistics.document_type') }} *</label><div class="driver-proof-choice mb-3"><label><input type="radio" name="document_type" value="ID"> ID / RG</label><label><input type="radio" name="document_type" value="TAX_ID"> CPF / Tax ID</label></div>
+                                                    <label class="form-label">{{ trans('store_logistics.document_number') }} *</label><input name="document_number" class="form-control mb-3" maxlength="80">
+                                                    <label class="form-label">{{ trans('store_logistics.delivery_photo') }} *</label><img class="driver-photo-preview" alt=""><input type="file" name="delivery_proof" class="form-control driver-proof-input mb-3" accept="image/jpeg,image/png,image/webp" capture="environment">
+                                                    <label class="form-label">{{ trans('store_logistics.observations') }}</label><textarea data-delivery-notes class="form-control mb-3" rows="3" maxlength="500" placeholder="{{ trans('store_logistics.delivery_notes_placeholder') }}"></textarea>
+                                                    <button class="driver-action" type="submit" data-driver-action="delivered"><i data-feather="check"></i> {{ trans('store_logistics.confirm_delivery') }}</button>
+                                                </div>
+                                                <div class="driver-flow-panel driver-occurrence-panel">
+                                                    <button type="button" class="driver-back" data-driver-back><i data-feather="arrow-left"></i> {{ trans('store_logistics.back') }}</button><h4 class="h5 fw-bold">{{ trans('store_logistics.report_occurrence') }}</h4><label class="form-label">{{ trans('store_logistics.what_happened') }} *</label><textarea data-occurrence-notes class="form-control mb-3" rows="4" maxlength="500"></textarea><button class="driver-action secondary danger" type="submit" data-driver-action="delivery_attempted"><i data-feather="alert-circle"></i> {{ trans('store_logistics.save_occurrence') }}</button><button class="driver-action secondary mt-2" type="submit" data-driver-action="returned_to_business"><i data-feather="rotate-ccw"></i> {{ trans('store_logistics.returned_to_business') }}</button>
+                                                </div>
+                                                <input type="hidden" name="notes" value="">
+                                                <div class="driver-bottom-actions"><button type="button" class="occurrence" data-driver-flow="occurrence">{{ trans('store_logistics.occurrence') }}</button><button type="button" class="delivered" data-driver-flow="proof">{{ trans('store_logistics.delivered') }}</button></div>
+                                            </form>
+                                        {% else %}
+                                            <span class="driver-proof-hint">{{ trans('store_logistics.waiting_for_preparation') }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <button type="button" class="driver-fab" id="openPackageScanner" data-bs-toggle="modal" data-bs-target="#packageScannerModal" title="{{ trans('store_logistics.scan_package_qr') }}"><i data-feather="maximize"></i></button>
+        </div>
+    </section>
+
+    <div class="modal fade" id="packageScannerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5">{{ trans('store_logistics.scan_package_qr') }}</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">{{ trans('store_logistics.scan_package_help') }}</p>
+                    <div class="alert alert-info small" role="note">
+                        <strong>{{ trans('store_logistics.scan_package_requirement_title') }}</strong><br>
+                        {{ trans('store_logistics.scan_package_requirement') }}
+                    </div>
+                    <div id="packageQrReader" style="width:100%"></div>
+                    <div id="packageQrFeedback" class="alert d-none mt-3" role="alert"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ parent() }}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+let packageScanner = null;
+const assignedPackageTokens = {{ assignedPackageTokens|json_encode|raw }};
+const isCarrierOrganization = {{ isCarrierOrganization ? 'true' : 'false' }};
+
+function scannedPackageKind(decodedText) {
+    try {
+        const scannedUrl = new URL(decodedText, window.location.origin);
+        if (scannedUrl.pathname.includes('/management/storage/') || scannedUrl.pathname.includes('/team/storage/')) {
+            return 'storage';
+        }
+        return scannedUrl.searchParams.has('token') ? 'order' : 'unknown';
+    } catch (error) {
+        return 'token';
+    }
+}
+
+function extractPackageToken(decodedText) {
+    try {
+        const scannedUrl = new URL(decodedText, window.location.origin);
+        return scannedUrl.searchParams.get('token') || '';
+    } catch (error) {
+        return String(decodedText || '').trim();
+    }
+}
+
+function showPackageScanFeedback(message, type) {
+    const feedback = document.getElementById('packageQrFeedback');
+    feedback.textContent = message;
+    feedback.className = 'alert mt-3 alert-' + type;
+}
+
+function captureLiveQrFrame() {
+    const video=document.querySelector('#packageQrReader video');if(!video||!video.videoWidth)return Promise.resolve(null);
+    const canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;canvas.getContext('2d').drawImage(video,0,0);
+    return new Promise(function(resolve){canvas.toBlob(resolve,'image/jpeg',0.88);});
+}
+
+function openAssignedPackageFromQr(decodedText) {
+    const token = extractPackageToken(decodedText);
+    const row = Array.from(document.querySelectorAll('[data-public-token]')).find(function (candidate) {
+        return candidate.dataset.publicToken && candidate.dataset.publicToken === token;
+    });
+    if (!row) {
+        if (isCarrierOrganization && token) {
+            const claim = async function(position) {
+                const photo=await captureLiveQrFrame();if(!photo){showPackageScanFeedback({{ trans('store_logistics.qr_photo_failed')|json_encode|raw }},'danger');return;}
+                const data=new FormData();data.append('action','carrier_qr_claim');data.append('qr_token',token);data.append('qr_photo',photo,'qr-pickup.jpg');if(position){data.append('latitude',position.coords.latitude);data.append('longitude',position.coords.longitude);}
+                fetch(window.location.href,{method:'POST',body:data,credentials:'same-origin',headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}}).then(async function(response){const payload=await response.json();if(!response.ok||!payload.success)throw new Error(payload.message||'Unable to accept package');showPackageScanFeedback(payload.message,'success');setTimeout(function(){window.location.reload()},700)}).catch(function(error){showPackageScanFeedback(error.message,'danger')});
+            };
+            if(navigator.geolocation)navigator.geolocation.getCurrentPosition(claim,function(){claim(null)},{enableHighAccuracy:true,timeout:7000});else claim(null);
+            return;
+        }
+        const assignment = assignedPackageTokens[token] || null;
+        if (scannedPackageKind(decodedText) === 'storage') {
+            showPackageScanFeedback({{ trans('store_logistics.qr_inventory_label')|json_encode|raw }}, 'warning');
+        } else if (assignment) {
+            showPackageScanFeedback({{ trans('store_logistics.qr_assignment_inactive')|json_encode|raw }}, 'warning');
+        } else {
+            showPackageScanFeedback({{ trans('store_logistics.qr_not_assigned')|json_encode|raw }}, 'danger');
+        }
+        return;
+    }
+    if (packageScanner && packageScanner.isScanning) packageScanner.stop().catch(function () {});
+    const scannerModal = bootstrap.Modal.getInstance(document.getElementById('packageScannerModal'));
+    const taskModal = document.getElementById('driverTaskModal' + row.dataset.taskId);
+    if (!taskModal) return;
+    const showAssignedTask = function () {
+        bootstrap.Modal.getOrCreateInstance(taskModal).show();
+    };
+    if (scannerModal) {
+        document.getElementById('packageScannerModal').addEventListener('hidden.bs.modal', showAssignedTask, { once: true });
+        scannerModal.hide();
+    } else {
+        showAssignedTask();
+    }
+}
+
+document.getElementById('packageScannerModal').addEventListener('shown.bs.modal', function () {
+    if (!window.Html5Qrcode) {
+        showPackageScanFeedback({{ trans('store_logistics.camera_unavailable')|json_encode|raw }}, 'warning');
+        return;
+    }
+    packageScanner = packageScanner || new Html5Qrcode('packageQrReader');
+    packageScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } }, openAssignedPackageFromQr)
+        .catch(function () { showPackageScanFeedback({{ trans('store_logistics.camera_permission_required')|json_encode|raw }}, 'warning'); });
+});
+
+document.getElementById('packageScannerModal').addEventListener('hidden.bs.modal', function () {
+    if (packageScanner && packageScanner.isScanning) packageScanner.stop().catch(function () {});
+});
+
+function driverPostLocation(taskId, position) {
+    const data = new FormData();
+    data.append('task_id', taskId);
+    data.append('action', 'update_location');
+    data.append('location_lat', position.coords.latitude);
+    data.append('location_long', position.coords.longitude);
+    data.append('location_accuracy', position.coords.accuracy || '');
+    data.append('location_platform', 'web_mobile_driver_mode');
+    data.append('location_source', 'browser_geolocation_watch');
+    data.append('location_permission_status', 'granted');
+    data.append('location_context', 'driver_mode_live');
+
+    return fetch('{{ path('panel/planner-hub/team/my-work') }}', {
+        method: 'POST',
+        body: data,
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).catch(function () {});
+}
+
+function driverRefreshMap(position) {
+    const frame = document.querySelector('.driver-map iframe');
+    if (!frame || !position || !position.coords) return;
+    frame.src = 'https://maps.google.com/maps?q='
+        + encodeURIComponent(position.coords.latitude + ',' + position.coords.longitude)
+        + '&z=14&output=embed';
+}
+
+function startDriverLiveTracking() {
+    const activeCards = Array.from(document.querySelectorAll('[data-order-status="OUT_FOR_DELIVERY"][data-task-id]'));
+    if (!activeCards.length || !navigator.geolocation) return;
+
+    const lastSent = new Map();
+    navigator.geolocation.watchPosition(function (position) {
+        driverRefreshMap(position);
+        activeCards.forEach(function (card) {
+            const taskId = card.dataset.taskId;
+            const now = Date.now();
+            const previous = lastSent.get(taskId) || 0;
+            if (now - previous < 45000) return;
+            lastSent.set(taskId, now);
+            driverPostLocation(taskId, position);
+        });
+    }, function () {}, { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 });
+}
+
+document.querySelectorAll('.driver-task-form').forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+        const submitter = event.submitter;
+        if (form.dataset.submitting === '1') {
+            event.preventDefault();
+            return;
+        }
+        if (submitter && submitter.dataset.driverAction) {
+            const actionInput = form.querySelector('[name="action"]');
+            if (actionInput) actionInput.value = submitter.dataset.driverAction;
+        }
+        if (submitter && ['delivery_attempted', 'returned_to_business'].includes(submitter.dataset.driverAction || '')) {
+            form.querySelector('[name="notes"]').value = form.querySelector('[data-occurrence-notes]')?.value || '';
+        } else if (submitter && submitter.dataset.driverAction === 'delivered') {
+            form.querySelector('[name="notes"]').value = form.querySelector('[data-delivery-notes]')?.value || '';
+        }
+        if (submitter && ['delivery_attempted', 'returned_to_business'].includes(submitter.dataset.driverAction)) {
+            const notes = form.querySelector('[name="notes"]');
+            if (!notes || !notes.value.trim()) {
+                event.preventDefault();
+                alert({{ trans('store_logistics.attempt_notes_required')|json_encode|raw }});
+                return;
+            }
+        }
+        if (form.dataset.locationReady === '1') {
+            form.dataset.submitting = '1';
+            form.querySelectorAll('button[type="submit"]').forEach(function (button) { button.disabled = true; });
+            return;
+        }
+        event.preventDefault();
+        if (!navigator.onLine) {
+            alert({{ trans('store_logistics.connection_required')|json_encode|raw }});
+            return;
+        }
+        if (!navigator.geolocation) {
+            alert('{{ trans('store_logistics.location_required')|e('js') }}');
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(function (position) {
+            form.querySelector('[name="location_lat"]').value = position.coords.latitude;
+            form.querySelector('[name="location_long"]').value = position.coords.longitude;
+            form.querySelector('[name="location_accuracy"]').value = position.coords.accuracy || '';
+            form.querySelector('[name="location_permission_status"]').value = 'granted';
+            form.dataset.locationReady = '1';
+            form.requestSubmit(submitter || undefined);
+        }, function () {
+            form.querySelector('[name="location_permission_status"]').value = 'denied';
+            alert('{{ trans('store_logistics.location_required')|e('js') }}');
+        }, { enableHighAccuracy: true, timeout: 10000 });
+    });
+});
+startDriverLiveTracking();
+document.querySelectorAll('.carrier-stage-form').forEach(function(form){form.addEventListener('submit',function(event){if(form.dataset.locationReady==='1')return;event.preventDefault();if(!navigator.geolocation){form.dataset.locationReady='1';form.requestSubmit();return;}navigator.geolocation.getCurrentPosition(function(position){form.querySelector('[name="latitude"]').value=position.coords.latitude;form.querySelector('[name="longitude"]').value=position.coords.longitude;form.dataset.locationReady='1';form.requestSubmit();},function(){form.dataset.locationReady='1';form.requestSubmit();},{enableHighAccuracy:true,timeout:7000});});});
+
+document.querySelectorAll('[data-driver-tab]').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+        document.querySelectorAll('[data-driver-tab]').forEach(function (item) { item.classList.toggle('active', item === tab); });
+        document.querySelectorAll('[data-driver-task-tab]').forEach(function (row) { row.hidden = row.dataset.driverTaskTab !== tab.dataset.driverTab; });
+    });
+});
+document.querySelectorAll('[data-driver-flow]').forEach(function (button) {
+    button.addEventListener('click', function () {
+        const form = button.closest('.driver-delivery-form'); if (!form) return;
+        form.querySelectorAll('.driver-flow-panel').forEach(function (panel) { panel.classList.remove('active'); });
+        form.querySelector('.driver-' + button.dataset.driverFlow + '-panel')?.classList.add('active');
+        form.querySelector('.driver-bottom-actions').style.display = 'none';
+    });
+});
+document.querySelectorAll('[data-driver-back]').forEach(function (button) {
+    button.addEventListener('click', function () { const form=button.closest('form');form.querySelectorAll('.driver-flow-panel').forEach(function(panel){panel.classList.remove('active')});form.querySelector('.driver-bottom-actions').style.display='grid'; });
+});
+document.querySelectorAll('.driver-delivery-form [name="delivery_proof"]').forEach(function (input) {
+    input.addEventListener('change', function () { const file=input.files&&input.files[0];const preview=input.closest('form').querySelector('.driver-photo-preview');if(!file||!preview)return;preview.src=URL.createObjectURL(file);preview.style.display='block'; });
+});
+
+document.querySelectorAll('[data-driver-modal-target]').forEach(function (button) {
+    button.addEventListener('click', function () {
+        const target = document.querySelector(button.dataset.driverModalTarget);
+        if (!target) return;
+        if (window.bootstrap && window.bootstrap.Modal) {
+            window.bootstrap.Modal.getOrCreateInstance(target).show();
+            return;
+        }
+        target.classList.add('show');
+        target.style.display = 'block';
+        target.removeAttribute('aria-hidden');
+        target.setAttribute('aria-modal', 'true');
+        document.body.classList.add('modal-open');
+    });
+});
+
+document.querySelectorAll('.driver-modal [data-bs-dismiss="modal"], .driver-modal .btn-close').forEach(function (button) {
+    button.addEventListener('click', function () {
+        const modal = button.closest('.driver-modal');
+        if (!modal || (window.bootstrap && window.bootstrap.Modal)) return;
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        modal.removeAttribute('aria-modal');
+        document.body.classList.remove('modal-open');
+    });
+});
+</script>
+{% endblock %}

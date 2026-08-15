@@ -1,0 +1,41 @@
+<div class="modal fade" id="{{ modal_id|default('paymentMethodConsentModal') }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ trans('planner_hub.payment_method_preferences') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ trans('planner_hub.close') }}"></button>
+            </div>
+            <div class="modal-body">
+                {% if gateway_supports_saved_methods|default(false) and not uses_saved_method|default(false) %}
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" value="1" id="savePaymentMethodInput" name="save_payment_method">
+                        <label class="form-check-label" for="savePaymentMethodInput">
+                            {{ trans('planner_hub.save_payment_method_for_future') }}
+                        </label>
+                    </div>
+                {% elseif not gateway_supports_saved_methods|default(false) %}
+                    <p class="text-muted mb-3">{{ trans('planner_hub.gateway_saved_methods_not_supported') }}</p>
+                {% endif %}
+
+                {% if not has_active_consent|default(false) %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="1" id="autoChargeConsentInput" name="auto_charge_consent">
+                        <label class="form-check-label" for="autoChargeConsentInput">
+                            {{ trans('planner_hub.authorize_future_charges_text') }}
+                        </label>
+                    </div>
+                {% else %}
+                    <p class="text-success mb-0">{{ trans('planner_hub.authorization_accepted') }}</p>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    {{ trans('planner_hub.continue_without_saving') }}
+                </button>
+                <button type="button" class="btn btn-primary" data-payment-consent-continue>
+                    {{ trans('planner_hub.continue_payment') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

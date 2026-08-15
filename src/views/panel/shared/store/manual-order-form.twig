@@ -1,0 +1,350 @@
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+      <p class="text-uppercase text-muted fw-bold small mb-1">{{ trans('store_manual.badge') }}</p>
+      <h1 class="h3 mb-1">{{ trans('store_manual.title') }}</h1>
+      <p class="text-muted mb-0">{{ trans('store_manual.subtitle') }}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{{ import_url }}" class="btn btn-outline-dark">{{ trans('store_manual.csv_import') }}</a>
+      <a href="{{ back_url }}" class="btn btn-light">{{ trans('store_manual.back_to_orders') }}</a>
+    </div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" id="manualStoreOrderForm">
+    <div class="order-wizard mb-4">
+      {% for number, label in {1: trans('store_manual.step_customer'), 2: trans('store_manual.step_cart'), 3: trans('store_manual.step_delivery_payment'), 4: trans('store_manual.step_review')} %}
+        <button type="button" class="wizard-step {{ number == 1 ? 'active' : '' }}" data-step-target="{{ number }}"><span>{{ number }}</span><small>{{ label }}</small></button>
+      {% endfor %}
+      <div class="wizard-progress"><div id="wizardProgressBar"></div></div>
+    </div>
+    <div class="wizard-panel" data-step="1">
+    <section>
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h5 fw-bold mb-3">{{ trans('store_report.customer') }}</h2>
+          <label class="form-label">{{ trans('store_manual.existing_client') }}</label>
+          <select class="form-select mb-3" name="id_user" id="storeClientSelect">
+            <option value="">{{ require_existing_client|default(false) ? trans('store_manual.select_or_create_customer') : trans('store_manual.guest_or_new_customer') }}</option>
+            {% for client in clients %}
+              <option value="{{ client.id }}" {{ selected_client_id|default(0) == client.id ? 'selected' : '' }} data-name="{{ (client.name ~ ' ' ~ client.lastname)|trim|e('html_attr') }}" data-email="{{ client.email|e('html_attr') }}" data-phone="{{ client.phone|default('')|e('html_attr') }}">
+                {{ (client.name ~ ' ' ~ client.lastname)|trim ?: client.email }} - {{ client.email }}
+              </option>
+            {% endfor %}
+          </select>
+          {% if new_client_url|default('') %}
+            <div class="{{ clients is empty ? 'alert alert-info' : 'd-flex justify-content-end' }} align-items-center gap-2 mb-3">
+              {% if clients is empty %}<span>{{ trans('store_manual.no_clients_yet') }}</span>{% endif %}
+              <a class="btn btn-sm btn-outline-primary fw-bold" id="createStoreClientLink" href="{{ path(new_client_url) }}">
+                <i data-feather="user-plus"></i> {{ trans('store_manual.create_new_client') }}
+              </a>
+            </div>
+          {% endif %}
+          {% if require_existing_client|default(false) %}
+            <div class="alert alert-warning py-2 mb-3" id="clientRequiredNotice">
+              {{ trans('store_manual.select_customer_to_continue') }}
+            </div>
+          {% endif %}
+          <label class="form-label">{{ trans('store_manual.name') }}</label>
+          <input class="form-control mb-3" name="guest_name" id="guestName" required {{ require_existing_client|default(false) ? 'readonly' : '' }}>
+          <label class="form-label">{{ trans('store_manual.email') }}</label>
+          <input class="form-control mb-3" type="email" name="guest_email" id="guestEmail" required {{ require_existing_client|default(false) ? 'readonly' : '' }}>
+          <label class="form-label">{{ trans('store_manual.phone') }}</label>
+          <input class="form-control mb-3" name="guest_phone" id="guestPhone" {{ require_existing_client|default(false) ? 'readonly' : '' }}>
+          <label class="form-label">{{ trans('store_manual.internal_notes') }}</label>
+          <textarea class="form-control" name="notes" rows="4" placeholder="Delivery preferences, dietary notes, support context..."></textarea>
+        </div>
+      </div>
+    </section></div>
+
+    <div class="wizard-panel d-none" data-step="2"><section>
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h5 fw-bold mb-0">{{ trans('store_manual.cart') }}</h2>
+            <button class="btn btn-sm btn-outline-success" type="button" id="addStoreLine">{{ trans('store_manual.add_product') }}</button>
+          </div>
+          <div id="storeLines" class="d-flex flex-column gap-3">
+            <div class="border rounded-3 p-3 store-line">
+              <label class="form-label">{{ trans('store_report.product') }}</label>
+              <select class="form-select store-product" name="product_id[]" required>
+                <option value="">{{ trans('store_manual.select_product') }}</option>
+                {% for product in products %}
+                  <option value="{{ product.id }}" data-price="{{ product.effective_price }}" data-variations='{{ product.variations|json_encode|e('html_attr') }}'>{{ product.name }} - ${{ product.effective_price|number_format(2) }}</option>
+                {% endfor %}
+              </select>
+              <div class="row g-2 mt-2">
+                <div class="col-md-7">
+                  <label class="form-label">{{ trans('store_product_form.variation') }}</label>
+                  <select class="form-select store-variation" name="variation_id[]"><option value="">{{ trans('store_manual.no_variation') }}</option></select>
+                </div>
+                <div class="col-md-5">
+                  <label class="form-label">{{ trans('store_product_form.min_qty') }}</label>
+                  <input class="form-control store-qty" type="number" min="1" value="1" name="quantity[]" required>
+                </div>
+              </div>
+              <div class="small text-muted mt-2 store-line-total">{{ trans('store_manual.line_total') }}: $0.00</div>
+            </div>
+          </div>
+          <div class="row g-3 mt-3">
+            <div class="col-md-6">
+              <label class="form-label">{{ trans('store_manual.delivery_fee') }}</label>
+              <input class="form-control money-field" name="delivery_fee" type="number" step="0.01" min="0" value="0">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">{{ trans('store_manual.discount') }}</label>
+              <input class="form-control money-field" name="discount" type="number" step="0.01" min="0" value="0">
+            </div>
+          </div>
+          <div class="fee-builder mt-3 p-3 rounded-3">
+            <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+              <label class="form-label fw-bold mb-0">{{ trans('store_manual.tax_processing_fee') }}</label>
+              <select class="form-select form-select-sm w-auto money-field" name="fee_type" id="feeType">
+                <option value="none">{{ trans('store_manual.no_fee') }}</option>
+                <option value="percentage">{{ trans('store_manual.percentage') }}</option>
+                <option value="fixed">{{ trans('store_manual.fixed_amount') }}</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <span class="input-group-text" id="feePrefix">$</span>
+              <input class="form-control money-field" name="fee_value" id="feeValue" type="number" step="0.01" min="0" value="0" disabled>
+              <span class="input-group-text d-none" id="feeSuffix">%</span>
+            </div>
+            <input class="form-control mt-2" name="fee_label" placeholder="{{ trans('store_manual.fee_label_placeholder') }}">
+          </div>
+          <div class="alert alert-info mt-3 mb-0"><strong>{{ trans('ui.total') }}:</strong> <span id="manualOrderTotal">$0.00</span></div>
+        </div>
+      </div>
+    </section></div>
+
+    <div class="wizard-panel d-none" data-step="3"><section>
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h2 class="h5 fw-bold mb-3">{{ trans('store_manual.delivery_address') }}</h2>
+          <label class="form-label" for="shippingAddressAutocomplete">{{ trans('store_manual.address') }}</label>
+          <input class="form-control mb-2" id="shippingAddressAutocomplete" name="shipping_address_1" placeholder="{{ trans('store_manual.start_typing_address') }}" autocomplete="off" data-address-autocomplete required>
+          <div class="form-text mb-2">{{ trans('store_manual.select_google_suggestion') }}</div>
+          <input type="hidden" name="shipping_place_id" data-address-place-id>
+          <input type="hidden" name="shipping_latitude" data-address-latitude>
+          <input type="hidden" name="shipping_longitude" data-address-longitude>
+          <label class="form-label" for="shippingAddress2">{{ trans('store_manual.address_line_2') }}</label>
+          <input class="form-control mb-2" id="shippingAddress2" name="shipping_address_2" data-address-dependent placeholder="{{ trans('store_manual.address_line_2_placeholder') }}" disabled>
+          <input class="form-control mb-2" name="shipping_city" data-address-part="city" data-address-dependent placeholder="{{ trans('store_manual.city') }}" required disabled>
+          <div class="row g-2">
+            <div class="col-6"><input class="form-control" name="shipping_state" data-address-part="state" data-address-dependent placeholder="{{ trans('store_manual.state') }}" required disabled></div>
+            <div class="col-6"><input class="form-control" name="shipping_zip" data-address-part="zip" data-address-dependent placeholder="ZIP" required disabled></div>
+          </div>
+          <input class="form-control mt-2" name="shipping_country" data-address-part="country" data-address-dependent placeholder="{{ trans('store_manual.country') }}" required disabled>
+          <label class="form-label mt-3" for="shippingInstructions">{{ trans('store_manual.shipping_instructions') }}</label>
+          <textarea class="form-control" id="shippingInstructions" name="shipping_instructions" data-address-dependent rows="2" placeholder="{{ trans('store_manual.shipping_instructions_placeholder') }}" disabled></textarea>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h2 class="h5 fw-bold mb-3">{{ trans('store_report.payment') }}</h2>
+          <select class="form-select mb-3" name="payment_mode" id="paymentMode">
+            <option value="send_link" {{ online_payment_available|default(false) ? '' : 'disabled' }}>{{ trans('store_manual.send_payment_link') }}{{ online_payment_available|default(false) ? '' : ' — ' ~ trans('store_manual.provider_required_short') }}</option>
+            <option value="saved_card" {{ saved_card_payment_available|default(false) ? '' : 'disabled' }}>{{ trans('store_manual.charge_saved_card') }}{{ saved_card_payment_available|default(false) ? '' : ' — ' ~ trans('store_manual.provider_required_short') }}</option>
+            <option value="manual_proof" {{ not online_payment_available|default(false) ? 'selected' : '' }}>{{ trans('store_manual.upload_proof_mark_paid') }}</option>
+            <option value="mark_paid">{{ trans('store_manual.mark_paid_without_proof') }}</option>
+          </select>
+          <div class="form-text mb-3">{{ trans('store_manual.payment_mode_help') }}</div>
+          {% if not online_payment_available|default(false) %}
+            <div class="alert alert-warning py-2 mb-3">
+              {{ trans('store_manual.online_provider_required') }}
+              <a class="alert-link" href="{{ path('/panel/planner-hub/settings/payment-providers') }}">{{ trans('store_manual.configure_payment_provider') }}</a>
+              {{ trans('store_manual.manual_payment_available') }}
+            </div>
+          {% elseif not saved_card_payment_available|default(false) %}
+            <div class="alert alert-warning py-2 mb-3">
+              {{ trans('store_manual.saved_card_provider_required') }}
+              <a class="alert-link" href="{{ path('/panel/planner-hub/settings/payment-providers') }}">{{ trans('store_manual.configure_payment_provider') }}</a>
+              {{ trans('store_manual.manual_payment_available') }}
+            </div>
+          {% endif %}
+          <div id="manualProofBox" class="d-none">
+            <label class="form-label">{{ trans('store_report.payment_proof') }}</label>
+            <input class="form-control mb-2" type="file" name="payment_proof" accept="image/*,.pdf">
+          </div>
+          <label class="form-label">{{ trans('store_report.ref') }}</label>
+          <input class="form-control mb-2" name="payment_reference" placeholder="Cash, Zelle, invoice #...">
+          <label class="form-label">{{ trans('store_manual.payment_notes') }}</label>
+          <textarea class="form-control mb-3" name="payment_notes" rows="3"></textarea>
+        </div>
+      </div>
+    </section></div>
+
+    <div class="wizard-panel d-none" data-step="4">
+      <section class="card border-0 shadow-sm review-card"><div class="card-body p-lg-5">
+        <div class="review-hero mb-4"><span>✓</span><div><h2 class="h4 mb-1">{{ trans('store_manual.review_title') }}</h2><p class="mb-0 text-muted">{{ trans('store_manual.review_help') }}</p></div></div>
+        <div class="row g-3" id="orderReview"></div>
+        <button class="btn btn-success btn-lg w-100 fw-bold mt-4" type="submit">{{ trans('store_manual.create_order') }}</button>
+      </div></section>
+    </div>
+    <div class="wizard-actions mt-4 d-flex justify-content-between">
+      <button class="btn btn-outline-secondary px-4 d-none" type="button" id="wizardBack"><span aria-hidden="true">&larr;</span> {{ trans('store_manual.back') }}</button>
+      <button class="btn btn-primary px-4 ms-auto" type="button" id="wizardNext">{{ trans('store_manual.continue') }} <span aria-hidden="true">&rarr;</span></button>
+    </div>
+  </form>
+</div>
+
+<style>
+.order-wizard{position:relative;display:grid;grid-template-columns:repeat(4,1fr);max-width:900px;margin:auto;padding-bottom:12px}.wizard-step{position:relative;z-index:2;border:0;background:transparent;color:#8090a0;display:flex;flex-direction:column;align-items:center;gap:7px}.wizard-step span{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#e9eef3;font-weight:800;transition:.25s}.wizard-step small{font-weight:700}.wizard-step.active,.wizard-step.done{color:#08766e}.wizard-step.active span{background:linear-gradient(135deg,#0f766e,#20b99f);color:#fff;box-shadow:0 8px 22px #0f766e55;transform:scale(1.08)}.wizard-step.done span{background:#d8f6ef;color:#08766e}.wizard-progress{position:absolute;height:4px;background:#e8edf2;left:12.5%;right:12.5%;top:19px}.wizard-progress div{height:100%;width:0;background:linear-gradient(90deg,#0f766e,#20b99f);transition:.3s}.wizard-panel{max-width:920px;margin:auto}.wizard-panel>section>.card{border-radius:20px!important}.fee-builder{background:linear-gradient(135deg,#f3fbfa,#eef4ff);border:1px solid #d8e9e7}.review-card{border-radius:22px!important;background:linear-gradient(145deg,#fff,#f7fbfb)}.review-hero{display:flex;align-items:center;gap:15px}.review-hero>span{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:#d8f6ef;color:#08766e;font-size:26px;font-weight:900}.review-box{height:100%;padding:18px;border-radius:16px;background:#f6f8fa;border:1px solid #e7ecef}.review-box h3{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:#708090}.wizard-actions{max-width:920px;margin-left:auto;margin-right:auto}@media(max-width:700px){.wizard-step small{font-size:.68rem}.wizard-step span{width:34px;height:34px}.wizard-progress{top:15px}.wizard-panel .card-body{padding:18px}}
+</style>
+
+<script>
+(() => {
+  const requireClient = {{ require_existing_client|default(false) ? 'true' : 'false' }};
+  const form = document.getElementById('manualStoreOrderForm');
+  const lines = document.getElementById('storeLines');
+  const totalNode = document.getElementById('manualOrderTotal');
+  let currentStep = 1;
+  let calculated = { subtotal: 0, delivery: 0, discount: 0, fee: 0, total: 0 };
+  const money = value => '$' + Number(value || 0).toFixed(2);
+  const refreshLine = line => {
+    const product = line.querySelector('.store-product');
+    const variation = line.querySelector('.store-variation');
+    const qty = Math.max(1, Number(line.querySelector('.store-qty')?.value || 1));
+    const selectedVariation = variation.selectedOptions[0];
+    const unit = Number(selectedVariation?.dataset.price || product.selectedOptions[0]?.dataset.price || 0);
+    line.querySelector('.store-line-total').textContent = '{{ trans('store_manual.line_total') }}: ' + money(unit * qty);
+  };
+  const refreshTotal = () => {
+    let subtotal = 0;
+    document.querySelectorAll('.store-line').forEach(line => {
+      const product = line.querySelector('.store-product');
+      const variation = line.querySelector('.store-variation');
+      const qty = Math.max(1, Number(line.querySelector('.store-qty')?.value || 1));
+      subtotal += Number(variation.selectedOptions[0]?.dataset.price || product.selectedOptions[0]?.dataset.price || 0) * qty;
+      refreshLine(line);
+    });
+    const delivery = Number(document.querySelector('[name="delivery_fee"]')?.value || 0);
+    const discount = Number(document.querySelector('[name="discount"]')?.value || 0);
+    const feeType = document.getElementById('feeType')?.value || 'none';
+    const feeValue = Math.max(0, Number(document.getElementById('feeValue')?.value || 0));
+    const taxableBase = Math.max(0, subtotal + delivery - discount);
+    const fee = feeType === 'percentage' ? taxableBase * Math.min(100, feeValue) / 100 : (feeType === 'fixed' ? feeValue : 0);
+    calculated = { subtotal, delivery, discount, fee, total: Math.max(0, taxableBase + fee) };
+    totalNode.textContent = money(calculated.total);
+  };
+  const refreshVariations = line => {
+    const product = line.querySelector('.store-product');
+    const variation = line.querySelector('.store-variation');
+    let variations = [];
+    try { variations = JSON.parse(product.selectedOptions[0]?.dataset.variations || '[]'); } catch (error) {}
+    variation.innerHTML = '<option value="">{{ trans('store_manual.no_variation') }}</option>' + variations.map(item => `<option value="${item.id}" data-price="${Number(item.effective_price || item.promo_price || item.price || 0)}">${item.name || 'Variation'} - ${money(item.effective_price || item.promo_price || item.price || 0)}</option>`).join('');
+    refreshTotal();
+  };
+  const refreshClientState = () => {
+    if (!requireClient) return;
+    const clientSelect = document.getElementById('storeClientSelect');
+    const hasClient = Boolean(clientSelect?.value);
+    form.querySelectorAll('input, textarea, button, select').forEach(field => {
+      if (field !== clientSelect) field.disabled = !hasClient;
+    });
+    document.getElementById('clientRequiredNotice')?.classList.toggle('d-none', hasClient);
+    form.querySelectorAll('section .card').forEach(card => card.classList.toggle('opacity-50', !hasClient));
+    clientSelect.disabled = false;
+    clientSelect.closest('.card')?.classList.remove('opacity-50');
+    refreshAddressState();
+  };
+  const refreshAddressState = () => {
+    const hasClient = !requireClient || Boolean(document.getElementById('storeClientSelect')?.value);
+    const hasGoogleAddress = Boolean(form.querySelector('[data-address-place-id]')?.value);
+    form.querySelectorAll('[data-address-dependent]').forEach(field => field.disabled = !(hasClient && hasGoogleAddress));
+    const submit = form.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = !(hasClient && hasGoogleAddress);
+  };
+  document.getElementById('addStoreLine')?.addEventListener('click', () => {
+    const clone = lines.querySelector('.store-line').cloneNode(true);
+    clone.querySelectorAll('input,select').forEach(field => field.value = field.type === 'number' ? '1' : '');
+    clone.querySelector('.store-variation').innerHTML = '<option value="">{{ trans('store_manual.no_variation') }}</option>';
+    lines.appendChild(clone);
+    refreshTotal();
+  });
+  document.addEventListener('change', event => {
+    if (event.target.matches('.store-product')) refreshVariations(event.target.closest('.store-line'));
+    if (event.target.matches('.store-variation,.store-qty,.money-field')) refreshTotal();
+    if (event.target.id === 'paymentMode') document.getElementById('manualProofBox').classList.toggle('d-none', event.target.value !== 'manual_proof');
+    if (event.target.id === 'feeType') {
+      const type = event.target.value;
+      const input = document.getElementById('feeValue');
+      input.disabled = type === 'none';
+      document.getElementById('feePrefix').classList.toggle('d-none', type === 'percentage');
+      document.getElementById('feeSuffix').classList.toggle('d-none', type !== 'percentage');
+      if (type === 'none') input.value = '0';
+      refreshTotal();
+    }
+    if (event.target.id === 'storeClientSelect') {
+      const opt = event.target.selectedOptions[0];
+      if (!opt) return;
+      document.getElementById('guestName').value = opt.dataset.name || '';
+      document.getElementById('guestEmail').value = opt.dataset.email || '';
+      document.getElementById('guestPhone').value = opt.dataset.phone || '';
+      refreshClientState();
+    }
+  });
+  document.addEventListener('input', event => {
+    if (event.target.matches('.store-qty,.money-field')) refreshTotal();
+  });
+  form.addEventListener('ophyra:address-selected', refreshAddressState);
+  form.addEventListener('ophyra:address-cleared', refreshAddressState);
+  const showStep = step => {
+    currentStep = Math.max(1, Math.min(4, step));
+    document.querySelectorAll('.wizard-panel').forEach(panel => panel.classList.toggle('d-none', Number(panel.dataset.step) !== currentStep));
+    document.querySelectorAll('.wizard-step').forEach(button => {
+      const number = Number(button.dataset.stepTarget);
+      button.classList.toggle('active', number === currentStep);
+      button.classList.toggle('done', number < currentStep);
+    });
+    document.getElementById('wizardProgressBar').style.width = ((currentStep - 1) / 3 * 100) + '%';
+    document.getElementById('wizardBack').classList.toggle('d-none', currentStep === 1);
+    document.getElementById('wizardNext').classList.toggle('d-none', currentStep === 4);
+    if (currentStep === 4) buildReview();
+    window.scrollTo({ top: Math.max(0, form.offsetTop - 100), behavior: 'smooth' });
+  };
+  const validateStep = step => {
+    if (step === 1 && requireClient && !document.getElementById('storeClientSelect').value) {
+      alert('{{ trans('store_manual.select_customer_to_continue')|e('js') }}'); return false;
+    }
+    if (step === 2 && !Array.from(document.querySelectorAll('.store-product')).some(field => field.value)) {
+      alert('{{ trans('store_manual.cart_required')|e('js') }}'); return false;
+    }
+    if (step === 3) {
+      if (!form.querySelector('[data-address-place-id]').value) { alert('{{ trans('store_manual.address_required')|e('js') }}'); return false; }
+      const mode = document.getElementById('paymentMode');
+      if (!mode.value || mode.selectedOptions[0]?.disabled) { alert('{{ trans('store_manual.payment_method_required')|e('js') }}'); return false; }
+    }
+    return true;
+  };
+  const value = selector => form.querySelector(selector)?.value || '—';
+  const buildReview = () => {
+    refreshTotal();
+    const selectedProducts = Array.from(document.querySelectorAll('.store-product')).filter(p => p.value).map(p => p.selectedOptions[0]?.textContent.trim()).join('<br>');
+    const feeLabel = value('[name="fee_label"]') === '—' ? '{{ trans('store_manual.tax_processing_fee') }}' : value('[name="fee_label"]');
+    document.getElementById('orderReview').innerHTML = `
+      <div class="col-md-6"><div class="review-box"><h3>{{ trans('store_report.customer') }}</h3><strong>${value('#guestName')}</strong><br>${value('#guestEmail')}<br>${value('#guestPhone')}</div></div>
+      <div class="col-md-6"><div class="review-box"><h3>{{ trans('store_manual.cart') }}</h3>${selectedProducts || '—'}<hr><strong>{{ trans('ui.total') }}: ${money(calculated.total)}</strong><br><small>${feeLabel}: ${money(calculated.fee)}</small></div></div>
+      <div class="col-md-6"><div class="review-box"><h3>{{ trans('store_manual.delivery_address') }}</h3>${value('[name="shipping_address_1"]')}<br>${value('[name="shipping_address_2"]')}<br>${value('[name="shipping_city"]')}, ${value('[name="shipping_state"]')} ${value('[name="shipping_zip"]')}</div></div>
+      <div class="col-md-6"><div class="review-box"><h3>{{ trans('store_report.payment') }}</h3>${document.getElementById('paymentMode').selectedOptions[0]?.textContent || '—'}<br><small>${value('[name="payment_reference"]')}</small></div></div>`;
+  };
+  document.getElementById('wizardNext').addEventListener('click', () => { if (validateStep(currentStep)) showStep(currentStep + 1); });
+  document.getElementById('wizardBack').addEventListener('click', () => showStep(currentStep - 1));
+  document.querySelectorAll('.wizard-step').forEach(button => button.addEventListener('click', () => {
+    const target = Number(button.dataset.stepTarget);
+    if (target < currentStep) { showStep(target); return; }
+    for (let step = currentStep; step < target; step++) {
+      if (!validateStep(step)) { showStep(step); return; }
+    }
+    showStep(target);
+  }));
+  form.addEventListener('submit', event => { for (let step = 1; step <= 3; step++) if (!validateStep(step)) { event.preventDefault(); showStep(step); return; } });
+  refreshTotal();
+  const selectedClient = document.getElementById('storeClientSelect');
+  if (selectedClient?.value) selectedClient.dispatchEvent(new Event('change', { bubbles: true }));
+  refreshClientState();
+  document.getElementById('manualProofBox').classList.toggle('d-none', document.getElementById('paymentMode').value !== 'manual_proof');
+  showStep(1);
+})();
+</script>

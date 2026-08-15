@@ -1,0 +1,62 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="container-fluid">
+    <h1 class="h3 mb-3">🎬 {{ trans('planner_hub.multimedia_session_categories') }}</h1>
+    {{ macros.breadcrumb2() }}
+
+    <div class="card">
+        <div class="card-body">
+            <a href="{{ path('panel/multimedia-sessions/categories/create') }}" class="btn btn-primary mb-3">
+                <i data-feather="plus"></i> {{ trans('planner_hub.add_new_category') }}
+            </a>
+
+            <div class="table-responsive">
+                <table class="table table-bordered text-center align-middle" style="min-width: 500px;">
+                    <thead>
+                        <tr>
+                            <th>{{ trans('planner_hub.name') }}</th>
+                            <th>{{ trans('planner_hub.description') }}</th>
+                            <th>{{ trans('planner_hub.actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in categories %}
+                            <tr>
+                                <td>{{ category.name }}</td>
+                                <td>{{ category.description|default('—') }}</td>
+                                <td class="d-flex justify-content-center gap-1">
+                                    <a href="{{ path('panel/multimedia-sessions/categories/edit') }}?id={{ category.id }}" class="btn btn-sm btn-primary">
+                                        <i data-feather="edit"></i> {{ trans('planner_hub.edit') }}
+                                    </a>
+                                    <form method="post" style="display:inline;" onsubmit="return confirm('{{ trans('planner_hub.are_you_sure_delete_category')|e('js') }}');">
+                                        <input type="hidden" name="id" value="{{ category.id }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i data-feather="trash"></i> {{ trans('planner_hub.delete') }}
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="3" class="text-muted">{{ trans('planner_hub.no_categories_found') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-3">
+                <a href="{{ path('panel/multimedia-sessions') }}" class="btn btn-outline-secondary">
+                    <i data-feather="arrow-left"></i> {{ trans('planner_hub.back_to_multimedia_sessions') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+
+
+

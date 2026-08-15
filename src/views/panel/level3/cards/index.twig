@@ -1,0 +1,149 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+<section class="p-5 rounded-4 shadow-sm mb-5 text-white" style="background: linear-gradient(135deg, #00b894, #00cec9);">
+    <h2 class="fw-bold mb-2">🏦 {{ trans('panel_home.manage_your_venue') }}</h2>
+    <p class="fs-5 mb-3">{{ trans('panel_home.update_profile_attract') }}</p>
+    <a href="{{ path('panel/venues/home') }}" class="btn btn-light btn-lg fw-bold px-4">{{ trans('panel_home.go_to_venue_btn') }}</a>
+</section>
+<h1 class="h3 mb-4">💳 {{ trans('planner_hub.update_payment_activate') }}</h1>
+
+<a href="{{ path('panel/billing') }}" class="btn btn-outline-primary mb-4">
+    🧾 {{ trans('planner_hub.update_billing_info') }}
+</a>
+
+<div class="row">
+    <div class="col-md-6">
+        <form id="card-form">
+            <div class="card">
+                <div class="card-body">
+                    <div id="card-element" class="form-control mb-3 py-3"></div>
+                    <div id="card-errors" class="text-danger mb-2"></div>
+                    <button class="btn btn-dark w-100" id="submit-card" type="submit">
+                        {{ trans('planner_hub.add_card') }}
+                    </button>
+                    <div id="loading-text" class="text-center text-muted mt-2" style="display:none;">
+                        {{ trans('planner_hub.processing_card') }}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-md-6">
+        <h5>💼 {{ trans('planner_hub.saved_cards') }}</h5>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>{{ trans('planner_hub.brand') }}</th>
+                    <th>{{ trans('planner_hub.last4') }}</th>
+                    <th>{{ trans('planner_hub.exp') }}</th>
+                    <th>{{ trans('planner_hub.main') }}</th>
+                    <th>{{ trans('planner_hub.actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for card in cards %}
+                    <tr>
+                        <td>{{ card.brand }}</td>
+                        <td>**** **** **** {{ card.last4 }}</td>
+                        <td>{{ card.exp }}</td>
+                        <td>{% if card.main_card == 'yes' %}✅{% endif %}</td>
+                        <td>
+                            {% if card.main_card != 'yes' %}
+                                <form method="post" class="d-inline">
+                                    <input type="hidden" name="set_main" value="{{ card.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">{{ trans('planner_hub.make_main') }}</button>
+                                </form>
+                            {% endif %}
+                            <form method="post" class="d-inline">
+                                <input type="hidden" name="delete_card" value="{{ card.id }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">{{ trans('planner_hub.delete') }}</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5" class="text-center">{{ trans('planner_hub.no_cards_saved') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal sugerencia de perfil (venue) -->
+<div class="modal fade" id="profileSuggestModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="profileSuggestTitle">{{ trans('planner_hub.create_venue_profile') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {{ trans('planner_hub.payment_saved_venue_prompt') }}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans('panel_home.later') }}</button>
+        <a id="profileSuggestGo" href="#" class="btn btn-primary">{{ trans('planner_hub.go_now') }}</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    const stripe = Stripe("{{ stripe_key }}");
+    const elements = stripe.elements();
+    const card = elements.create("card");
+    card.mount("#card-element");
+
+    document.getElementById("card-form").addEventListener("submit", async (e) => {
+        e.prevent{{ trans('wallet.default') }}();
+        const submitBtn = document.getElementById("submit-card");
+        const loadingText = document.getElementById("loading-text");
+        submitBtn.disabled = true;
+        loadingText.style.display = "block";
+
+        const { token, error } = await stripe.createToken(card);
+        if (error) {
+            document.getElementById("card-errors").textContent = error.message;
+            submitBtn.disabled = false;
+            loadingText.style.display = "none";
+        } else {
+            const cardInfo = {
+                brand: token.card.brand,
+                last4: token.card.last4,
+                exp: token.card.exp_month + "/" + token.card.exp_year
+            };
+
+            const formData = new FormData();
+            formData.append("token", token.id);
+            formData.append("card_info", JSON.stringify(cardInfo));
+
+            const res = await fetch(location.href, {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await res.json();
+            if (result.success) {
+                if (result.needs_profile) {
+                    document.getElementById('profileSuggestTitle').textContent = result.next_title || '{{ trans('planner_hub.create_venue_profile')|e('js') }}';
+                    document.getElementById('profileSuggestGo').setAttribute('href', result.next_url || '#');
+                    const modal = new bootstrap.Modal(document.getElementById('profileSuggestModal'));
+                    modal.show();
+                    submitBtn.disabled = false;
+                    loadingText.style.display = "none";
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                document.getElementById("card-errors").textContent = result.message || '{{ trans('planner_hub.something_went_wrong')|e('js') }}';
+                submitBtn.disabled = false;
+                loadingText.style.display = "none";
+            }
+        }
+    });
+</script>
+{% endblock %}

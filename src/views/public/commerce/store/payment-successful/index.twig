@@ -1,0 +1,278 @@
+{% extends "templates/base.twig" %}
+
+{% block body %}
+
+<style>
+.success-wrap{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:2rem 1rem;
+    background:linear-gradient(180deg,#f8fafc 0%, #ffffff 100%);
+}
+
+.success-card{
+    max-width:720px;
+    width:100%;
+    background:#fff;
+    border-radius:28px;
+    padding:2.2rem 1.8rem;
+    box-shadow:0 25px 60px rgba(15,23,42,.12);
+    text-align:center;
+    border:1px solid #e5e7eb;
+}
+
+.success-icon{
+    width:84px;
+    height:84px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto 1rem;
+    background:linear-gradient(135deg,#dcfce7,#bbf7d0);
+    color:#15803d;
+    font-size:2.4rem;
+    font-weight:900;
+    box-shadow:0 10px 30px rgba(22,163,74,.15);
+}
+
+.success-title{
+    font-size:clamp(2rem,4vw,2.35rem);
+    font-weight:900;
+    color:#111827;
+    margin-bottom:.5rem;
+    line-height:1.08;
+}
+
+.success-sub{
+    color:#6b7280;
+    margin:0 auto 1.5rem;
+    line-height:1.8;
+    max-width:560px;
+    font-size:1.02rem;
+}
+
+.success-badges{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.65rem;
+    justify-content:center;
+    margin-bottom:1.5rem;
+}
+
+.success-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    padding:.55rem .9rem;
+    border-radius:999px;
+    font-size:.92rem;
+    font-weight:800;
+    background:#f3f4f6;
+    border:1px solid #e5e7eb;
+    color:#374151;
+}
+
+.success-box{
+    background:#fcfcfd;
+    border:1px solid #e5e7eb;
+    border-radius:18px;
+    padding:1.15rem 1.15rem;
+    margin-bottom:1rem;
+    text-align:left;
+}
+
+.success-box strong{
+    display:block;
+    margin-bottom:.35rem;
+    color:#111827;
+    font-size:1rem;
+    font-weight:900;
+}
+
+.success-box span{
+    color:#6b7280;
+    line-height:1.75;
+    display:block;
+}
+
+.success-highlight{
+    margin-top:.7rem;
+    padding:.85rem 1rem;
+    border-radius:14px;
+    background:#f8fafc;
+    border:1px dashed #cbd5e1;
+    color:#334155;
+    font-weight:700;
+    line-height:1.65;
+}
+
+.success-actions{
+    margin-top:1.6rem;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:.85rem;
+}
+
+.btn-main{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.55rem;
+    padding:1rem 1.65rem;
+    border-radius:999px;
+    font-weight:900;
+    text-decoration:none;
+    background:#111827;
+    color:#fff !important;
+    box-shadow:0 12px 28px rgba(17,24,39,.18);
+    transition:all .2s ease;
+    border:none;
+}
+
+.btn-main:hover{
+    transform:translateY(-2px);
+}
+
+.btn-secondary{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.5rem;
+    padding:1rem 1.4rem;
+    border-radius:999px;
+    font-weight:800;
+    text-decoration:none;
+    background:#fff;
+    border:1px solid #d1d5db;
+    color:#111827 !important;
+    transition:all .2s ease;
+}
+
+.btn-secondary:hover{
+    transform:translateY(-2px);
+    background:#f8fafc;
+}
+
+.success-note{
+    margin-top:1.4rem;
+    font-size:.93rem;
+    color:#6b7280;
+    line-height:1.75;
+}
+
+@media (max-width: 768px){
+    .success-card{
+        padding:2rem 1.15rem;
+        border-radius:24px;
+    }
+
+    .success-actions{
+        flex-direction:column;
+    }
+
+    .btn-main,
+    .btn-secondary{
+        width:100%;
+    }
+}
+</style>
+
+<div class="success-wrap">
+    <div class="success-card">
+
+        <div class="success-icon">
+            ✓
+        </div>
+
+        <div class="success-title">
+            Payment Successful
+        </div>
+
+        <p class="success-sub">
+            Your order has been confirmed and your payment was completed successfully.
+            {% if guest_name %}
+                Thank you, {{ guest_name }}.
+            {% endif %}
+        </p>
+
+        <div class="success-badges">
+            {% if pricing_mode %}
+                <span class="success-badge">
+                    {{ pricing_mode|upper }}
+                </span>
+            {% endif %}
+
+            {% if total %}
+                <span class="success-badge">
+                    Total Paid: ${{ total|number_format(2, '.', ',') }}
+                </span>
+            {% endif %}
+
+            {% if order_id %}
+                <span class="success-badge">
+                    Order #{{ order_id }}
+                </span>
+            {% endif %}
+        </div>
+
+        <div class="success-box">
+            <strong>What happens next</strong>
+            <span>
+                Your order is now being processed. You can review the order details and track the status from your order access page.
+            </span>
+        </div>
+
+        <div class="success-box">
+            <strong>Confirmation</strong>
+            <span>
+                {% if email %}
+                    A confirmation has been sent to <strong>{{ email }}</strong>.
+                {% else %}
+                    Your payment has been recorded successfully.
+                {% endif %}
+            </span>
+
+            <div class="success-highlight">
+                Keep your order reference available in case you need support or want to review your purchase later.
+            </div>
+        </div>
+
+        <div class="success-box">
+            <strong>Need help?</strong>
+            <span>
+                If you have any questions about your purchase, billing details, or fulfillment status, our team will be ready to help.
+            </span>
+        </div>
+
+        <div class="success-actions">
+            {% if public_token %}
+                <a href="{{ path('store/order-access') }}?token={{ public_token }}" class="btn-main">
+                    View My Order
+                </a>
+            {% elseif order_id %}
+                <a href="{{ path('store/order-access') }}?id={{ order_id }}" class="btn-main">
+                    View My Order
+                </a>
+            {% endif %}
+
+            <a href="{{ path('panel') }}" class="btn-secondary">
+                Go to Dashboard
+            </a>
+
+            <a href="{{ path('/') }}" class="btn-secondary">
+                Back to Home
+            </a>
+        </div>
+
+        <div class="success-note">
+            Thank you for your order.
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

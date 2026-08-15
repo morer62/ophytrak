@@ -1,0 +1,3 @@
+{% for block in blocks|default([]) %}
+  {% include ['templates/cms/blocks/' ~ block.block_type ~ '.twig', 'templates/cms/blocks/default.twig'] with { block: block } %}
+{% endfor %}

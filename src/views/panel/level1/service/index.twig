@@ -1,0 +1,114 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="container-fluid h-100 d-flex flex-column justify-content-center p-3">
+    <h1 class="h3 mb-3 text-center">{{ trans('planner_hub.my_services') }}</h1>
+
+    <nav aria-label="breadcrumb" class="text-center">
+        <ol class="breadcrumb justify-content-center">
+            <li class="breadcrumb-item"><a href="{{ path('panel/home') }}">{{ trans('planner_hub.home') }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ trans('planner_hub.my_services') }}</li>
+
+        </ol>
+    </nav>
+
+    
+        <div class="alert alert-info alert-dismissible fade show text-center" role="alert"> 
+            📢 {{ trans('planner_hub.service_promoted_across_listings') }}<br><br>
+            📢 {{ trans('planner_hub.negative_reviews_reviewed') }}
+            </strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+    <section class="card w-100 shadow-lg">
+        <div class="card-body">
+            <a class="btn btn-secondary mb-3" href="{{ path('panel/service/create') }}">{{ trans('planner_hub.add') }}</a>
+            <div> 
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered align-middle text-center" style="min-width: 768px;">
+                    <thead>
+                    <tr>
+                        
+                        <th>{{ trans('planner_hub.name') }}</th>
+                        <th>{{ trans('planner_hub.address') }}</th>
+                        <th>{{ trans('planner_hub.category') }}</th>
+                        <th>{{ trans('planner_hub.status') }}</th>
+                        <th>{{ trans('planner_hub.payment') }}</th>
+                                <th>{{ trans('planner_hub.expiration_date') }}</th>
+                         <th>{{ trans('planner_hub.client_requests') }}</th> {# NUEVA COLUMNA #}
+                        <th>{{ trans('planner_hub.more_actions') }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for service in services %}
+                    
+                        <tr>
+                             
+                            <td style="min-width: 160px;">{{ service.name }}</td>
+                            <td style="min-width: 160px;">{{ service.address }}</td>
+                            <td style="min-width: 160px;">
+                                {{
+                                    categories
+                                    | filter(c => c.id == service.category_id)
+                                    | first.service_category
+                                }}
+                            </td>
+                            <td style="min-width: 160px;">
+                                {{ service.status }}
+                                {% if service.status == "APPROVED" %}
+                                    <hr> 
+                                    <a href="{{ path('/search/vendors/details?id=' ~ service.id) }}">{{ trans('planner_hub.public_profile') }}</a>
+                                {% endif %}
+                            </td>
+                            <td style="min-width: 160px;">
+                                {% if service.status == "APPROVED" %}
+                                     
+                                        <small class="text-muted d-block fst-italic">✅  {{ trans('planner_hub.monthly_subscription_active') }}</span>
+                                  
+                                {% else %}
+                                    <small class="text-muted d-block fst-italic">{{ trans('planner_hub.under_review_payment_enabled')|replace({'{amount}': SERVICE_PAYMENT_AMOUNT_PER_ZIP}) }}</span>
+                                {% endif %}
+                            </td>
+                               <td style="min-width: 160px;">{{ service.expiration_date }}</td>
+                            <td style="min-width: 140px;">
+                                {% set count = service.request_count ?? 0 %}
+                                {% if count > 0 %}
+                                    <a href="{{ path('panel/service/requests?id=' ~ service.id) }}" class="btn btn-sm btn-outline-primary">
+                                        {{ count }} {{ count > 1 ? trans('planner_hub.requests') : trans('planner_hub.request') }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">0</span>
+                                {% endif %}
+                            </td>
+ 
+                            <td style="min-width: 160px;">
+                                <div class="dropdown">
+                                    <button class="btn btn-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        {{ trans('planner_hub.more') }} {{ macros.icon('more-horizontal') }}
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="{{ path('panel/service-events/home?id=' ~ service.id) }}">{{ trans('planner_hub.view_events') }}</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('panel/service-promotions/home?id=' ~ service.id) }}">{{ trans('planner_hub.view_promotions') }}</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('panel/service-photos/home?id=' ~ service.id) }}">{{ trans('planner_hub.view_photos') }}</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="{{ path('panel/service/edit?id=' ~ service.id) }}">{{ trans('planner_hub.edit_this_service') }}</a></li>
+                                        <li>
+                                            <form method="post" form-delete>
+                                                <input type="hidden" name="action" value="delete" />
+                                                <input type="hidden" name="id" value="{{ service.id }}">
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}

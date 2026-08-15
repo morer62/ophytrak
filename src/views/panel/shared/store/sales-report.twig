@@ -1,0 +1,277 @@
+{% set filters = report.filters|default({}) %}
+{% set stats = report.stats|default({}) %}
+{% set pagination = report.pagination|default({'current_page':1,'total_pages':1,'total_records':0}) %}
+{% set operationQuery = operation_context.query|default('') %}
+{% set routePath = operation_context is defined ? path('panel/planner-hub/store/reports/sales') ~ '?' ~ operationQuery : path('panel/planner-hub/store/reports/sales') %}
+{% set storeStatusLabels = {
+  'NEW': trans('store_status.new'),
+  'CONFIRMED': trans('store_status.confirmed'),
+  'PROCESSING': trans('store_status.processing'),
+  'IN_PREPARATION': trans('store_status.in_preparation'),
+  'READY': trans('store_status.ready'),
+  'READY_FOR_DELIVERY': trans('store_status.ready_for_delivery'),
+  'OUT_FOR_DELIVERY': trans('store_status.out_for_delivery'),
+  'DELIVERY_ATTEMPTED': trans('store_status.delivery_attempted'),
+  'RETURNED_TO_BUSINESS': trans('store_status.returned_to_business'),
+  'REDELIVERY_SCHEDULED': trans('store_status.redelivery_scheduled'),
+  'DELIVERED': trans('store_status.delivered'),
+  'COMPLETED': trans('store_status.completed'),
+  'CANCELLED': trans('store_status.cancelled'),
+  'RETURN_REQUESTED': trans('store_status.return_requested'),
+  'RETURN_APPROVED': trans('store_status.return_approved'),
+  'RETURN_REJECTED': trans('store_status.return_rejected'),
+  'RETURNED': trans('store_status.returned'),
+  'CLOSED': trans('store_status.closed')
+} %}
+{% set paymentStatusLabels = {
+  'PENDING': trans('store_payment_status.pending'),
+  'PAID': trans('store_payment_status.paid'),
+  'FAILED': trans('store_payment_status.failed'),
+  'REFUNDED': trans('store_payment_status.refunded')
+} %}
+<div class="container-fluid store-sales-report">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+      <p class="text-uppercase text-muted fw-bold small mb-1">{{ trans('store_report.badge') }}</p>
+      <h1 class="h3 mb-1">{{ trans('store_report.title') }}</h1>
+      <p class="text-muted mb-0">{{ trans('store_report.subtitle', {'range': report.label|default(trans('store_report.selected_range'))}) }}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{{ back_url }}" class="btn btn-light">{{ trans('store_report.back_to_orders') }}</a>
+      <a href="{{ history_url }}" class="btn btn-outline-dark">{{ trans('store_report.history') }}</a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="store-report-card primary">
+        <span>{{ trans('store_report.net_sales') }}</span>
+        <strong>${{ stats.net_sales|default(0)|number_format(2, '.', ',') }}</strong>
+        <small>{{ trans('store_report.net_sales_help') }}</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="store-report-card success">
+        <span>{{ trans('store_report.gross_sales') }}</span>
+        <strong>${{ stats.gross_sales|default(0)|number_format(2, '.', ',') }}</strong>
+        <small>{{ stats.paid_orders|default(0) }} {{ trans('store_report.paid_orders') }}</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="store-report-card warning">
+        <span>{{ trans('store_report.returns') }}</span>
+        <strong>${{ stats.returned_amount|default(0)|number_format(2, '.', ',') }}</strong>
+        <small>{{ stats.return_requested|default(0) }} {{ trans('store_report.requested') }} / {{ stats.return_approved|default(0) }} {{ trans('store_report.approved') }} / {{ stats.returned_orders|default(0) }} {{ trans('store_report.returned') }}</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="store-report-card muted">
+        <span>{{ trans('store_report.average_order') }}</span>
+        <strong>${{ stats.average_order|default(0)|number_format(2, '.', ',') }}</strong>
+        <small>{{ stats.total_orders|default(0) }} {{ trans('store_report.total_orders_in_range') }}</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end">
+        {% if operation_context is defined %}
+          <input type="hidden" name="operation" value="{{ operation_context.key|default('vnv_events') }}">
+        {% endif %}
+        <div class="col-lg-2 col-md-4">
+          <label class="form-label">{{ trans('store_report.range') }}</label>
+          <select class="form-select" name="preset" id="storeReportPreset">
+            <option value="today" {{ filters.preset|default('') == 'today' ? 'selected' : '' }}>{{ trans('store_report.today') }}</option>
+            <option value="this_week" {{ filters.preset|default('') == 'this_week' ? 'selected' : '' }}>{{ trans('store_report.this_week') }}</option>
+            <option value="this_month" {{ filters.preset|default('this_month') == 'this_month' ? 'selected' : '' }}>{{ trans('store_report.this_month') }}</option>
+            <option value="last_month" {{ filters.preset|default('') == 'last_month' ? 'selected' : '' }}>{{ trans('store_report.last_month') }}</option>
+            <option value="custom" {{ filters.preset|default('') == 'custom' ? 'selected' : '' }}>{{ trans('store_report.custom') }}</option>
+          </select>
+        </div>
+        <div class="col-lg-2 col-md-4">
+          <label class="form-label">{{ trans('store_report.from') }}</label>
+          <input class="form-control" type="date" name="date_from" value="{{ filters.date_from|default('') }}">
+        </div>
+        <div class="col-lg-2 col-md-4">
+          <label class="form-label">{{ trans('store_report.to') }}</label>
+          <input class="form-control" type="date" name="date_to" value="{{ filters.date_to|default('') }}">
+        </div>
+        <div class="col-lg-2 col-md-4">
+          <label class="form-label">{{ trans('store_report.product_sold') }}</label>
+          <select class="form-select" name="product_id">
+            <option value="0">{{ trans('store_report.all_products') }}</option>
+            {% for p in report.products|default([]) %}
+              <option value="{{ p.id }}" {{ filters.product_id|default(0) == p.id ? 'selected' : '' }}>{{ p.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-2 col-md-4">
+          <label class="form-label">{{ trans('store_report.payment') }}</label>
+          <select class="form-select" name="payment_status">
+            <option value="">{{ trans('store_report.all') }}</option>
+            <option value="PAID" {{ filters.payment_status|default('') == 'PAID' ? 'selected' : '' }}>{{ trans('store_report.paid') }}</option>
+            <option value="PENDING" {{ filters.payment_status|default('') == 'PENDING' ? 'selected' : '' }}>{{ trans('store_report.pending') }}</option>
+            <option value="FAILED" {{ filters.payment_status|default('') == 'FAILED' ? 'selected' : '' }}>{{ trans('store_report.failed') }}</option>
+            <option value="REFUNDED" {{ filters.payment_status|default('') == 'REFUNDED' ? 'selected' : '' }}>{{ trans('store_report.refunded') }}</option>
+          </select>
+        </div>
+        <div class="col-lg-2 col-md-4">
+          <label class="form-label">{{ trans('ui.status') }}</label>
+          <select class="form-select" name="status">
+            <option value="">{{ trans('store_report.all') }}</option>
+            {% for statusCode, statusLabel in storeStatusLabels %}
+              <option value="{{ statusCode }}" {{ filters.status|default('') == statusCode ? 'selected' : '' }}>{{ statusLabel }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <label class="form-label">{{ trans('store_report.customer_email') }}</label>
+          <input class="form-control" name="email" value="{{ filters.email|default('') }}" placeholder="customer@email.com">
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <label class="form-label">{{ trans('store_report.search') }}</label>
+          <input class="form-control" name="search" value="{{ filters.search|default('') }}" placeholder="Name, email, phone or order id">
+        </div>
+        <div class="col-lg-3 col-md-6 d-flex gap-2">
+          <button class="btn btn-primary flex-fill">{{ trans('store_report.filter_report') }}</button>
+          <a class="btn btn-outline-secondary" href="{{ routePath }}">{{ trans('store_report.clear') }}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-xl-5">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+          <h2 class="h5 mb-1">{{ trans('store_report.product_movement') }}</h2>
+          <p class="text-muted mb-0 small">{{ trans('store_report.product_movement_help') }}</p>
+        </div>
+        <div class="card-body px-4">
+          {% if report.productSummary|default([]) %}
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead><tr><th>{{ trans('store_report.product') }}</th><th class="text-end">{{ trans('store_report.sold') }}</th><th class="text-end">{{ trans('store_report.returned_status') }}</th><th class="text-end">{{ trans('store_report.net') }}</th></tr></thead>
+                <tbody>
+                {% for row in report.productSummary %}
+                  <tr>
+                    <td>{{ row.product_name }}</td>
+                    <td class="text-end">{{ row.sold_quantity|default(0) }}</td>
+                    <td class="text-end">{{ row.returned_quantity|default(0) }}</td>
+                    <td class="text-end fw-semibold">${{ (row.sold_amount - row.returned_amount)|number_format(2, '.', ',') }}</td>
+                  </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center text-muted py-4">{{ trans('store_report.no_product_movement') }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-7">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="h5 mb-1">{{ trans('store_report.order_records') }}</h2>
+            <p class="text-muted mb-0 small">{{ pagination.total_records|default(0) }} {{ trans('store_report.records_found') }}</p>
+          </div>
+        </div>
+        <div class="card-body px-0">
+          {% if report.orders|default([]) %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                  <tr>
+                    <th>{{ trans('store_report.order') }}</th>
+                    <th>{{ trans('store_report.customer') }}</th>
+                    <th>{{ trans('store_report.items') }}</th>
+                    <th class="text-end">{{ trans('ui.total') }}</th>
+                    <th>{{ trans('store_report.payment') }}</th>
+                    <th>{{ trans('ui.status') }}</th>
+                    <th>{{ trans('store_report.proof') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for o in report.orders %}
+                    <tr>
+                      <td>
+                        <strong>#{{ o.id }}</strong>
+                        <div class="small text-muted">{{ o.created_at|date('M j, Y g:i A') }}</div>
+                      </td>
+                      <td>
+                        <div class="fw-semibold">{{ o.guest_name ?: trans('store_report.customer') }}</div>
+                        <div class="small text-muted">{{ o.guest_email ?: '-' }}</div>
+                      </td>
+                      <td>
+                        <span class="badge bg-light text-dark border">{{ o.quantity_total|default(0) }} {{ trans('store_report.units') }}</span>
+                        <div class="small text-muted">{{ o.item_count|default(0) }} {{ trans('store_report.item_lines') }}</div>
+                      </td>
+                      <td class="text-end fw-semibold">${{ o.total|default(0)|number_format(2, '.', ',') }}</td>
+                      <td>
+                        <span class="badge {{ o.payment_status == 'PAID' ? 'bg-success' : (o.payment_status == 'REFUNDED' ? 'bg-secondary' : (o.payment_status == 'FAILED' ? 'bg-danger' : 'bg-warning text-dark')) }}">{{ paymentStatusLabels[o.payment_status]|default(o.payment_status) }}</span>
+                        {% if o.latest_payment_method %}<div class="small text-muted">{{ o.latest_payment_method|replace({'_':' '})|title }}</div>{% endif %}
+                      </td>
+                      <td>
+                        {% set statusBadge = o.status in ['DELIVERED', 'COMPLETED'] ? 'bg-success' : (o.status in ['CANCELLED', 'RETURN_REJECTED'] ? 'bg-danger' : (o.status in ['DELIVERY_ATTEMPTED', 'RETURNED_TO_BUSINESS', 'RETURN_REQUESTED'] ? 'bg-warning text-dark' : (o.status in ['OUT_FOR_DELIVERY', 'READY_FOR_DELIVERY', 'RETURN_APPROVED', 'REDELIVERY_SCHEDULED'] ? 'bg-primary' : 'bg-secondary'))) %}
+                        <span class="badge {{ statusBadge }}">{{ storeStatusLabels[o.status]|default(o.status|replace({'_':' '})) }}</span>
+                        {% if o.return_notes %}<div class="small text-muted mt-1">{{ trans('store_returns.customer_note') }}: {{ o.return_notes }}</div>{% endif %}
+                        {% if o.return_admin_message %}<div class="small text-muted mt-1">{{ trans('store_returns.admin_response') }}: {{ o.return_admin_message }}</div>{% endif %}
+                      </td>
+                      <td class="small">
+                        {% if o.payment_proof_url %}
+                          <a target="_blank" href="{{ o.payment_proof_url }}">{{ trans('store_report.payment_proof') }}</a>
+                        {% elseif o.external_payment_id %}
+                          <span class="text-muted">{{ trans('store_report.processor') }}: {{ o.external_payment_id }}</span>
+                        {% elseif o.payment_reference %}
+                          <span class="text-muted">{{ trans('store_report.ref') }}: {{ o.payment_reference }}</span>
+                        {% else %}
+                          <span class="text-muted">{{ trans('store_report.no_proof_file') }}</span>
+                        {% endif %}
+                        {% if o.delivery_photo_url %}
+                          <div><a target="_blank" href="{{ o.delivery_photo_url }}">{{ trans('store_history.delivery_proof') }}</a></div>
+                          {% if o.delivery_notes %}<div class="text-muted">{{ o.delivery_notes }}</div>{% endif %}
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-5">
+              <h5 class="mb-2">{{ trans('store_report.empty_title') }}</h5>
+              <p class="text-muted mb-0">{{ trans('store_report.empty_text') }}</p>
+            </div>
+          {% endif %}
+        </div>
+        {% if pagination.total_pages|default(1) > 1 %}
+          <div class="card-footer bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span class="small text-muted">{{ trans('store_report.page_of', {'page': pagination.current_page, 'pages': pagination.total_pages}) }}</span>
+            <div class="d-flex gap-2">
+              {% if pagination.current_page > 1 %}
+                <a class="btn btn-sm btn-outline-dark" href="?{% if operation_context is defined %}operation={{ operation_context.key|default('vnv_events') }}&{% endif %}preset={{ filters.preset }}&date_from={{ filters.date_from }}&date_to={{ filters.date_to }}&product_id={{ filters.product_id }}&payment_status={{ filters.payment_status }}&status={{ filters.status }}&email={{ filters.email|url_encode }}&search={{ filters.search|url_encode }}&page={{ pagination.current_page - 1 }}">{{ trans('store_report.previous') }}</a>
+              {% endif %}
+              {% if pagination.current_page < pagination.total_pages %}
+                <a class="btn btn-sm btn-outline-dark" href="?{% if operation_context is defined %}operation={{ operation_context.key|default('vnv_events') }}&{% endif %}preset={{ filters.preset }}&date_from={{ filters.date_from }}&date_to={{ filters.date_to }}&product_id={{ filters.product_id }}&payment_status={{ filters.payment_status }}&status={{ filters.status }}&email={{ filters.email|url_encode }}&search={{ filters.search|url_encode }}&page={{ pagination.current_page + 1 }}">{{ trans('store_report.next') }}</a>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.store-sales-report .store-report-card{border:0;border-radius:24px;padding:22px;min-height:150px;color:#0f172a;box-shadow:0 18px 40px rgba(15,23,42,.08);background:#fff}
+.store-sales-report .store-report-card span{display:block;text-transform:uppercase;letter-spacing:.08em;font-size:.75rem;font-weight:800;color:#64748b;margin-bottom:10px}
+.store-sales-report .store-report-card strong{display:block;font-size:2rem;line-height:1;font-weight:900;margin-bottom:12px}
+.store-sales-report .store-report-card small{color:#64748b;font-weight:600}
+.store-sales-report .store-report-card.primary{background:linear-gradient(135deg,#083344,#0f766e);color:#fff}.store-sales-report .store-report-card.primary span,.store-sales-report .store-report-card.primary small{color:#d1fae5}
+.store-sales-report .store-report-card.success{background:linear-gradient(135deg,#ecfdf5,#fff);border:1px solid #bbf7d0}.store-sales-report .store-report-card.warning{background:linear-gradient(135deg,#fffbeb,#fff);border:1px solid #fde68a}.store-sales-report .store-report-card.muted{background:linear-gradient(135deg,#eff6ff,#fff);border:1px solid #bfdbfe}
+@media (max-width:768px){.store-sales-report .store-report-card strong{font-size:1.55rem}.store-sales-report .table{font-size:.88rem}}
+</style>
+

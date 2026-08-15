@@ -1,0 +1,8 @@
+{% set data = block.data|default({}) %}
+<section class="cms-block cms-block-hero">
+  <p class="cms-eyebrow">{{ data.eyebrow|default('') }}</p>
+  <h1>{{ data.headline|default(block.title|default('')) }}</h1>
+  {% if data.subheadline|default('') %}
+    <p>{{ data.subheadline }}</p>
+  {% endif %}
+</section>

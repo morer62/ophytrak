@@ -1,0 +1,347 @@
+﻿{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set active = activeModuleSlugs ?? [] %}
+{% set hasServiceOps = product_mode == 'ophytrack' ? false : ('services' in active or 'service_operations' in active) %}
+{% set hasStoreLogistics = 'store_delivery_tracking' in active or 'store_logistics' in active %}
+{% set hasTicketsRsvp = 'tickets_rsvp' in active or 'ticket_sales_rsvp' in active %}
+{% set hasInventory = 'inventory_storage' in active or 'advanced_storage_qr_inventory' in active %}
+{% set hasAiAdvisor = 'ai_advisor' in active %}
+{% set hasAnyCore = hasServiceOps or hasStoreLogistics %}
+{% set serviceQuote = addonQuotes.services ?? addonQuotes.service_operations ?? null %}
+{% set storeQuote = addonQuotes.store_delivery_tracking ?? addonQuotes.store_logistics ?? null %}
+{% set businessName = businessProfile.business.name|default(businessProfile.name|default(user.company|default(user.name))) %}
+{% set profileReady = businessProfile.completion.is_complete|default(false) or businessProfile.public_ready|default(false) %}
+{% set primaryWorkspaceUrl = hasStoreLogistics ? 'panel/planner-hub/store/orders/home' : (hasServiceOps ? 'panel/planner-hub/management' : 'panel/membership/manage?payment_currency=' ~ preferredCurrency) %}
+{% set nextActionUrl = profileReady ? primaryWorkspaceUrl : 'panel/planner-hub/institution-profile' %}
+{% set nextActionLabel = profileReady ? (hasAnyCore ? trans('nav.open_workspace') : trans('nav.choose_workspace')) : trans('nav.complete_public_profile') %}
+{% set nextActionText = profileReady ? (hasAnyCore ? trans('nav.next_action_work') : trans('nav.next_action_workspace')) : trans('nav.next_action_profile') %}
+
+<main class="container py-4 level2-command-center">
+  {% if carrierCustodyRequests|length %}
+  <div class="modal fade" id="carrierDashboardRequestModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-warning-subtle"><h2 class="modal-title h5">{{ trans('store_orders.carrier_requests_title') }}</h2><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>{{ trans('store_orders.carrier_requests_help') }}</p>{% for request in carrierCustodyRequests %}<div class="border rounded-3 p-3 mb-2"><strong>{{ request.package_code }}</strong><div>{{ request.carrier_name }}</div><small class="text-muted">{{ request.name }} {{ request.lastname }} · {{ request.created_at|date('M j, Y g:i A') }}</small><form method="post" class="d-flex gap-2 mt-3"><input type="hidden" name="action" value="carrier_custody_decision"><input type="hidden" name="request_id" value="{{ request.id }}"><button class="btn btn-outline-danger flex-fill" name="decision" value="REJECT">{{ trans('ui.reject') }}</button><button class="btn btn-success flex-fill" name="decision" value="APPROVE">{{ trans('ui.accept') }}</button></form></div>{% endfor %}</div></div></div></div>
+  <script>document.addEventListener('DOMContentLoaded',function(){if(window.bootstrap)bootstrap.Modal.getOrCreateInstance(document.getElementById('carrierDashboardRequestModal')).show();});</script>
+  {% endif %}
+  <section class="currency-strip mb-3">
+    <div>
+      <span>{{ trans('nav.billing_currency') }}</span>
+      <strong>{{ preferredCurrency }}</strong>
+      <small>{{ trans('nav.billing_currency_help') }}</small>
+    </div>
+    <form method="post" action="{{ path('panel/home') }}" class="d-flex flex-wrap gap-2 align-items-center">
+      <input type="hidden" name="action" value="update_preferred_currency">
+      <select class="form-select form-select-sm" name="preferred_currency" aria-label="{{ trans('nav.billing_currency') }}">
+        {% for currency in supportedBillingCurrencies %}
+          <option value="{{ currency }}" {{ currency == preferredCurrency ? 'selected' : '' }}>{{ currency }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-sm btn-dark fw-bold" type="submit">{{ trans('nav.update') }}</button>
+    </form>
+  </section>
+
+  <section class="command-hero mb-4">
+    <div>
+      <p class="command-kicker command-kicker-light">{{ trans('nav.current_view') }}</p>
+      <h1>{{ trans('nav.dashboard_title') }}</h1>
+      <p>{{ trans('nav.dashboard_subtitle') }}</p>
+      <div class="command-status-row">
+        <span>{{ trans('nav.business_admin') }}</span>
+        <span>{{ businessName }}</span>
+        <span>{{ profileReady ? trans('nav.public_profile_active') : trans('nav.setup_needed') }}</span>
+        <span>{{ hasServiceOps and hasStoreLogistics ? trans('nav.both_workspaces_active') : (hasServiceOps ? trans('nav.services_active') : (hasStoreLogistics ? trans('nav.store_active') : trans('nav.no_workspace_active'))) }}</span>
+      </div>
+    </div>
+    <a href="{{ path(nextActionUrl) }}" class="btn btn-light btn-lg fw-bold">{{ nextActionLabel }}</a>
+  </section>
+
+  <section class="command-panel mb-4">
+    <div class="command-panel-head">
+      <div>
+        <p class="command-kicker">{{ trans('nav.next_best_action') }}</p>
+        <h2>{{ nextActionLabel }}</h2>
+        <p>{{ nextActionText }}</p>
+      </div>
+      <a href="{{ path(nextActionUrl) }}" class="btn btn-dark fw-bold">{{ nextActionLabel }}</a>
+    </div>
+  </section>
+
+  <section class="command-panel mb-4">
+    <div class="command-panel-head">
+      <div>
+        <p class="command-kicker">{{ trans('nav.workspaces') }}</p>
+        <h2>{{ trans('nav.manage_today') }}</h2>
+        <p>{{ trans('nav.manage_today_help') }}</p>
+      </div>
+      <a href="{{ path('panel/membership/manage?payment_currency=' ~ preferredCurrency) }}#billing-overview" class="btn btn-outline-dark fw-bold">{{ trans('nav.modules_billing') }}</a>
+    </div>
+
+    <div class="row g-4">
+      {% set workspaces = [
+        {
+          'title': trans('nav.services'),
+          'active': hasServiceOps,
+          'status': hasServiceOps ? trans('nav.active') : trans('nav.recommended'),
+          'body': trans('nav.services_card_text'),
+          'price': serviceQuote ? serviceQuote.monthly_price_formatted ~ '/' ~ trans('dashboard_home.month') : trans('nav.setup_needed'),
+          'renewal': workspaceRenewals.services|default(serviceQuote.renewal_at|default(null)),
+          'open': 'panel/planner-hub/management',
+          'locked': 'panel/membership/modules/review?module_slug=services&payment_currency=' ~ preferredCurrency,
+          'cta': hasServiceOps ? trans('nav.open_workspace') : trans('nav.activate_workspace')
+        },
+        {
+          'title': trans('nav.store_logistics'),
+          'active': hasStoreLogistics,
+          'slug': 'store_logistics',
+          'status': hasStoreLogistics ? trans('nav.active') : trans('nav.activate'),
+          'body': trans('nav.store_card_text'),
+          'price': storeQuote ? storeQuote.monthly_price_formatted ~ '/' ~ trans('dashboard_home.month') : trans('nav.setup_needed'),
+          'renewal': workspaceRenewals.store_logistics|default(storeQuote.renewal_at|default(null)),
+          'open': 'panel/planner-hub/store/orders/home',
+          'locked': 'panel/membership/modules/review?module_slug=store_delivery_tracking&payment_currency=' ~ preferredCurrency,
+          'cta': hasStoreLogistics ? trans('nav.open_workspace') : trans('nav.activate_workspace')
+        }
+      ] %}
+      {% if product_mode == 'ophytrack' %}{% set workspaces = [workspaces[1]] %}{% endif %}
+      {% for workspace in workspaces %}
+        <div class="col-lg-6">
+          <article class="workspace-card {{ workspace.comingSoon|default(false) ? 'coming-soon' : (workspace.active ? 'active' : 'locked') }}">
+            <div class="d-flex justify-content-between gap-3 align-items-start mb-3">
+              <div>
+                <span class="command-kicker">{{ trans('nav.workspace') }}</span>
+                <h3>{{ workspace.title }}</h3>
+              </div>
+              <span class="state-pill {{ workspace.comingSoon|default(false) ? 'coming-soon' : (workspace.active ? 'active' : 'recommended') }}">{{ workspace.status }}</span>
+            </div>
+            <p>{{ workspace.body }}</p>
+            <div class="workspace-actions">
+              <div>
+                <strong>{{ workspace.price }}</strong>
+                {% if workspace.active and workspace.renewal.label %}
+                  <a class="workspace-renewal-link" href="{{ path('panel/membership/manage?payment_currency=' ~ preferredCurrency ~ '&highlight=' ~ workspace.slug) }}#billing-overview">
+                    {{ trans('nav.next_renewal') }}: {{ workspace.renewal.label }}
+                  </a>
+                {% endif %}
+              </div>
+              <div class="d-flex flex-column gap-2 align-items-stretch">
+                {% if workspace.comingSoon|default(false) %}
+                  <span class="btn btn-outline-secondary fw-bold disabled" aria-disabled="true">{{ workspace.cta }}</span>
+                {% else %}
+                  <a href="{{ path(workspace.active ? workspace.open : workspace.locked) }}" class="btn {{ workspace.active ? 'btn-dark' : 'btn-outline-dark' }} fw-bold">{{ workspace.cta }}</a>
+                {% endif %}
+                {% if workspace.active %}
+                  <a href="{{ path('panel/membership/manage?payment_currency=' ~ preferredCurrency ~ '&highlight=' ~ workspace.slug) }}#billing-overview" class="btn btn-outline-dark fw-bold">{{ trans('nav.manage_renewal') }}</a>
+                {% endif %}
+              </div>
+            </div>
+          </article>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="command-panel quick-modules-panel mb-4">
+    <div class="command-panel-head">
+      <div>
+        <p class="command-kicker">{{ trans('nav.complementary_modules') }}</p>
+        <h2>{{ trans('nav.quick_module_access') }}</h2>
+        <p>{{ trans('nav.quick_module_access_help') }}</p>
+      </div>
+      <a href="{{ path('panel/membership/manage?payment_currency=' ~ preferredCurrency) }}#manage-modules" class="btn btn-outline-dark fw-bold">{{ trans('nav.manage_modules') }}</a>
+    </div>
+
+    {% set quickModules = [
+      {
+        'title': trans('nav.crm'),
+        'body': trans('nav.crm_quick_help'),
+        'icon': 'users',
+        'active': hasServiceOps,
+        'url': 'panel/planner-hub/management/crm/',
+        'lock': 'panel/planner-hub/no-access?module=service_operations&required=services'
+      },
+      {
+        'title': trans('nav.tickets_rsvp'),
+        'body': trans('nav.tickets_rsvp_quick_help'),
+        'icon': 'tag',
+        'active': hasTicketsRsvp,
+        'url': 'panel/event-invitations',
+        'lock': 'panel/planner-hub/no-access?module=tickets_rsvp&required=tickets_rsvp'
+      },
+      {
+        'title': trans('nav.warehouse'),
+        'body': trans('nav.inventory_quick_help'),
+        'icon': 'archive',
+        'active': hasInventory,
+        'url': 'panel/planner-hub/management/storage',
+        'lock': 'panel/planner-hub/no-access?module=inventory_storage&required=inventory_storage'
+      },
+      {
+        'title': trans('nav.ai_assistant'),
+        'body': trans('nav.ai_assistant_quick_help'),
+        'icon': 'cpu',
+        'active': hasAiAdvisor,
+        'url': 'panel/planner-hub/management/chatia',
+        'lock': 'panel/planner-hub/no-access?module=ai_advisor&required=ai_advisor'
+      },
+      {
+        'title': trans('ui.payroll'),
+        'body': trans('nav.payroll_quick_help'),
+        'icon': 'clock',
+        'active': hasServiceOps,
+        'url': 'panel/planner-hub/management/payroll',
+        'lock': 'panel/planner-hub/no-access?module=service_operations&required=services'
+      }
+    ] %}
+    {% if product_mode == 'ophytrack' %}
+      {% set quickModules = [
+        {'title':trans('nav.crm'),'body':trans('nav.crm_quick_help'),'icon':'users','active':hasStoreLogistics,'url':'panel/planner-hub/management/crm?context=store','lock':'panel/planner-hub/no-access?module=store_logistics&required=store_delivery_tracking'},
+        {'title':trans('nav.warehouse'),'body':trans('nav.inventory_quick_help'),'icon':'archive','active':hasInventory,'url':'panel/planner-hub/management/storage','lock':'panel/planner-hub/no-access?module=inventory_storage&required=inventory_storage'},
+        {'title':'Marketplaces','body':'Synchronize products and orders from connected stores.','icon':'refresh-cw','active':'marketplace_connectors' in active,'url':'panel/planner-hub/marketplace-connectors','lock':'panel/planner-hub/no-access?module=marketplace_connectors&required=marketplace_connectors'}
+      ] %}
+    {% endif %}
+    <div class="quick-modules-grid">
+      {% for module in quickModules %}
+        <a class="quick-module-card {{ module.active ? 'is-active' : 'is-locked' }}" href="{{ path(module.active ? module.url : module.lock) }}">
+          <span class="quick-module-icon"><i data-feather="{{ module.active ? module.icon : 'lock' }}"></i></span>
+          <span class="quick-module-copy">
+            <strong>{{ module.title }}</strong>
+            <small>{{ module.body }}</small>
+          </span>
+          <span class="quick-module-status">{{ module.active ? trans('nav.open') : trans('nav.activate') }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="row g-4 mb-4">
+    <div class="col-lg-7">
+      <div class="command-panel h-100">
+        <div class="command-panel-head mb-3">
+          <div>
+            <p class="command-kicker">{{ trans('nav.business_snapshot') }}</p>
+            <h2>{{ hasAnyCore ? trans('nav.activity_snapshot') : trans('nav.first_steps') }}</h2>
+          </div>
+        </div>
+        {% if hasAnyCore and operationsReport %}
+          <div class="snapshot-grid">
+            <a href="{{ path(operationsReport.orders_created > 0 ? 'panel/planner-hub/management/orders' : 'panel/planner-hub/management/orders/orders/create?context=service') }}" class="snapshot-card">
+              <span>{{ trans('dashboard_home.orders_created') }}</span>
+              <strong>{{ operationsReport.orders_created }}</strong>
+              {% if operationsReport.orders_created == 0 %}
+                <small class="snapshot-empty-cta">{{ trans('nav.create_first_order') }}</small>
+              {% endif %}
+            </a>
+            <a href="{{ path(hasServiceOps ? (operationsReport.revenue_collected > 0 ? 'panel/planner-hub/management/payments' : 'panel/planner-hub/management/orders/orders/create?context=service') : 'panel/planner-hub/store/reports/sales') }}" class="snapshot-card">
+              <span>{{ trans('dashboard_home.collected_sales') }}</span>
+              <strong>${{ operationsReport.revenue_collected|number_format(2) }}</strong>
+              {% if operationsReport.revenue_collected <= 0 %}
+                <small class="snapshot-empty-cta">{{ trans('nav.create_first_order') }}</small>
+              {% endif %}
+            </a>
+            <a href="{{ path(hasServiceOps ? 'panel/planner-hub/management/orders' : 'panel/planner-hub/store/orders/home') }}" class="snapshot-card"><span>{{ trans('dashboard_home.pending_payments') }}</span><strong>{{ operationsReport.orders_pending_payment + operationsReport.store_orders_pending }}</strong></a>
+            <a href="{{ path(hasServiceOps ? 'panel/planner-hub/management/payroll' : 'panel/planner-hub/store/orders/home') }}" class="snapshot-card"><span>{{ trans('ui.payroll') }}</span><strong>{{ operationsReport.payroll_pending_hours|number_format(1) }}h</strong></a>
+          </div>
+        {% else %}
+          <div class="first-step-list">
+            <a href="{{ path('panel/planner-hub/institution-profile') }}">{{ trans('nav.complete_public_profile') }}</a>
+            <a href="{{ path('panel/membership/manage?payment_currency=' ~ preferredCurrency) }}#manage-modules">{{ trans('nav.choose_workspace') }}</a>
+            <a href="{{ path('panel/cards') }}">{{ trans('nav.add_payment_method') }}</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="command-panel h-100">
+        <p class="command-kicker">{{ trans('nav.switch_view') }}</p>
+        <h2>{{ trans('nav.switch_view_title') }}</h2>
+        <div class="switch-view-list">
+          <a href="{{ path('panel/home') }}"><strong>{{ trans('nav.business_admin') }}</strong><span>{{ trans('nav.business_admin_desc') }}</span></a>
+          <form method="post" action="{{ path('panel/home') }}"><input type="hidden" name="level" value="4"><button type="submit"><strong>{{ trans('nav.team_member_view') }}</strong><span>{{ trans('nav.team_member_view_desc') }}</span></button></form>
+          <form method="post" action="{{ path('panel/home') }}"><input type="hidden" name="level" value="5"><button type="submit"><strong>{{ trans('nav.client_portal') }}</strong><span>{{ trans('nav.client_portal_desc') }}</span></button></form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="modal fade" id="currencySetupModal" tabindex="-1" aria-labelledby="currencySetupModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+      <form method="post" action="{{ path('panel/home') }}" class="modal-content">
+        <input type="hidden" name="action" value="update_preferred_currency">
+        <div class="modal-header"><h5 class="modal-title fw-bold" id="currencySetupModalLabel">{{ trans('nav.choose_billing_currency') }}</h5></div>
+        <div class="modal-body">
+          <p class="text-muted">{{ trans('nav.choose_billing_currency_help') }}</p>
+          <label class="form-label fw-bold" for="setupPreferredCurrency">{{ trans('nav.billing_currency') }}</label>
+          <select class="form-select" id="setupPreferredCurrency" name="preferred_currency" required>
+            {% for currency in supportedBillingCurrencies %}
+              <option value="{{ currency }}" {{ currency == preferredCurrency ? 'selected' : '' }}>{{ currency }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="modal-footer"><button class="btn btn-dark fw-bold" type="submit">{{ trans('ui.save') }}</button></div>
+      </form>
+    </div>
+  </div>
+</main>
+
+{% if requiresCurrencySetup %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const modalEl = document.getElementById('currencySetupModal');
+      if (modalEl && window.bootstrap) new bootstrap.Modal(modalEl).show();
+    });
+  </script>
+{% endif %}
+
+<style>
+  .level2-command-center { color:#0f172a; }
+  .currency-strip { align-items:center; background:#fff; border:1px solid rgba(15,23,42,.08); border-radius:16px; box-shadow:0 10px 28px rgba(15,23,42,.06); display:flex; gap:1rem; justify-content:space-between; padding:.9rem 1rem; }
+  .currency-strip span,.currency-strip small { color:#64748b; display:block; }
+  .currency-strip strong { color:#0f172a; display:block; font-size:1.1rem; }
+  .currency-strip .form-select { min-width:110px; }
+  .command-hero { align-items:flex-end; background:radial-gradient(circle at 90% 10%, rgba(45,212,191,.26), transparent 34%),linear-gradient(135deg,#111827,#0f766e); border-radius:28px; box-shadow:0 26px 72px rgba(15,23,42,.16); color:#fff; display:flex; gap:1.5rem; justify-content:space-between; padding:clamp(1.35rem,4vw,3rem); }
+  .command-hero h1 { color:#fff; font-size:clamp(2rem,5vw,4rem); font-weight:900; letter-spacing:-.04em; max-width:960px; }
+  .command-hero p { color:rgba(255,255,255,.84); max-width:760px; }
+  .command-kicker { color:#0f766e; font-size:.76rem; font-weight:900; letter-spacing:.08em; margin:0 0 .35rem; text-transform:uppercase; }
+  .command-kicker-light { color:#99f6e4; }
+  .command-status-row { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1rem; }
+  .command-status-row span,.state-pill { border-radius:999px; display:inline-flex; font-size:.78rem; font-weight:850; padding:.42rem .72rem; }
+  .command-status-row span { background:rgba(255,255,255,.13); color:#fff; }
+  .command-panel,.workspace-card { background:#fff; border:1px solid rgba(15,23,42,.08); border-radius:22px; box-shadow:0 18px 50px rgba(15,23,42,.08); padding:1.25rem; }
+  .command-panel-head { align-items:flex-start; display:flex; gap:1rem; justify-content:space-between; }
+  .command-panel h2,.workspace-card h3 { font-weight:900; letter-spacing:-.02em; margin:0; }
+  .command-panel p,.workspace-card p { color:#64748b; line-height:1.65; margin:.35rem 0 0; }
+  .workspace-card { height:100%; min-height:285px; }
+  .workspace-card.active { background:radial-gradient(circle at top right, rgba(20,184,166,.14), transparent 44%),#fff; border-color:rgba(20,184,166,.28); }
+  .workspace-card.locked { background:#f8fafc; }
+  .workspace-card.coming-soon { background:#f5f5f3; border-color:#e0ded8; box-shadow:none; color:#64748b; filter:grayscale(.35); opacity:.76; }
+  .workspace-card.coming-soon h3 { color:#64748b; }
+  .state-pill.active { background:#dcfce7; color:#166534; }
+  .state-pill.recommended { background:#fef3c7; color:#92400e; }
+  .state-pill.coming-soon { background:#ebebeb; color:#737373; }
+  .workspace-actions { align-items:center; display:flex; gap:1rem; justify-content:space-between; margin-top:1.35rem; }
+  .workspace-renewal-link { color:#0f766e; display:block; font-size:.84rem; font-weight:800; margin-top:.35rem; text-decoration:none; }
+  .workspace-renewal-link:hover { text-decoration:underline; }
+  .snapshot-grid { display:grid; gap:.85rem; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); }
+  .quick-modules-panel { background:radial-gradient(circle at 8% 12%, rgba(20,184,166,.08), transparent 32%),#fff; }
+  .quick-modules-grid { display:grid; gap:.85rem; grid-template-columns:repeat(5,minmax(0,1fr)); margin-top:1rem; }
+  .quick-module-card { align-items:flex-start; background:#f8fafc; border:1px solid rgba(15,23,42,.08); border-radius:18px; color:#0f172a; display:flex; flex-direction:column; gap:.8rem; min-height:178px; padding:1rem; text-decoration:none; transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+  .quick-module-card:hover { border-color:rgba(15,118,110,.32); box-shadow:0 18px 42px rgba(15,23,42,.09); color:#0f172a; transform:translateY(-2px); }
+  .quick-module-card.is-active { background:linear-gradient(180deg,#ffffff 0%,#f0fdfa 100%); border-color:rgba(20,184,166,.24); }
+  .quick-module-card.is-locked { background:#f8fafc; }
+  .quick-module-icon { align-items:center; background:#ccfbf1; border-radius:15px; color:#0f766e; display:inline-flex; height:42px; justify-content:center; width:42px; }
+  .quick-module-icon svg { height:20px; width:20px; }
+  .quick-module-copy { display:block; }
+  .quick-module-copy strong { display:block; font-size:1rem; font-weight:900; line-height:1.15; }
+  .quick-module-copy small { color:#64748b; display:block; font-size:.78rem; line-height:1.35; margin-top:.35rem; }
+  .quick-module-status { background:#fff; border:1px solid rgba(15,23,42,.1); border-radius:999px; color:#0f766e; display:inline-flex; font-size:.72rem; font-weight:900; margin-top:auto; padding:.3rem .62rem; }
+  .snapshot-card,.first-step-list a,.switch-view-list a,.switch-view-list button { background:#f8fafc; border:1px solid rgba(15,23,42,.08); border-radius:16px; color:#0f172a; display:block; padding:1rem; text-align:left; text-decoration:none; width:100%; }
+  .snapshot-card span,.switch-view-list span { color:#64748b; display:block; font-size:.86rem; }
+  .snapshot-card strong { display:block; font-size:1.6rem; margin-top:.35rem; }
+  .snapshot-empty-cta { color:#0f766e; display:block; font-size:.8rem; font-weight:900; margin-top:.25rem; }
+  .first-step-list,.switch-view-list { display:grid; gap:.7rem; margin-top:1rem; }
+  .switch-view-list form { margin:0; }
+  .switch-view-list button { cursor:pointer; }
+  @media (max-width:1400px){ .quick-modules-grid{grid-template-columns:repeat(3,minmax(0,1fr));} }
+  @media (max-width:768px){ .currency-strip,.command-hero,.command-panel-head,.workspace-actions{align-items:stretch; flex-direction:column;} .command-hero .btn,.workspace-actions .btn{width:100%;} .quick-modules-grid{grid-template-columns:1fr;} .quick-module-card{min-height:auto;} }
+</style>
+{% endblock %}
+

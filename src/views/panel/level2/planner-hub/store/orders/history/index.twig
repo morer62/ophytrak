@@ -1,0 +1,5 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% include 'panel/shared/store/order-history.twig' with { back_url: path('panel/planner-hub/store/orders/home') } %}
+{% endblock %}

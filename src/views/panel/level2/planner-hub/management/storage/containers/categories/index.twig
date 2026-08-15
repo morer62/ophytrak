@@ -1,0 +1,12 @@
+{% extends 'templates/base.admin.twig' %}
+{% block body %}
+<main>
+    <h1 class="h3 mb-4">{{ trans('planner_hub.container_categories') }}</h1>
+    <section class="card mb-3"><div class="card-body">
+        <form method="post" class="row g-2"><input type="hidden" name="action" value="create"><div class="col"><input name="name" class="form-control" required maxlength="120" placeholder="{{ trans('planner_hub.container_category_name') }}"></div><div class="col-auto"><button class="btn btn-primary">{{ trans('ui.create') }}</button></div></form>
+    </div></section>
+    <section class="card"><div class="card-body table-responsive"><table class="table align-middle"><thead><tr><th>{{ trans('planner_hub.container_category') }}</th><th>{{ trans('planner_hub.containers') }}</th><th>{{ trans('ui.actions') }}</th></tr></thead><tbody>
+    {% for category in categories %}<tr><td>{{ category.name }}</td><td>{{ category.containers_count }}</td><td>{% if category.containers_count == 0 %}<form method="post"><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="{{ category.id }}"><button class="btn btn-sm btn-outline-danger">{{ trans('ui.delete') }}</button></form>{% else %}<span class="text-muted">{{ trans('planner_hub.container_category_in_use') }}</span>{% endif %}</td></tr>{% else %}<tr><td colspan="3" class="text-muted">{{ trans('planner_hub.no_container_categories') }}</td></tr>{% endfor %}
+    </tbody></table><a class="btn btn-outline-secondary" href="{{ path('panel/planner-hub/management/storage/containers') }}">{{ trans('ui.back') }}</a></div></section>
+</main>
+{% endblock %}

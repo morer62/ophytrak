@@ -1,0 +1,37 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="mt-4">
+
+    <h1 class="h3 mb-3">
+        {{ trans('planner_hub.crm') }}
+    </h1>
+
+    {{ macros.breadcrumb2() }}
+
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        <!-- Categories -->
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center py-4">
+                    <h5 class="card-title mb-2">{{ trans('planner_hub.categories') }}</h5>
+                    <p class="text-muted small">{{ trans('planner_hub.manage_lead_types') }}</p>
+                    <a href="{{ path('panel/planner-hub/management/crm/categories') }}" class="btn btn-primary mt-2">{{ trans('planner_hub.go_to_categories') }}</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leads -->
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center py-4">
+                    <h5 class="card-title mb-2">{{ trans('planner_hub.leads') }}</h5>
+                    <p class="text-muted small">{{ trans('planner_hub.view_manage_inquiries') }}</p>
+                    <a href="{{ path('panel/planner-hub/management/crm/lead') }}" class="btn btn-primary mt-2">{{ trans('planner_hub.go_to_leads') }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

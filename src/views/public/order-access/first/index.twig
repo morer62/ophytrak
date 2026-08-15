@@ -1,0 +1,168 @@
+{% extends 'templates/base.twig' %}
+
+{% block body %}
+<main class="container mt-5" style="max-width:500px;">
+    <h2 class="mb-4 text-center">💳 {{ trans('planner_hub.pay_first_installment') }}</h2>
+
+    <div class="alert alert-info text-center">
+        {{ trans('planner_hub.amount_to_pay') }} <strong>{{ currency_code|default('USD') }} {{ first_payment_amount | number_format(2) }}</strong>
+    </div>
+
+    {% if payment_error is defined and payment_error %}
+    <div class="alert alert-warning border-warning shadow-sm">
+        <strong>{{ trans('planner_hub.payment_error') }}</strong><br>
+        {{ payment_error }}
+    </div>
+{% endif %}
+<form id="payment-form" method="POST">
+        <input type="hidden" name="token" value="{{ token }}">
+        <input type="hidden" name="customer_token" id="payment-customer-token">
+
+<div class="mb-3">
+            <label class="form-label fw-bold">{{ trans('planner_hub.your_email') }}</label>
+            <input type="email" name="customer_email" id="payment-customer-email" class="form-control form-control-lg" value="{{ client_email|default('')|e('html_attr') }}" required>
+        </div>
+
+        {% include 'templates/partials/order-access-payment-method-fields.twig' %}
+
+        <div class="mb-4" id="card-section" {% if active_provider_type == 'paypal' %}style="display:none;"{% endif %}>
+            <label class="form-label fw-bold">{{ trans('planner_hub.card_information') }}</label>
+            <div id="payment-card-container" class="border rounded p-3" style="min-height: 150px;"></div>
+            <div id="payment-card-errors" class="text-danger mt-2"></div>
+        </div>
+        {% if active_provider_type == 'paypal' and paypal_client_id %}
+        <div class="mb-4" id="paypal-button-container"></div>
+        {% endif %}
+
+        <button type="submit" id="pay-button" class="btn btn-primary w-100 btn-lg mb-3" {% if active_provider_type == 'paypal' %}style="display:none;"{% endif %}>
+            <i class="bi bi-credit-card me-2"></i>{{ trans('planner_hub.pay_now') }}
+        </button>
+        <div id="loading" class="text-muted text-center" style="display:none;">{{ trans('planner_hub.processing_payment') }}</div>
+    </form>
+    
+    <div class="text-center mt-3">
+        <a href="{{ path('order-access', { token: token }) }}" class="btn btn-outline-secondary">
+            {{ trans('planner_hub.back_to_order_access') }}
+        </a>
+    </div>
+</main>
+
+{{ processingModal|raw }}
+{% endblock %}
+
+{% block scripts %}
+{% if active_provider_type == 'stripe' and stripe_publishable_key %}
+<script src="https://js.stripe.com/v3/"></script>
+{% elseif active_provider_type == 'square' %}
+<script type="text/javascript" src="https://{{ square_environment == 'production' ? 'web' : 'sandbox.web' }}.squarecdn.com/v1/square.js"></script>
+{% elseif active_provider_type == 'paypal' and paypal_client_id %}
+<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id|e('html_attr') }}&currency={{ currency_code|default('USD') }}&intent=capture"></script>
+{% endif %}
+{{ processingModalScript|raw }}
+<script>
+    (async function () {
+        const form = document.getElementById('payment-form');
+        const tokenInput = document.getElementById('payment-customer-token');
+        const errorDiv = document.getElementById('payment-card-errors');
+        const payButton = document.getElementById('pay-button');
+        const loading = document.getElementById('loading');
+        const token = '{{ token|e('js') }}';
+        function setProcessingState(isProcessing) {
+            if (payButton) payButton.disabled = isProcessing;
+            if (loading) loading.style.display = isProcessing ? "block" : "none";
+            if (isProcessing) window.VnvProcessingModal.show("orderAccessProcessingModal", { title: "{{ trans('planner_hub.processing_payment')|e('js') }}", message: "{{ trans('planner_hub.we_are_confirming_payment')|e('js') }}" });
+            else window.VnvProcessingModal.hide("orderAccessProcessingModal");
+        }
+        {% if active_provider_type == 'paypal' and paypal_client_id %}
+        var createOrderUrl = '{{ base_url|e('js') }}/order-access/paypal-create-order';
+        paypal.Buttons({
+            createOrder: function() {
+                return fetch(createOrderUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'token=' + encodeURIComponent(token) + '&payment_type=first' })
+                    .then(function(r) { return r.json(); }).then(function(data) { if (data.success && data.orderId) return data.orderId; throw new Error(data.error || '{{ trans('planner_hub.could_not_create_order')|e('js') }}'); });
+            },
+            onApprove: function(data) {
+                var emailEl = document.getElementById('payment-customer-email');
+                if (!emailEl || !emailEl.value || !emailEl.value.trim()) {
+                    if (errorDiv) errorDiv.textContent = '{{ trans('planner_hub.please_enter_email')|e('js') }}';
+                    return;
+                }
+                tokenInput.value = data.orderID;
+                form.submit();
+            },
+            onError: function(err) { if (errorDiv) errorDiv.textContent = err.message || '{{ trans('planner_hub.payment_failed')|e('js') }}'; }
+        }).render('#paypal-button-container');
+        return;
+        {% endif %}
+        try {
+            {% if active_provider_type == 'stripe' and stripe_publishable_key %}
+            var stripe = Stripe("{{ stripe_publishable_key|e('js') }}");
+            var cardElement = stripe.elements().create('card', { hidePostalCode: true, style: { base: { fontSize: '16px' } } });
+            cardElement.mount('#payment-card-container');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const savedSelect = document.getElementById('saved-payment-method-id');
+                const tokenTypeInput = document.getElementById('payment-token-type');
+                if (savedSelect && savedSelect.value) {
+                    if (tokenTypeInput) tokenTypeInput.value = 'stored_card';
+                    tokenInput.value = 'SAVED_PAYMENT_METHOD';
+                    form.submit();
+                    return;
+                }
+                setProcessingState(true);
+                errorDiv.textContent = '';
+                var res = await stripe.createToken(cardElement, { address_zip: (document.getElementById('payment-billing-zip') || document.getElementById('billing_zip') || {value: ''}).value.trim() });
+                if (res.error) { errorDiv.textContent = res.error.message || '{{ trans('planner_hub.payment_failed')|e('js') }}'; setProcessingState(false); return; }
+                document.getElementById('payment-card-brand').value = res.token.card?.brand || '';
+                document.getElementById('payment-card-last4').value = res.token.card?.last4 || '';
+                document.getElementById('payment-card-exp-month').value = res.token.card?.exp_month || '';
+                document.getElementById('payment-card-exp-year').value = res.token.card?.exp_year || '';
+                document.getElementById('payment-card-brand').value = res.token.card?.brand || '';
+                document.getElementById('payment-card-last4').value = res.token.card?.last4 || '';
+                document.getElementById('payment-card-exp-month').value = res.token.card?.exp_month || '';
+                document.getElementById('payment-card-exp-year').value = res.token.card?.exp_year || '';
+                tokenInput.value = res.token.id;
+                form.submit();
+            });
+            return;
+            {% endif %}
+            const squareApplicationId = "{{ square_application_id|e('js') }}";
+            const squareLocationId = "{{ square_location_id|e('js') }}";
+            if (!squareApplicationId || !squareLocationId) {
+                if (errorDiv) errorDiv.textContent = '{{ trans('planner_hub.payment_system_not_configured')|e('js') }}';
+                return;
+            }
+            const payments = Square.payments(squareApplicationId, squareLocationId);
+            const card = await payments.card();
+            await card.attach('#payment-card-container');
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const savedSelect = document.getElementById('saved-payment-method-id');
+                const tokenTypeInput = document.getElementById('payment-token-type');
+                if (savedSelect && savedSelect.value) {
+                    if (tokenTypeInput) tokenTypeInput.value = 'stored_card';
+                    tokenInput.value = 'SAVED_PAYMENT_METHOD';
+                    form.submit();
+                    return;
+                }
+                setProcessingState(true);
+                errorDiv.textContent = '';
+                try {
+                    const tokenResult = await card.tokenize();
+                    if (tokenResult.status === 'OK') {
+                        tokenInput.value = tokenResult.token;
+                        form.submit();
+                    } else {
+                        errorDiv.textContent = (tokenResult.errors && tokenResult.errors[0]) ? tokenResult.errors[0].detail : '{{ trans('planner_hub.payment_failed')|e('js') }}';
+                        setProcessingState(false);
+                    }
+                } catch (error) {
+                    errorDiv.textContent = '{{ trans('planner_hub.error_occurred_try_again')|e('js') }}';
+                    setProcessingState(false);
+                }
+            });
+        } catch (error) {
+            if (errorDiv) errorDiv.textContent = '{{ trans('planner_hub.unable_load_payment_form')|e('js') }}';
+        }
+    })();
+</script>
+{% endblock %}

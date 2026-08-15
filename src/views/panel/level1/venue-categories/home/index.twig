@@ -1,0 +1,59 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+
+
+    <main class="container-fluid">
+
+        <h1 class="h3 mb-3">
+            {{ trans('panel_home.venue_categories') }}
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ path('panel/home') }}">{{ trans('planner_hub.home') }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ trans('panel_home.venue_categories') }}</li>
+            </ol>
+        </nav>
+
+
+        <section class="card">
+            <div class="card-body">
+                <a class="btn btn-secondary mb-3" href="{{ path('panel/venue-categories/create') }}">{{ trans('planner_hub.add_category') }}</a>
+
+                <table class="table table-bordered">
+                    <thead>
+                    <tr>
+                        <th>{{ trans('planner_hub.id') }}</th>
+                        <th>{{ trans('planner_hub.name') }}</th>
+                        <th>{{ trans('planner_hub.description') }}</th>
+                        <th>{{ trans('planner_hub.edit') }}</th>
+                        <th>{{ trans('planner_hub.remove') }}</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    {% for data in categories %}
+                        <tr>
+                            <td>{{ data.id }}</td>
+                            <td>{{ data.name }}</td>
+                            <td>{{ data.description }}</td>
+                            <td>
+                                <a href="{{ path('panel/venue-categories/edit?id=' ~ data.id)  }}">{{ trans('planner_hub.edit') }}</a>
+                            </td>
+                            <td>
+                                <form method="post" form-delete>
+                                    <input type="hidden" name="action" value="delete" />
+                                    <input type="hidden" name="id" value="{{ data.id }}">
+
+                                    <button type="submit" class="btn btn-danger">{{ trans('planner_hub.delete') }}</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+{% endblock %}

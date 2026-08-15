@@ -1,0 +1,257 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<h2 class="mb-4">💰 {{ trans('planner_hub.payments') }}</h2>
+{{ macros.breadcrumb2() }}
+
+<div class="card p-4 shadow-sm mb-4">
+    <h5 class="mb-3">💰 {{ trans('planner_hub.received_payments') }}</h5>
+    <p class="text-muted small mb-3">{{ trans('planner_hub.payments_collected_desc') }}</p>
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h3 class="text-success mb-0">${{ totalCollected|number_format(2) }}</h3>
+        <form method="get" class="d-flex flex-wrap gap-2 align-items-center">
+            <input type="hidden" name="chart_months" value="{{ chartMonths }}">
+            <select name="date_filter" class="form-select form-select-sm" style="width: auto;" onchange="toggleDateRange(this)">
+                <option value="today" {{ dateFilter == 'today' ? 'selected' : '' }}>{{ trans('planner_hub.date_filter_today') }}</option>
+                <option value="7d" {{ dateFilter == '7d' ? 'selected' : '' }}>{{ trans('planner_hub.date_filter_7d') }}</option>
+                <option value="30d" {{ dateFilter == '30d' ? 'selected' : '' }}>{{ trans('planner_hub.date_filter_30d') }}</option>
+                <option value="month" {{ dateFilter == 'month' ? 'selected' : '' }}>{{ trans('planner_hub.date_filter_month') }}</option>
+                <option value="range" {{ dateFilter == 'range' ? 'selected' : '' }}>{{ trans('planner_hub.date_filter_range') }}</option>
+            </select>
+            <span id="dateRangeFields" class="d-flex gap-1 align-items-center" style="{{ dateFilter != 'range' ? 'display:none!important' : '' }}">
+                <input type="date" name="date_from" class="form-control form-control-sm" value="{{ dateFrom ?? '' }}" placeholder="{{ trans('planner_hub.date_from') }}">
+                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ dateTo ?? '' }}" placeholder="{{ trans('planner_hub.date_to') }}">
+            </span>
+            <button type="submit" class="btn btn-sm btn-primary">{{ trans('planner_hub.filter') }}</button>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>{{ trans('planner_hub.who_paid') }}</th>
+                    <th>{{ trans('planner_hub.amount') }}</th>
+                    <th>{{ trans('planner_hub.payment_date') }}</th>
+                    <th>{{ trans('planner_hub.order') }}</th>
+                    <th>{{ trans('planner_hub.platform') }}</th>
+                    <th>{{ trans('planner_hub.payment_kind') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in collectedPayments %}
+                <tr>
+                    <td>
+                        {{ p.payer_name|trim ?: (p.payer_email ?: '—') }}
+                    </td>
+                    <td>${{ (p.amount - (p.refunded_amount ?? 0))|number_format(2) }}</td>
+                    <td>{{ p.paid_at|date("Y-m-d H:i") }}</td>
+                    <td>
+                        {% if p.contract_token is defined and p.contract_token %}
+                            <a href="{{ path('/order-access?token=' ~ p.contract_token) }}" target="_blank">#{{ p.id_order }}</a>
+                        {% else %}
+                            <a href="{{ path('panel/planner-hub/management/orders/orders') }}?id={{ p.id_order }}">#{{ p.id_order }}</a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if p.platform == 'square' %}<span class="badge bg-success">{{ trans('planner_hub.platform_square') }}</span>
+                        {% elseif p.platform == 'stripe' %}<span class="badge bg-primary">{{ trans('planner_hub.platform_stripe') }}</span>
+                        {% elseif p.platform == 'paypal' %}<span class="badge bg-info">{{ trans('planner_hub.platform_paypal') }}</span>
+                        {% else %}<span class="badge bg-secondary">{{ trans('planner_hub.platform_manual') }}</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if p.payment_kind == 'full' %}<span class="badge bg-success">{{ trans('planner_hub.payment_kind_full') }}</span>
+                        {% elseif p.payment_kind == 'first' %}<span class="badge bg-warning text-dark">{{ trans('planner_hub.payment_kind_first') }}</span>
+                        {% elseif p.payment_kind == 'second' %}<span class="badge bg-info">{{ trans('planner_hub.payment_kind_second') }}</span>
+                        {% else %}<span class="badge bg-secondary">{{ trans('planner_hub.payment_kind_advance') }}</span>{% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-muted text-center py-4">{{ trans('planner_hub.no_payments_in_period') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<div class="row mt-4">
+    <div class="col-lg-6 mb-3 mb-lg-0">
+        <div class="card p-4 shadow-sm h-100">
+            <h6 class="mb-3">📈 {{ trans('planner_hub.payments') }} — {{ trans('planner_hub.date_filter_30d') }}</h6>
+            <div class="chart chart-sm" style="min-height: 220px;">
+                <canvas id="chartDaily"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card p-4 shadow-sm h-100">
+            <h6 class="mb-3">📊 {{ trans('planner_hub.payments') }} — {{ trans('planner_hub.income_by_month') }}</h6>
+            <form method="get" class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                <input type="hidden" name="date_filter" value="{{ dateFilter }}">
+                <input type="hidden" name="date_from" value="{{ dateFrom ?? '' }}">
+                <input type="hidden" name="date_to" value="{{ dateTo ?? '' }}">
+                <label class="form-label mb-0 small">{{ trans('planner_hub.filter') }}:</label>
+                <select name="chart_months" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                    <option value="6" {{ chartMonths == 6 ? 'selected' : '' }}>{{ trans('planner_hub.chart_months_6') }}</option>
+                    <option value="12" {{ chartMonths == 12 ? 'selected' : '' }}>{{ trans('planner_hub.chart_months_12') }}</option>
+                    <option value="24" {{ chartMonths == 24 ? 'selected' : '' }}>{{ trans('planner_hub.chart_months_24') }}</option>
+                </select>
+            </form>
+            <div class="chart chart-sm" style="min-height: 220px;">
+                <canvas id="chartMonthly"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% if user.level == 1 and ticketCommissions|length > 0 %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card p-4 shadow-sm">
+            <h6 class="mb-3">🎫 Ticket Sales Commissions</h6>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="text-center p-3 bg-light rounded">
+                        <h5 class="text-primary mb-1">{{ ticketCommissions|length }}</h5>
+                        <small class="text-muted">Total Transactions</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-center p-3 bg-light rounded">
+                        <h5 class="text-success mb-1">${{ totalTicketCommissions|number_format(2) }}</h5>
+                        <small class="text-muted">Total Commissions</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Venue</th>
+                            <th>Buyer</th>
+                            <th>{{ trans('ui.amount') }}</th>
+                            <th>Commission</th>
+                            <th>{{ trans('ui.date') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for commission in ticketCommissions %}
+                        <tr>
+                            <td>{{ commission.event_name }}</td>
+                            <td>{{ commission.venue_name }}</td>
+                            <td>{{ commission.buyer_email }}</td>
+                            <td>${{ commission.total_amount|number_format(2) }}</td>
+                            <td class="text-success">${{ commission.commission_amount|number_format(2) }}</td>
+                            <td>{{ commission.created_at|date('M d, Y') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function toggleDateRange(sel) {
+    const isRange = sel && sel.value === 'range';
+    const grp = document.getElementById('dateRangeFields');
+    if (grp) grp.style.display = isRange ? 'flex' : 'none';
+}
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chartDailyData = {{ chartDaily|json_encode|raw }};
+    const chartMonthlyData = {{ chartMonthly|json_encode|raw }};
+
+    if (document.getElementById('chartDaily') && chartDailyData && chartDailyData.length) {
+        new Chart(document.getElementById('chartDaily'), {
+            type: 'bar',
+            data: {
+                labels: chartDailyData.map(d => {
+                    const [y, m, day] = d.date.split('-');
+                    return m + '/' + day;
+                }),
+                datasets: [{
+                    label: '{{ trans("planner_hub.amount")|default("Amount") }}',
+                    data: chartDailyData.map(d => d.total),
+                    backgroundColor: 'rgba(34, 197, 94, 0.6)',
+                    borderColor: 'rgb(34, 197, 94)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => '$' + ctx.raw.toFixed(2)
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: (v) => '$' + v
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    if (document.getElementById('chartMonthly') && chartMonthlyData && chartMonthlyData.length) {
+        new Chart(document.getElementById('chartMonthly'), {
+            type: 'bar',
+            data: {
+                labels: chartMonthlyData.map(d => d.label),
+                datasets: [{
+                    label: '{{ trans("planner_hub.amount")|default("Amount") }}',
+                    data: chartMonthlyData.map(d => d.total),
+                    backgroundColor: 'rgba(13, 110, 253, 0.6)',
+                    borderColor: 'rgb(13, 110, 253)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => '$' + ctx.raw.toFixed(2)
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: (v) => '$' + v
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

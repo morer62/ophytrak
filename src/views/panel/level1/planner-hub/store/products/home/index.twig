@@ -1,0 +1,660 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set operationQuery = operation_context.query|default('operation=vnv_events') %}
+<div class="container-fluid store-products-page">
+
+    <style>
+        :root{
+            --store-primary:#111827;
+            --store-primary-soft:#1f2937;
+            --store-accent:#374151;
+            --store-bg:#f8fafc;
+            --store-card:#ffffff;
+            --store-text:#111827;
+            --store-muted:#6b7280;
+            --store-border:#e5e7eb;
+            --store-success:#16a34a;
+            --store-danger:#dc2626;
+            --store-warning:#d97706;
+            --store-info:#2563eb;
+            --store-shadow:0 18px 44px rgba(15,23,42,.08);
+        }
+
+        .store-products-page{
+            color:var(--store-text);
+        }
+
+        .sp-hero{
+            position:relative;
+            overflow:hidden;
+            border-radius:28px;
+            padding:1.8rem 1.6rem;
+            color:#fff;
+            background:
+                radial-gradient(900px 420px at 0% 0%, rgba(255,255,255,.08), transparent 60%),
+                linear-gradient(135deg, #111827 0%, #1f2937 55%, #374151 100%);
+            box-shadow:0 22px 54px rgba(15,23,42,.18);
+            margin-bottom:1.5rem;
+        }
+
+        .sp-hero:after{
+            content:"";
+            position:absolute;
+            right:-70px;
+            top:-70px;
+            width:220px;
+            height:220px;
+            background:radial-gradient(circle, rgba(255,255,255,.10) 0%, rgba(255,255,255,0) 70%);
+            pointer-events:none;
+        }
+
+        .sp-hero > *{
+            position:relative;
+            z-index:2;
+        }
+
+        .sp-badge{
+            display:inline-flex;
+            align-items:center;
+            gap:.45rem;
+            border-radius:999px;
+            padding:.55rem .9rem;
+            font-size:.9rem;
+            font-weight:800;
+            background:rgba(255,255,255,.10);
+            border:1px solid rgba(255,255,255,.14);
+            color:#e5e7eb;
+            margin-bottom:.9rem;
+        }
+
+        .sp-hero h1{
+            font-size:clamp(1.9rem,3vw,2.7rem);
+            line-height:1.08;
+            font-weight:900;
+            letter-spacing:-.8px;
+            margin-bottom:.45rem;
+            color:#fff;
+        }
+
+        .sp-hero p{
+            color:#e5e7eb;
+            line-height:1.72;
+            font-size:1rem;
+            margin:0;
+            max-width:760px;
+        }
+
+        .sp-hero-top{
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-start;
+            gap:1rem;
+            flex-wrap:wrap;
+        }
+
+        .btn-sp-main{
+            background:#fff;
+            color:#111827 !important;
+            padding:.95rem 1.35rem;
+            font-size:1rem;
+            border-radius:999px;
+            text-decoration:none;
+            font-weight:800;
+            display:inline-flex;
+            gap:.55rem;
+            align-items:center;
+            justify-content:center;
+            border:none;
+            box-shadow:0 12px 28px rgba(255,255,255,.18);
+            transition:all .22s ease;
+            white-space:nowrap;
+        }
+
+        .btn-sp-main:hover{
+            transform:translateY(-2px);
+            background:#f9fafb;
+        }
+
+        .sp-tools{
+            margin-bottom:1.5rem;
+        }
+
+        .sp-tools-card{
+            background:#fff;
+            border:1px solid var(--store-border);
+            border-radius:24px;
+            box-shadow:var(--store-shadow);
+            padding:1.2rem;
+        }
+
+        .sp-tools-head{
+            margin-bottom:1rem;
+        }
+
+        .sp-tools-head h2{
+            font-size:1.1rem;
+            font-weight:900;
+            color:var(--store-text);
+            margin:0 0 .2rem;
+        }
+
+        .sp-tools-head p{
+            margin:0;
+            color:var(--store-muted);
+            line-height:1.6;
+        }
+
+        .sp-tool-item{
+            display:block;
+            text-decoration:none;
+            color:inherit;
+            height:100%;
+        }
+
+        .sp-tool-box{
+            height:100%;
+            background:linear-gradient(180deg,#fff 0%, #f8fafc 100%);
+            border:1px solid var(--store-border);
+            border-radius:20px;
+            padding:1.15rem 1rem;
+            transition:all .2s ease;
+            box-shadow:0 10px 24px rgba(15,23,42,.05);
+        }
+
+        .sp-tool-box:hover{
+            transform:translateY(-3px);
+            box-shadow:0 18px 34px rgba(15,23,42,.08);
+        }
+
+        .sp-tool-box i{
+            font-size:1.4rem;
+            color:var(--store-primary);
+            margin-bottom:.7rem;
+        }
+
+        .sp-tool-box strong{
+            display:block;
+            font-size:1rem;
+            color:var(--store-text);
+            margin-bottom:.25rem;
+        }
+
+        .sp-tool-box span{
+            display:block;
+            color:var(--store-muted);
+            font-size:.92rem;
+            line-height:1.55;
+        }
+
+        .sp-card{
+            background:#fff;
+            border:1px solid var(--store-border);
+            border-radius:24px;
+            box-shadow:var(--store-shadow);
+            overflow:hidden;
+        }
+
+        .sp-card-body{
+            padding:1.25rem;
+        }
+
+        .sp-table{
+            margin-bottom:0;
+        }
+
+        .sp-table thead th{
+            border-bottom:1px solid var(--store-border);
+            color:var(--store-text);
+            font-size:.92rem;
+            font-weight:800;
+            text-transform:uppercase;
+            letter-spacing:.02em;
+            background:#f8fafc;
+            padding:1rem .85rem;
+            white-space:nowrap;
+        }
+
+        .sp-table tbody td{
+            vertical-align:middle;
+            padding:1rem .85rem;
+            border-color:#eef2f7;
+        }
+
+        .sp-table tbody tr:hover{
+            background:#fbfcfe;
+        }
+
+        .sp-product-name{
+            font-weight:800;
+            color:var(--store-text);
+            margin-bottom:.15rem;
+        }
+
+        .sp-product-slug{
+            font-size:.85rem;
+            color:var(--store-muted);
+            word-break:break-word;
+        }
+
+        .sp-thumb{
+            width:60px;
+            height:60px;
+            object-fit:cover;
+            border-radius:12px;
+            border:1px solid #e5e7eb;
+            box-shadow:0 8px 20px rgba(15,23,42,.05);
+            background:#fff;
+        }
+
+        .sp-thumb-empty{
+            width:60px;
+            height:60px;
+            border-radius:12px;
+            border:1px dashed #d1d5db;
+            background:#f8fafc;
+            color:#9ca3af;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:.75rem;
+            font-weight:700;
+            text-align:center;
+            line-height:1.2;
+        }
+
+        .sp-price{
+            font-weight:800;
+            color:var(--store-text);
+        }
+
+        .sp-muted{
+            color:var(--store-muted);
+        }
+
+        .sp-badges{
+            display:flex;
+            flex-wrap:wrap;
+            gap:.35rem;
+        }
+
+        .sp-badge-status{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            padding:.42rem .7rem;
+            border-radius:999px;
+            font-size:.78rem;
+            font-weight:800;
+            letter-spacing:.01em;
+            border:1px solid transparent;
+        }
+
+        .sp-active{
+            background:rgba(22,163,74,.12);
+            color:#166534;
+            border-color:rgba(22,163,74,.18);
+        }
+
+        .sp-draft{
+            background:rgba(217,119,6,.12);
+            color:#92400e;
+            border-color:rgba(217,119,6,.20);
+        }
+
+        .sp-inactive{
+            background:rgba(107,114,128,.12);
+            color:#4b5563;
+            border-color:rgba(107,114,128,.18);
+        }
+
+        .sp-public{
+            background:rgba(37,99,235,.10);
+            color:#1d4ed8;
+            border-color:rgba(37,99,235,.18);
+        }
+
+        .sp-private{
+            background:rgba(17,24,39,.08);
+            color:#374151;
+            border-color:rgba(17,24,39,.12);
+        }
+
+        .sp-featured{
+            background:rgba(99,102,241,.10);
+            color:#4338ca;
+            border-color:rgba(99,102,241,.18);
+        }
+
+        .sp-fixed{
+            background:rgba(17,24,39,.08);
+            color:#111827;
+            border-color:rgba(17,24,39,.12);
+        }
+
+        .sp-variable{
+            background:rgba(124,58,237,.12);
+            color:#6d28d9;
+            border-color:rgba(124,58,237,.18);
+        }
+
+        .sp-actions{
+            display:flex;
+            flex-wrap:wrap;
+            gap:.45rem;
+            justify-content:flex-end;
+        }
+
+        .sp-btn{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:.4rem;
+            padding:.58rem .88rem;
+            border-radius:999px;
+            font-weight:800;
+            font-size:.84rem;
+            text-decoration:none;
+            transition:all .18s ease;
+            border:1px solid transparent;
+        }
+
+        .sp-btn-dark{
+            background:#f8fafc;
+            border-color:#dbe3ea;
+            color:var(--store-text);
+        }
+
+        .sp-btn-dark:hover{
+            background:#eef2f7;
+            color:var(--store-text);
+        }
+
+        .sp-btn-primary{
+            background:#eef2ff;
+            border-color:#c7d2fe;
+            color:#3730a3;
+        }
+
+        .sp-btn-primary:hover{
+            background:#e0e7ff;
+            color:#312e81;
+        }
+
+        .sp-btn-danger{
+            background:#fff1f2;
+            border-color:#fecdd3;
+            color:#b91c1c;
+        }
+
+        .sp-btn-danger:hover{
+            background:#ffe4e6;
+            color:#991b1b;
+        }
+
+        .sp-empty{
+            padding:4rem 1.5rem;
+            text-align:center;
+        }
+
+        .sp-empty-icon{
+            width:76px;
+            height:76px;
+            border-radius:22px;
+            background:linear-gradient(135deg,#f8fafc,#ffffff);
+            border:1px solid #e5e7eb;
+            color:var(--store-primary);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:2rem;
+            margin:0 auto 1rem;
+            box-shadow:0 12px 28px rgba(15,23,42,.06);
+        }
+
+        .sp-empty h5{
+            font-size:1.25rem;
+            font-weight:900;
+            color:var(--store-text);
+            margin-bottom:.5rem;
+        }
+
+        .sp-empty p{
+            color:var(--store-muted);
+            margin-bottom:1.2rem;
+        }
+
+        @media (max-width: 991px){
+            .sp-hero-top{
+                flex-direction:column;
+                align-items:flex-start;
+            }
+        }
+
+        @media (max-width: 768px){
+            .sp-hero{
+                padding:1.35rem 1rem;
+                border-radius:22px;
+            }
+
+            .sp-card,
+            .sp-tools-card{
+                border-radius:20px;
+            }
+
+            .sp-card-body,
+            .sp-tools-card{
+                padding:1rem;
+            }
+
+            .sp-actions{
+                justify-content:flex-start;
+            }
+
+            .btn-sp-main{
+                width:100%;
+            }
+        }
+    </style>
+
+    <section class="sp-hero">
+        <div class="sp-hero-top">
+            <div>
+                <span class="sp-badge">
+                    <i class="fa-solid fa-store"></i> Store Catalog
+                </span>
+                <h1>Store Products</h1>
+                <p>Manage fixed-price and variable products for {{ operation_context.current.label|default('the selected operation') }}. Catalog data stays scoped to owner {{ operation_context.owner_id|default('') }}.</p>
+            </div>
+
+            <div>
+                <a href="{{ path('panel/planner-hub/store/products/create') }}?{{ operationQuery }}" class="btn-sp-main">
+                    <i class="fa-solid fa-plus"></i> Create Product
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="sp-tools">
+        <div class="sp-tools-card">
+            <div class="sp-tools-head">
+                <h2>Catalog shortcuts</h2>
+                <p>Products are now the center of the flow. Categories and attributes stay available as support modules.</p>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <a href="{{ path('panel/planner-hub/store/products/create') }}?{{ operationQuery }}" class="sp-tool-item">
+                        <div class="sp-tool-box">
+                            <i class="fa-solid fa-box-open"></i>
+                            <strong>Create product</strong>
+                            <span>Start a new fixed or variable product directly from the catalog.</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a href="{{ path('panel/planner-hub/store/categories/home') }}?{{ operationQuery }}" class="sp-tool-item">
+                        <div class="sp-tool-box">
+                            <i class="fa-solid fa-tags"></i>
+                            <strong>Categories</strong>
+                            <span>Organize the catalog with clean product groups and landing structure.</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a href="{{ path('panel/planner-hub/store/attributes/home') }}?{{ operationQuery }}" class="sp-tool-item">
+                        <div class="sp-tool-box">
+                            <i class="fa-solid fa-sliders"></i>
+                            <strong>Attributes</strong>
+                            <span>Manage reusable global attributes and values used in details or variations.</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="sp-card">
+        <div class="sp-card-body">
+            {% if products|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table sp-table align-middle">
+                        <thead>
+                            <tr>
+                                <th style="min-width:90px;">Image</th>
+                                <th style="min-width:240px;">Product</th>
+                                <th style="min-width:110px;">Type</th>
+                                <th style="min-width:120px;">SKU</th>
+                                <th style="min-width:160px;">Price</th>
+                                <th style="min-width:100px;">Stock</th>
+                                <th style="min-width:120px;">{{ trans('ui.status') }}</th>
+                                <th style="min-width:170px;">Visibility</th>
+                                <th style="min-width:220px;" class="text-end">{{ trans('ui.actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in products %}
+                                <tr>
+                                    <td>
+                                        {% if p.main_image %}
+                                            <img src="{{ p.main_image }}" alt="{{ p.name }}" class="sp-thumb">
+                                        {% else %}
+                                            <div class="sp-thumb-empty">No Img</div>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <div class="sp-product-name">{{ p.name }}</div>
+                                        {% if p.slug %}
+                                            <div class="sp-product-slug">
+                                                <a href="{{ path(publicStoreUrl ~ '&product=' ~ p.slug ~ '#product-' ~ p.slug) }}" target="_blank" style="color:inherit; text-decoration:none;">
+                                                    {{ path(publicStoreUrl ~ '&product=' ~ p.slug) }}
+                                                </a>
+                                            </div>
+                                        {% else %}
+                                            <div class="sp-product-slug">—</div>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if p.product_type == 'VARIABLE' %}
+                                            <span class="sp-badge-status sp-variable">VARIABLE</span>
+                                        {% else %}
+                                            <span class="sp-badge-status sp-fixed">FIXED</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <span class="sp-muted">{{ p.sku ?: '—' }}</span>
+                                    </td>
+
+                                    <td>
+                                        {% if p.product_type == 'VARIABLE' %}
+                                            {% if p.min_price is defined and p.max_price is defined %}
+                                                {% if p.min_price == p.max_price %}
+                                                    <span class="sp-price">${{ p.min_price|number_format(2, '.', ',') }}</span>
+                                                {% else %}
+                                                    <span class="sp-price">${{ p.min_price|number_format(2, '.', ',') }} - ${{ p.max_price|number_format(2, '.', ',') }}</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="sp-muted">—</span>
+                                            {% endif %}
+                                        {% else %}
+                                            {% if p.display_price is defined %}
+                                                <span class="sp-price">${{ p.display_price|number_format(2, '.', ',') }}</span>
+                                            {% else %}
+                                                <span class="sp-price">${{ p.price|number_format(2, '.', ',') }}</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if p.product_type == 'VARIABLE' %}
+                                            <span class="sp-muted">By variation</span>
+                                        {% else %}
+                                            <strong>{{ p.stock_quantity }}</strong>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if p.status == 'ACTIVE' %}
+                                            <span class="sp-badge-status sp-active">{{ trans('ui.active') }}</span>
+                                        {% elseif p.status == 'DRAFT' %}
+                                            <span class="sp-badge-status sp-draft">DRAFT</span>
+                                        {% else %}
+                                            <span class="sp-badge-status sp-inactive">{{ trans('ui.inactive') }}</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <div class="sp-badges">
+                                            {% if p.is_public %}
+                                                <span class="sp-badge-status sp-public">PUBLIC</span>
+                                            {% else %}
+                                                <span class="sp-badge-status sp-private">PRIVATE</span>
+                                            {% endif %}
+
+                                            {% if p.is_featured %}
+                                                <span class="sp-badge-status sp-featured">FEATURED</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+
+                                    <td class="text-end">
+                                        <div class="sp-actions">
+                                            <a href="{{ path(publicStoreUrl ~ '&product=' ~ p.slug ~ '#product-' ~ p.slug) }}" target="_blank" class="sp-btn sp-btn-dark">
+                                                View Public
+                                            </a>
+                                            <a href="{{ path('panel/planner-hub/store/products/edit') }}?id={{ p.id }}&{{ operationQuery }}" class="sp-btn sp-btn-primary">
+                                                Edit
+                                            </a>
+                                            <a href="{{ path('panel/planner-hub/store/products/delete') }}?id={{ p.id }}&{{ operationQuery }}"
+                                               class="sp-btn sp-btn-danger"
+                                               onclick="return confirm('Are you sure you want to delete this product?');">
+                                                Delete
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="sp-empty">
+                    <div class="sp-empty-icon">
+                        <i class="fa-solid fa-store"></i>
+                    </div>
+                    <h5>No products created yet</h5>
+                    <p>Start by creating your first store product. From there you can define whether it is fixed-price or variable and then organize categories and attributes as support modules.</p>
+                    <a href="{{ path('panel/planner-hub/store/products/create') }}?{{ operationQuery }}" class="btn-sp-main">
+                        <i class="fa-solid fa-plus"></i> Create Product
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

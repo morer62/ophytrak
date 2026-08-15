@@ -1,0 +1,781 @@
+{% extends "templates/base.twig" %}
+
+{% block head %}
+    {{ parent() }}
+    {% if recaptchaSiteKey|default('') %}
+        <script src="https://www.google.com/recaptcha/enterprise.js?render={{ recaptchaSiteKey }}"></script>
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+
+<style>
+.signup-shell {
+    min-height: 100vh;
+    background:
+        radial-gradient(720px 340px at 12% 16%, rgba(38, 166, 154, .18), transparent 62%),
+        radial-gradient(620px 320px at 88% 84%, rgba(15, 23, 42, .09), transparent 60%),
+        linear-gradient(180deg, #f8fbfa 0%, #eef6f4 100%);
+}
+
+.signup-panel {
+    overflow: hidden;
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .92);
+    box-shadow: 0 30px 90px rgba(15, 23, 42, .12);
+}
+
+.signup-side {
+    height: 100%;
+    min-height: 560px;
+    padding: 2rem;
+    color: #f8fffd;
+    background:
+        linear-gradient(180deg, rgba(8, 19, 18, .82), rgba(8, 19, 18, .92)),
+        url("{{ asset_for(product_mode == 'ophytrack' ? 'assets/ophytrack/ophytrack-logo-hero.png' : 'assets/public/ophyra/industries/service-providers-hero.webp') }}") center / cover no-repeat;
+}
+
+.signup-side-kicker {
+    display: inline-flex;
+    padding: .45rem .7rem;
+    border: 1px solid rgba(141, 244, 232, .32);
+    border-radius: 999px;
+    color: #a8fff5;
+    font-size: .78rem;
+    font-weight: 850;
+    text-transform: uppercase;
+}
+
+.signup-side h1 {
+    margin-top: 1.2rem;
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    line-height: 1.02;
+    font-weight: 900;
+}
+
+.signup-side p {
+    color: #d8e7e5;
+    line-height: 1.7;
+}
+
+.signup-stepper {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .55rem;
+    margin-bottom: 1.5rem;
+}
+
+.signup-step-dot {
+    height: 7px;
+    border-radius: 999px;
+    background: #dbe5e3;
+}
+
+.signup-step-dot.is-active,
+.signup-step-dot.is-complete {
+    background: #0f8a76;
+}
+
+.signup-step {
+    display: none;
+}
+
+.signup-step.is-active {
+    display: block;
+}
+
+.signup-step-title {
+    color: #111827;
+    font-size: clamp(1.7rem, 3vw, 2.4rem);
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 1.08;
+}
+
+.signup-step-copy {
+    color: #64748b;
+    font-size: 1rem;
+}
+
+.form-label {
+    color: #111827;
+    font-weight: 800;
+}
+
+.form-control {
+    min-height: 54px;
+    border: 1px solid #d7e0df;
+    border-radius: 8px;
+    color: #0f172a;
+    box-shadow: none;
+}
+
+.form-control:focus {
+    border-color: #0f8a76;
+    box-shadow: 0 0 0 .18rem rgba(15, 138, 118, .16);
+}
+
+.signup-actions {
+    display: flex;
+    gap: .8rem;
+    justify-content: space-between;
+    margin-top: 1.6rem;
+}
+
+.signup-actions .btn {
+    min-height: 52px;
+    border-radius: 8px;
+    font-weight: 850;
+}
+
+.btn-ophyra-primary {
+    border: 0;
+    background: #0f8a76;
+    color: #fff;
+    box-shadow: 0 18px 44px rgba(15, 138, 118, .22);
+}
+
+.btn-ophyra-primary:hover {
+    background: #0b725f;
+    color: #fff;
+}
+
+.btn-ophyra-ghost {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #334155;
+}
+
+.input-group .form-control {
+    border-right: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group .btn {
+    border-left: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-color: #d7e0df;
+}
+
+[data-feather] {
+    width: 18px;
+    height: 18px;
+}
+
+#togglePassword,
+#toggleConfirmPassword {
+    min-width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.global-phone-group {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+}
+
+.global-phone-group select,
+.global-phone-group input {
+    min-height: 54px;
+}
+
+.global-phone-group select {
+    flex: 0 0 104px;
+    max-width: 104px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    padding-left: .65rem;
+    padding-right: 1.65rem;
+}
+
+.global-phone-group input {
+    flex: 1 1 auto;
+    min-width: 0;
+    border-left: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.signup-ready-note {
+    border: 1px solid rgba(15, 138, 118, .22);
+    border-radius: 8px;
+    background: #effaf7;
+    color: #14544b;
+    padding: 1rem;
+    font-weight: 700;
+}
+
+.signup-success-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(8, 19, 18, .68);
+}
+
+.signup-success-modal.is-open {
+    display: flex;
+}
+
+.signup-success-card {
+    width: min(100%, 520px);
+    border-radius: 8px;
+    background: #fff;
+    padding: 2rem;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, .28);
+    text-align: center;
+}
+
+.signup-success-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    margin-bottom: 1rem;
+    border-radius: 999px;
+    background: #e7fbf6;
+    color: #0f8a76;
+    font-size: 1.6rem;
+}
+
+@media (max-width: 767.98px) {
+    .signup-side {
+        min-height: auto;
+        padding: 1.4rem;
+    }
+
+    .signup-actions {
+        flex-direction: column-reverse;
+    }
+
+    .signup-actions .btn {
+        width: 100%;
+    }
+
+    .global-phone-group select {
+        flex-basis: 96px;
+        max-width: 96px;
+    }
+}
+</style>
+
+<main class="signup-shell d-flex w-100">
+    <div class="container py-4 py-lg-5">
+        <div class="signup-panel">
+            <div class="row g-0">
+                <div class="col-lg-5 d-none d-lg-block">
+                    <aside class="signup-side d-flex flex-column justify-content-between">
+                        <div>
+                            <span class="signup-side-kicker">{{ product_mode == 'ophytrack' ? 'OPHYTRACK' : trans('auth.signup_side_kicker') }}</span>
+                            <h1>{{ product_mode == 'ophytrack' ? brand.tagline : trans('auth.signup_side_title') }}</h1>
+                            <p class="mt-3 mb-0">{{ product_mode == 'ophytrack' ? brand.description : trans('auth.signup_side_text') }}</p>
+                        </div>
+                        <p class="small mb-0">{{ trans('auth.signup_side_footer') }}</p>
+                    </aside>
+                </div>
+
+                <div class="col-lg-7">
+                    <div class="p-4 p-lg-5">
+                        <div class="mb-4">
+                            <h2 class="signup-step-title mb-2">{{ trans('auth.create_business_account') }}</h2>
+                            <p class="signup-step-copy mb-0">{{ trans('auth.signup_subtitle') }}</p>
+                        </div>
+
+                        <div class="signup-stepper" aria-label="{{ trans('auth.signup_progress') }}">
+                            <span class="signup-step-dot is-active" data-step-dot="1"></span>
+                            <span class="signup-step-dot" data-step-dot="2"></span>
+                            <span class="signup-step-dot" data-step-dot="3"></span>
+                            <span class="signup-step-dot" data-step-dot="4"></span>
+                        </div>
+
+                        <form method="post" data-signup-wizard>
+                            <input type="hidden" name="level" value="2">
+                            {% if recaptchaSiteKey|default('') %}
+                                <input type="hidden" name="recaptcha_token" id="recaptchaToken" value="">
+                                <input type="hidden" name="recaptcha_action" id="recaptchaAction" value="{{ recaptchaAction|default('SIGNUP') }}">
+                            {% endif %}
+                            <input type="hidden" name="preferred_currency" value="{{ detectedCurrencyCode|default('USD') }}">
+                            <input type="hidden" name="detected_country_code" value="{{ detectedCountryCode|default('') }}">
+
+                            <section class="signup-step is-active" data-step="1">
+                                <h3 class="h4 fw-bold mb-2">{{ trans('auth.signup_step_company_title') }}</h3>
+                                <p class="signup-step-copy mb-4">{{ trans('auth.signup_step_company_copy') }}</p>
+                                <div class="mb-3">
+                                    <label class="form-label">{{ trans('auth.business_name') }}</label>
+                                    <input class="form-control form-control-lg"
+                                           type="text"
+                                           name="company_name"
+                                           placeholder="{{ trans('auth.enter_business_name') }}"
+                                           autocomplete="organization"
+                                           required>
+                                </div>
+                            </section>
+
+                            <section class="signup-step" data-step="2">
+                                <h3 class="h4 fw-bold mb-2">{{ trans('auth.signup_step_business_title') }}</h3>
+                                <p class="signup-step-copy mb-4">{{ trans('auth.signup_step_business_copy') }}</p>
+                                <div class="row">
+                                    <div class="col-12 col-md-6 mb-3">
+                                        <label class="form-label">{{ trans('auth.business_type') }}</label>
+                                        <select class="form-control form-control-lg" name="business_nature" required>
+                                            <option value="">{{ trans('auth.select_one') }}</option>
+                                            {% if product_mode != 'ophytrack' %}<option value="service_business">{{ trans('auth.service_business') }}</option>{% endif %}
+                                            <option value="commerce_operations">{{ trans('auth.commerce_operations') }}</option>
+                                            <option value="logistics_delivery">{{ trans('auth.logistics_delivery') }}</option>
+                                            <option value="carrier_logistics">{{ trans('auth.carrier_logistics') }}</option>
+                                            <option value="inventory_storage">{{ trans('auth.inventory_storage') }}</option>
+                                            {% if product_mode != 'ophytrack' %}<option value="event_operations">{{ trans('auth.event_operations') }}</option><option value="agency_studio">{{ trans('auth.agency_studio') }}</option>{% endif %}
+                                            <option value="local_store">{{ trans('auth.local_store') }}</option>
+                                            <option value="wholesale_distribution">{{ trans('auth.wholesale_distribution') }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-6 mb-3">
+                                        <label class="form-label">{{ trans('auth.operation_focus') }}</label>
+                                        <select class="form-control form-control-lg" name="business_operation_type" required>
+                                            <option value="">{{ trans('auth.select_one') }}</option>
+                                            {% if product_mode != 'ophytrack' %}<option value="clients_orders_team">{{ trans('auth.clients_orders_team') }}</option>{% endif %}
+                                            <option value="inventory_fulfillment">{{ trans('auth.inventory_fulfillment') }}</option>
+                                            <option value="store_delivery_tracking">{{ trans('auth.store_delivery_tracking') }}</option>
+                                            {% if product_mode != 'ophytrack' %}<option value="contracts_services">{{ trans('auth.contracts_services') }}</option><option value="events_registrations">{{ trans('auth.events_registrations') }}</option><option value="mixed_operations">{{ trans('auth.mixed_operations') }}</option>{% endif %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="signup-step" data-step="3">
+                                <h3 class="h4 fw-bold mb-2">{{ trans('auth.signup_step_contact_title') }}</h3>
+                                <p class="signup-step-copy mb-4">{{ trans('auth.signup_step_contact_copy') }}</p>
+                                <div class="row">
+                                    <div class="col-12 col-md-6 mb-3">
+                                        <label class="form-label">{{ trans('auth.name') }}</label>
+                                        <input class="form-control form-control-lg" type="text" name="name" placeholder="{{ trans('auth.enter_name') }}" autocomplete="given-name" required>
+                                    </div>
+                                    <div class="col-12 col-md-6 mb-3">
+                                        <label class="form-label">{{ trans('auth.lastname') }}</label>
+                                        <input class="form-control form-control-lg" type="text" name="lastname" placeholder="{{ trans('auth.enter_lastname') }}" autocomplete="family-name" required>
+                                    </div>
+                                    <div class="col-12 col-md-6 mb-3">
+                                        <label class="form-label">{{ trans('auth.email') }}</label>
+                                        <input class="form-control form-control-lg" type="email" name="email" placeholder="{{ trans('auth.enter_email') }}" autocomplete="email" required>
+                                    </div>
+                                    <div class="col-12 col-md-6 mb-3">
+                                        <label class="form-label">{{ trans('auth.phone_number') }}</label>
+                                        <div class="global-phone-group">
+                                            <select class="form-control form-control-lg" name="phone_country_code" id="phoneCountryCode" aria-label="{{ trans('auth.phone_country_code') }}">
+                                                <option value="+1" data-country="US">US +1</option>
+                                                <option value="+1" data-country="CA">CA +1</option>
+                                                <option value="+52" data-country="MX">MX +52</option>
+                                                <option value="+57" data-country="CO">CO +57</option>
+                                                <option value="+55" data-country="BR">BR +55</option>
+                                                <option value="+58" data-country="VE" data-stripe-connect="0">VE +58</option>
+                                                <option value="+54" data-country="AR">AR +54</option>
+                                                <option value="+56" data-country="CL">CL +56</option>
+                                                <option value="+51" data-country="PE">PE +51</option>
+                                                <option value="+598" data-country="UY">UY +598</option>
+                                                <option value="+595" data-country="PY">PY +595</option>
+                                                <option value="+591" data-country="BO">BO +591</option>
+                                                <option value="+593" data-country="EC">EC +593</option>
+                                                <option value="+506" data-country="CR">CR +506</option>
+                                                <option value="+1" data-country="DO">DO +1</option>
+                                                <option value="+502" data-country="GT">GT +502</option>
+                                                <option value="+507" data-country="PA">PA +507</option>
+                                                <option value="+503" data-country="SV">SV +503</option>
+                                                <option value="+1" data-country="TT">TT +1</option>
+                                                <option value="+1" data-country="JM">JM +1</option>
+                                                <option value="+1" data-country="BS">BS +1</option>
+                                                <option value="+1" data-country="AG">AG +1</option>
+                                                <option value="+1" data-country="LC">LC +1</option>
+                                                <option value="+592" data-country="GY">GY +592</option>
+                                                <option value="+34" data-country="ES">ES +34</option>
+                                                <option value="+39" data-country="IT">IT +39</option>
+                                                <option value="+33" data-country="FR">FR +33</option>
+                                                <option value="+351" data-country="PT">PT +351</option>
+                                                <option value="+44" data-country="GB">GB +44</option>
+                                                <option value="+49" data-country="DE">DE +49</option>
+                                                <option value="+31" data-country="NL">NL +31</option>
+                                                <option value="+32" data-country="BE">BE +32</option>
+                                                <option value="+353" data-country="IE">IE +353</option>
+                                                <option value="+43" data-country="AT">AT +43</option>
+                                                <option value="+41" data-country="CH">CH +41</option>
+                                                <option value="+46" data-country="SE">SE +46</option>
+                                                <option value="+47" data-country="NO">NO +47</option>
+                                                <option value="+45" data-country="DK">DK +45</option>
+                                                <option value="+358" data-country="FI">FI +358</option>
+                                                <option value="+48" data-country="PL">PL +48</option>
+                                                <option value="+40" data-country="RO">RO +40</option>
+                                                <option value="+30" data-country="GR">GR +30</option>
+                                                <option value="+420" data-country="CZ">CZ +420</option>
+                                                <option value="+36" data-country="HU">HU +36</option>
+                                            </select>
+                                            <input class="form-control form-control-lg" type="tel" name="phone_local_number" id="phoneLocalNumber" inputmode="tel" autocomplete="tel-national" placeholder="{{ trans('auth.enter_phone_number') }}" required>
+                                        </div>
+                                        <input type="hidden" name="phoneNumber" id="phoneNumber" value="">
+                                    </div>
+                                </div>
+                                <p class="small text-muted mb-0">
+                                    {{ trans('auth.signup_currency_note')|replace({'{currency}': detectedCurrencyCode|default('USD')}) }}
+                                </p>
+                            </section>
+
+                            <section class="signup-step" data-step="4">
+                                <h3 class="h4 fw-bold mb-2">{{ trans('auth.signup_step_password_title') }}</h3>
+                                <p class="signup-step-copy mb-4">{{ trans('auth.signup_step_password_copy') }}</p>
+                                <div class="signup-ready-note mb-3">{{ trans('auth.signup_ready_to_process') }}</div>
+                                <div class="row">
+                                    <div class="col-12 col-md-6 mb-3">
+                                        <label class="form-label">{{ trans('auth.password') }}</label>
+                                        <div class="input-group">
+                                            <input class="form-control form-control-lg" type="password" name="password" id="password" placeholder="{{ trans('auth.enter_password') }}" autocomplete="new-password" required>
+                                            <button class="btn btn-outline-secondary" type="button" id="togglePassword" aria-label="{{ trans('auth.show_password') }}">
+                                                <i data-feather="eye" id="eyeIcon"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6 mb-3">
+                                        <label class="form-label">{{ trans('auth.confirm_password') }}</label>
+                                        <div class="input-group">
+                                            <input class="form-control form-control-lg" type="password" name="passwordConfirmation" id="confirmPassword" placeholder="{{ trans('auth.confirm_your_password') }}" autocomplete="new-password" required>
+                                            <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword" aria-label="{{ trans('auth.show_password') }}">
+                                                <i data-feather="eye" id="eyeIconConfirm"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="terms" id="terms" required>
+                                        <label class="form-check-label small" for="terms">
+                                            {{ trans('auth.agree_to_the') }}
+                                            <a href="{{ path('terms_and_conditions') }}" target="_blank" class="text-decoration-none">{{ trans('auth.terms_conditions') }}</a>
+                                            {{ trans('auth.and_acknowledge_the') }}
+                                            <a href="{{ path('privacy-policy') }}" target="_blank" class="text-decoration-none">{{ trans('auth.privacy_policy') }}</a>.
+                                        </label>
+                                    </div>
+                                    {% if isEuropeanRegion|default(false) %}
+                                        <p class="small text-muted mb-0 mt-2">{{ trans('auth.us_processing_notice') }}</p>
+                                    {% endif %}
+                                </div>
+                            </section>
+
+                            <div class="signup-actions">
+                                <button type="button" class="btn btn-ophyra-ghost" data-signup-prev hidden>{{ trans('auth.back') }}</button>
+                                <button type="button" class="btn btn-ophyra-primary ms-auto" data-signup-next>{{ trans('auth.continue') }}</button>
+                                <button type="submit" class="btn btn-ophyra-primary ms-auto" data-signup-submit hidden>{{ trans('auth.create_business_account_button') }}</button>
+                            </div>
+                        </form>
+
+                        <div class="text-center mt-4">
+                            <p class="text-muted small mb-0">
+                                {{ trans('auth.already_have_account') }}
+                                <a href="{{ path('login') }}" class="text-decoration-none fw-bold">{{ trans('auth.log_in') }}</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div class="signup-success-modal" data-signup-success-modal aria-hidden="true">
+    <div class="signup-success-card" role="dialog" aria-modal="true" aria-labelledby="signupSuccessTitle" aria-describedby="signupSuccessText">
+        <span class="signup-success-icon"><i class="fa-solid fa-circle-check"></i></span>
+        <h2 id="signupSuccessTitle" class="h3 fw-bold mb-2">{{ trans('auth.signup_success_title') }}</h2>
+        <p id="signupSuccessText" class="text-muted mb-4">{{ trans('auth.signup_success_ready') }}</p>
+        <button type="button" class="btn btn-ophyra-primary px-4" data-signup-success-login>{{ trans('auth.go_to_login') }}</button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const signupForm = document.querySelector('[data-signup-wizard]');
+    const steps = Array.from(document.querySelectorAll('[data-step]'));
+    const dots = Array.from(document.querySelectorAll('[data-step-dot]'));
+    const prevButton = document.querySelector('[data-signup-prev]');
+    const nextButton = document.querySelector('[data-signup-next]');
+    const submitButton = document.querySelector('[data-signup-submit]');
+    const successModal = document.querySelector('[data-signup-success-modal]');
+    const successLoginButton = document.querySelector('[data-signup-success-login]');
+    const phoneCountryCode = document.getElementById('phoneCountryCode');
+    const phoneLocalNumber = document.getElementById('phoneLocalNumber');
+    const phoneNumber = document.getElementById('phoneNumber');
+    let currentStep = 1;
+    let isSubmitting = false;
+
+    function updateStep() {
+        steps.forEach((step) => {
+            step.classList.toggle('is-active', Number(step.dataset.step) === currentStep);
+        });
+
+        dots.forEach((dot) => {
+            const dotStep = Number(dot.dataset.stepDot);
+            dot.classList.toggle('is-active', dotStep === currentStep);
+            dot.classList.toggle('is-complete', dotStep < currentStep);
+        });
+
+        if (prevButton) prevButton.hidden = currentStep === 1;
+        if (nextButton) nextButton.hidden = currentStep === steps.length;
+        if (submitButton) submitButton.hidden = currentStep !== steps.length;
+    }
+
+    function visibleStepFields() {
+        const activeStep = steps.find((step) => Number(step.dataset.step) === currentStep);
+        return activeStep ? Array.from(activeStep.querySelectorAll('input, select, textarea')) : [];
+    }
+
+    function validateCurrentStep() {
+        for (const field of visibleStepFields()) {
+            if (!field.checkValidity()) {
+                field.reportValidity();
+                return false;
+            }
+        }
+
+        if (currentStep === 4) {
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+            if (password && confirmPassword && password.value !== confirmPassword.value) {
+                confirmPassword.setCustomValidity('{{ trans('auth.passwords_must_match')|e('js') }}');
+                confirmPassword.reportValidity();
+                confirmPassword.setCustomValidity('');
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    nextButton?.addEventListener('click', function () {
+        if (!validateCurrentStep()) return;
+        currentStep = Math.min(currentStep + 1, steps.length);
+        updateStep();
+    });
+
+    prevButton?.addEventListener('click', function () {
+        currentStep = Math.max(currentStep - 1, 1);
+        updateStep();
+    });
+
+    function normalizeSignupPhone() {
+        if (!phoneCountryCode || !phoneLocalNumber || !phoneNumber) return;
+        const code = phoneCountryCode.value.replace(/[^\d+]/g, '');
+        const local = phoneLocalNumber.value.replace(/[^\d]/g, '');
+        phoneNumber.value = local ? `${code}${local}` : '';
+    }
+
+    function formatLocalPhone() {
+        if (!phoneCountryCode || !phoneLocalNumber) return;
+        const selectedCountry = phoneCountryCode.options[phoneCountryCode.selectedIndex]?.dataset.country || 'US';
+        let digits = phoneLocalNumber.value.replace(/\D/g, '');
+        let formatted = digits;
+        const europeanMaxLengths = {
+            ES: 9, IT: 11, FR: 10, PT: 9, GB: 11, DE: 12, NL: 9, BE: 9, IE: 9,
+            AT: 12, CH: 9, SE: 10, NO: 8, DK: 8, FI: 12, PL: 9, RO: 10,
+            GR: 10, CZ: 9, HU: 9
+        };
+
+        if (selectedCountry === 'US' || selectedCountry === 'CA') {
+            digits = digits.slice(0, 10);
+            if (digits.length > 6) {
+                formatted = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+            } else if (digits.length > 3) {
+                formatted = `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+            } else if (digits.length > 0) {
+                formatted = `(${digits}`;
+            }
+        } else if (selectedCountry === 'CO') {
+            digits = digits.slice(0, 10);
+            if (digits.length > 6) {
+                formatted = `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+            } else if (digits.length > 3) {
+                formatted = `${digits.slice(0, 3)} ${digits.slice(3)}`;
+            }
+        } else if (selectedCountry === 'MX') {
+            digits = digits.slice(0, 10);
+            if (digits.length > 6) {
+                formatted = `${digits.slice(0, 2)} ${digits.slice(2, 6)} ${digits.slice(6)}`;
+            } else if (digits.length > 2) {
+                formatted = `${digits.slice(0, 2)} ${digits.slice(2)}`;
+            }
+        } else if (selectedCountry === 'BR') {
+            digits = digits.slice(0, 11);
+            if (digits.length > 7) {
+                formatted = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+            } else if (digits.length > 2) {
+                formatted = `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+            } else if (digits.length > 0) {
+                formatted = `(${digits}`;
+            }
+        } else if (Object.prototype.hasOwnProperty.call(europeanMaxLengths, selectedCountry)) {
+            digits = digits.slice(0, europeanMaxLengths[selectedCountry]);
+            if (selectedCountry === 'ES' || selectedCountry === 'PT' || selectedCountry === 'PL' || selectedCountry === 'CZ' || selectedCountry === 'HU') {
+                formatted = digits.length > 6
+                    ? `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`
+                    : (digits.length > 3 ? `${digits.slice(0, 3)} ${digits.slice(3)}` : digits);
+            } else if (selectedCountry === 'FR' || selectedCountry === 'IT' || selectedCountry === 'GB' || selectedCountry === 'GR' || selectedCountry === 'RO') {
+                formatted = digits.replace(/(\d{2})(?=\d)/g, '$1 ').trim();
+            } else {
+                formatted = digits.length > 7
+                    ? `${digits.slice(0, 3)} ${digits.slice(3, 7)} ${digits.slice(7)}`
+                    : (digits.length > 3 ? `${digits.slice(0, 3)} ${digits.slice(3)}` : digits);
+            }
+        } else {
+            digits = digits.slice(0, 12);
+            if (digits.length > 7) {
+                formatted = `${digits.slice(0, 3)} ${digits.slice(3, 7)} ${digits.slice(7)}`;
+            } else if (digits.length > 3) {
+                formatted = `${digits.slice(0, 3)} ${digits.slice(3)}`;
+            }
+        }
+
+        phoneLocalNumber.value = formatted;
+        normalizeSignupPhone();
+    }
+
+    if (phoneCountryCode && phoneLocalNumber) {
+        const lang = (navigator.language || '').toUpperCase();
+        const country = lang.includes('-') ? lang.split('-').pop() : '';
+        const match = country ? phoneCountryCode.querySelector(`[data-country="${country}"]`) : null;
+        if (match) {
+            phoneCountryCode.value = match.value;
+            match.selected = true;
+        }
+
+        phoneCountryCode.addEventListener('change', function () {
+            phoneLocalNumber.value = phoneLocalNumber.value.replace(/\D/g, '');
+            formatLocalPhone();
+        });
+        phoneLocalNumber.addEventListener('input', formatLocalPhone);
+        signupForm?.addEventListener('submit', normalizeSignupPhone);
+        formatLocalPhone();
+    }
+
+    function showSuccessAndRedirect(redirectUrl) {
+        if (successModal) {
+            successModal.classList.add('is-open');
+            successModal.setAttribute('aria-hidden', 'false');
+        }
+
+        const goLogin = function () {
+            window.location.href = redirectUrl || '{{ path('login') }}';
+        };
+
+        successLoginButton?.addEventListener('click', goLogin, { once: true });
+        window.setTimeout(goLogin, 2600);
+    }
+
+    function setSubmitState(disabled) {
+        isSubmitting = disabled;
+        if (submitButton) {
+            submitButton.disabled = disabled;
+            submitButton.textContent = disabled ? '{{ trans('auth.processing')|e('js') }}' : '{{ trans('auth.create_business_account_button')|e('js') }}';
+        }
+    }
+
+    async function submitSignup() {
+        if (isSubmitting || !signupForm) return;
+        if (!validateCurrentStep()) return;
+
+        normalizeSignupPhone();
+        setSubmitState(true);
+
+        try {
+            const response = await fetch(signupForm.action || window.location.href, {
+                method: 'POST',
+                body: new FormData(signupForm),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const payload = await response.json();
+
+            if (!payload.success) {
+                throw new Error(payload.message || '{{ trans('auth.signup_error_generic')|e('js') }}');
+            }
+
+            showSuccessAndRedirect(payload.redirect || '{{ path('login') }}');
+        } catch (error) {
+            alert(error.message || '{{ trans('auth.signup_error_generic')|e('js') }}');
+            setSubmitState(false);
+        }
+    }
+
+    {% if recaptchaSiteKey|default('') %}
+    const recaptchaToken = document.getElementById('recaptchaToken');
+    const recaptchaAction = document.getElementById('recaptchaAction');
+
+    signupForm?.addEventListener('submit', function (event) {
+        event.preventDefault();
+        normalizeSignupPhone();
+        if (!validateCurrentStep() || isSubmitting) return;
+
+        if (!window.grecaptcha || !window.grecaptcha.enterprise || !recaptchaToken || !recaptchaAction) {
+            alert('{{ trans('auth.security_not_ready')|e('js') }}');
+            return;
+        }
+
+        setSubmitState(true);
+
+        window.grecaptcha.enterprise.ready(function () {
+            window.grecaptcha.enterprise.execute('{{ recaptchaSiteKey }}', {action: recaptchaAction.value || 'SIGNUP'})
+                .then(function (token) {
+                    recaptchaToken.value = token;
+                    setSubmitState(false);
+                    submitSignup();
+                })
+                .catch(function () {
+                    setSubmitState(false);
+                    alert('{{ trans('auth.security_failed')|e('js') }}');
+                });
+        });
+    });
+    {% else %}
+    signupForm?.addEventListener('submit', function (event) {
+        event.preventDefault();
+        submitSignup();
+    });
+    {% endif %}
+
+    const togglePassword = document.getElementById('togglePassword');
+    const password = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+
+    togglePassword?.addEventListener('click', function() {
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        eyeIcon.setAttribute('data-feather', type === 'text' ? 'eye-off' : 'eye');
+
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    });
+
+    const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+    const confirmPassword = document.getElementById('confirmPassword');
+    const eyeIconConfirm = document.getElementById('eyeIconConfirm');
+
+    toggleConfirmPassword?.addEventListener('click', function() {
+        const type = confirmPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+        confirmPassword.setAttribute('type', type);
+        eyeIconConfirm.setAttribute('data-feather', type === 'text' ? 'eye-off' : 'eye');
+
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    });
+
+    updateStep();
+});
+</script>
+
+{% endblock %}

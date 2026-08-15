@@ -1,0 +1,63 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<h2 class="h4 mb-4">{{ trans('planner_hub.order_status_title') }} - vnv-341{{ order.id }}</h2>
+{{ macros.breadcrumb2() }}
+<a href="{{ path('/panel/planner-hub/orders/orders') }}" class="btn btn-sm btn-light mb-3">{{ trans('planner_hub.back_to_orders') }}</a>
+
+<div class="alert alert-info">
+    {{ trans('planner_hub.digital_signatures_soon') }}
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered text-center align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>{{ trans('planner_hub.status') }}</th>
+                <th>{{ trans('planner_hub.action') }}</th>
+                <th>{{ trans('planner_hub.note') }}</th>
+                <th>{{ trans('planner_hub.file') }}</th>
+                <th>{{ trans('planner_hub.date') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in history %}
+                <tr>
+                    <td style="min-width: 200px;">
+                        <span class="badge bg-secondary">
+                            {% if h.status == 'INVOICE_DRAFT' %}
+                                {{ trans('planner_hub.signature_pending') }}
+                            {% elseif h.status == 'INVOICE_READY' %}
+                                {{ trans('planner_hub.signed_payment_pending') }}
+                            {% elseif h.status == 'INVOICE_PARTIAL' %}
+                                {{ trans('planner_hub.first_payment_completed') }}
+                            {% elseif h.status == 'INVOICE_PAID' %}
+                                {{ trans('planner_hub.fully_paid') }}
+                            {% elseif h.status == 'INVOICE_EXPIRED' %}
+                                {{ trans('planner_hub.expired') }}
+                            {% else %}
+                                {{ h.status }}
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td style="min-width: 200px;">{{ trans('client_service_orders.action_' ~ h.action_type|lower)|default(h.action_type | replace({'_': ' '}) | title) }}</td>
+                    <td style="min-width: 200px;">{{ h.note }}</td>
+                    <td style="min-width: 200px;">
+                        {% if h.file_path %}
+                            <a href="{{ asset_for(h.file_path) }}" target="_blank" class="btn btn-sm btn-outline-dark">{{ trans('planner_hub.view') }}</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td style="min-width: 200px;">{{ h.created_at|date("Y-m-d H:i") }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="5">{{ trans('planner_hub.no_history_available') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

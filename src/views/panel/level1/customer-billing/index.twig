@@ -1,0 +1,101 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+<main class="container-fluid revops-page">
+{% if not customer %}
+  <section class="revops-panel text-center py-5"><h2>Customer not found</h2><a href="{{ path('panel/module-manager') }}" class="btn btn-dark mt-3">Back to Module Manager</a></section>
+{% else %}
+  <section class="billing-admin-hero">
+    <div>
+      <span class="revops-kicker">Customer Billing Admin</span>
+      <h1>{{ customer.name }}</h1>
+      <p>{{ customer.business ?: 'No business profile' }} · {{ customer.email }} · User #{{ customer.id }}{% if customer.business_id %} · Business #{{ customer.business_id }}{% endif %}</p>
+      <div class="badge-row">
+        <span>{{ customer.membership_status|replace({'_':' '})|title }}</span>
+        <span>{{ customer.has_card ? 'Has card' : 'No card' }}</span>
+        <span>{{ customer.autorenew ? 'Auto-renew ON' : 'Auto-renew OFF' }}</span>
+        <span>{{ customer.courtesy_modules }} courtesy modules</span>
+        <span>Risk {{ customer.risk }}</span>
+      </div>
+    </div>
+    <a href="{{ path('panel/module-manager') }}" class="btn btn-light fw-bold">Back to list</a>
+  </section>
+
+  <section class="summary-grid" id="billing-summary">
+    <article class="summary-card featured"><span>Amount due today</span><strong>{{ customer.amount_due_label }}</strong><p>{{ customer.eligibility_reason }}</p></article>
+    <article class="summary-card"><span>Next charge</span><strong>{{ customer.next_charge_label }}</strong><p>Paid module value</p></article>
+    <article class="summary-card"><span>Next renewal date</span><strong>{{ customer.membership_due_label ?: '-' }}</strong><p>{{ customer.membership_status|replace({'_':' '})|title }}</p></article>
+    <article class="summary-card"><span>Payment method</span><strong>{{ customer.payment_method }}</strong><p>{{ customer.autorenew ? 'Auto-renew enabled' : 'Manual renewal' }}</p></article>
+  </section>
+
+  <section class="action-grid">
+    <article class="revops-panel" id="charge-now">
+      <h2>Charge now</h2>
+      <p>Attempts a real gateway charge using the default tokenized card. Membership is not marked paid unless Stripe confirms.</p>
+      <form method="post" class="stack-form">
+        <input type="hidden" name="action" value="charge_now"><input type="hidden" name="customer_id" value="{{ customer.id }}">
+        <label>Amount</label><input type="number" step="0.01" min="0.01" name="amount" value="{{ customer.amount_due }}">
+        <label>Admin reason</label><input type="text" name="reason" required placeholder="Reason for charge">
+        <button class="btn btn-dark fw-bold" {{ not customer.has_card or customer.amount_due <= 0 ? 'disabled' : '' }}>Charge customer</button>
+      </form>
+    </article>
+    <article class="revops-panel" id="payment-method">
+      <h2>Add payment method</h2>
+      <p>Use a secure tokenized flow. Do not type raw card numbers or CVV in admin screens.</p>
+      <form method="post" class="stack-form">
+        <input type="hidden" name="action" value="send_payment_method_link"><input type="hidden" name="customer_id" value="{{ customer.id }}">
+        <label>Authorization / admin note</label><textarea name="reason" required placeholder="Customer authorized Ophyra to save this payment method."></textarea>
+        <button class="btn btn-outline-dark fw-bold">Send secure payment method link</button>
+      </form>
+    </article>
+  </section>
+
+  <section class="revops-panel" id="manage-modules">
+    <div class="section-head"><div><span class="revops-kicker muted">Modules</span><h2>Active modules and renewal controls</h2></div><a href="#grant-courtesy" class="btn btn-outline-dark">Grant courtesy</a></div>
+    <div class="table-responsive"><table class="revops-table"><thead><tr><th>Module</th><th>Status</th><th>Billing</th><th>Renews / Expires</th><th>Price</th><th>Statement</th><th>Action</th></tr></thead><tbody>
+      {% for module in customer.modules %}
+      <tr><td><strong>{{ module.name }}</strong><small>{{ module.slug }}</small></td><td>{{ module.status }}</td><td>{{ module.billing_status }}</td><td>{{ module.renewal_label ?: '-' }}</td><td>{{ module.monthly_price_label }}</td><td>{{ module.statement_description }}</td><td>
+        {% if module.billing_status == 'cancel_at_period_end' %}
+          <form method="post"><input type="hidden" name="action" value="reactivate_module_renewal"><input type="hidden" name="customer_id" value="{{ customer.id }}"><input type="hidden" name="module_slug" value="{{ module.slug }}"><input type="hidden" name="reason" value="Reactivated from Customer Billing Admin"><button class="btn btn-sm btn-outline-success">Reactivate</button></form>
+        {% else %}
+          <form method="post"><input type="hidden" name="action" value="cancel_module_at_period_end"><input type="hidden" name="customer_id" value="{{ customer.id }}"><input type="hidden" name="module_slug" value="{{ module.slug }}"><input type="hidden" name="reason" value="Cancelled from Customer Billing Admin"><button class="btn btn-sm btn-outline-warning">Remove next renewal</button></form>
+        {% endif %}
+      </td></tr>
+      {% else %}<tr><td colspan="7" class="text-center text-muted py-4">No modules yet.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+
+  <section class="action-grid">
+    <article class="revops-panel">
+      <h2>Add paid module</h2><p>Charges the saved method first. If payment fails, the module stays inactive.</p>
+      <form method="post" class="stack-form">
+        <input type="hidden" name="action" value="activate_paid_module"><input type="hidden" name="customer_id" value="{{ customer.id }}">
+        <label>Module</label><select name="module_slug" required>{% for module in customer.available_modules %}<option value="{{ module.slug }}">{{ module.name }} · due today {{ module.amount_due_label }} · renews {{ module.renewal_at ?: '-' }}</option>{% endfor %}</select>
+        <label>Reason</label><input type="text" name="reason" required placeholder="Customer requested module activation">
+        <button class="btn btn-dark fw-bold" {{ not customer.has_card ? 'disabled' : '' }}>Confirm and charge</button>
+      </form>
+    </article>
+    <article class="revops-panel" id="grant-courtesy">
+      <h2>Grant courtesy module</h2><p>Activates module for use, records reason, sets price to zero and shows statement line as Courtesy by Ophyra.</p>
+      <form method="post" class="stack-form">
+        <input type="hidden" name="action" value="grant_courtesy"><input type="hidden" name="customer_id" value="{{ customer.id }}">
+        <label>Module</label><select name="module_slug" required>{% for module in customer.available_modules %}<option value="{{ module.slug }}">{{ module.name }}</option>{% endfor %}</select>
+        <label>Expiration date</label><input type="date" name="expires_at" required>
+        <label>Courtesy reason</label><textarea name="reason" required></textarea>
+        <button class="btn btn-outline-success fw-bold">Grant courtesy</button>
+      </form>
+    </article>
+  </section>
+
+  <section class="action-grid" id="statements">
+    <article class="revops-panel"><h2>Statement preview</h2><div class="mini-list">{% for line in customer.statements %}<div><strong>{{ line.module }}</strong><span>{{ line.description }}</span><em>{{ line.amount_due }} · {{ line.status }}</em></div>{% else %}<p class="text-muted">No statement lines yet.</p>{% endfor %}</div></article>
+    <article class="revops-panel"><h2>Recent payments</h2><div class="mini-list">{% for payment in customer.payments %}<div><strong>{{ payment.concept }}</strong><span>{{ payment.date }} · {{ payment.reference }}</span><em>{{ payment.amount }} · {{ payment.status }}</em></div>{% else %}<p class="text-muted">No payments yet.</p>{% endfor %}</div></article>
+  </section>
+
+  <section class="revops-panel"><h2>Audit trail</h2><div class="mini-list">{% for action in customer.actions %}<div><strong>{{ action.action_type }}</strong><span>{{ action.created_at }} · {{ action.admin_name }}</span><em>{{ action.note ?: 'No note' }}</em></div>{% else %}<p class="text-muted">No admin actions yet.</p>{% endfor %}</div></section>
+{% endif %}
+</main>
+<style>
+.revops-page{--ink:#0f172a;--muted:#64748b;--line:rgba(15,23,42,.1);display:grid;gap:1.25rem}.billing-admin-hero{align-items:flex-end;background:linear-gradient(135deg,#111827,#0f766e);border-radius:28px;color:#fff;display:flex;justify-content:space-between;gap:1rem;padding:2rem}.billing-admin-hero h1{color:#fff!important;font-size:clamp(2rem,4vw,3.2rem);font-weight:950;letter-spacing:-.05em}.billing-admin-hero p{color:rgba(255,255,255,.82)}.revops-kicker{color:#99f6e4;font-size:.78rem;font-weight:950;letter-spacing:.16em;text-transform:uppercase}.revops-kicker.muted{color:#0f766e}.badge-row{display:flex;flex-wrap:wrap;gap:.5rem}.badge-row span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18);border-radius:999px;font-weight:850;padding:.4rem .7rem}.summary-grid,.action-grid{display:grid;gap:1rem;grid-template-columns:repeat(4,minmax(0,1fr))}.action-grid{grid-template-columns:1fr 1fr}.summary-card,.revops-panel{background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 18px 48px rgba(15,23,42,.08);padding:1.2rem}.summary-card.featured{background:linear-gradient(145deg,#ecfeff,#fff);border-color:rgba(20,184,166,.35)}.summary-card span{color:#64748b;font-size:.76rem;font-weight:950;letter-spacing:.08em;text-transform:uppercase}.summary-card strong{display:block;font-size:1.35rem;margin:.4rem 0}.section-head{display:flex;justify-content:space-between;gap:1rem;margin-bottom:1rem}.revops-table{min-width:920px;width:100%;border-collapse:separate;border-spacing:0}.revops-table th{background:#f8fafc;color:#475569;font-size:.73rem;font-weight:950;letter-spacing:.08em;padding:.85rem;text-transform:uppercase}.revops-table td{border-top:1px solid var(--line);padding:.9rem;vertical-align:middle}.revops-table small{color:#64748b;display:block}.stack-form{display:grid;gap:.65rem}.stack-form input,.stack-form select,.stack-form textarea{border:1px solid #dbe4ee;border-radius:14px;padding:.8rem 1rem;width:100%}.stack-form label{color:#475569;font-size:.76rem;font-weight:950;letter-spacing:.08em;text-transform:uppercase}.mini-list{display:grid;gap:.65rem}.mini-list>div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:.85rem}.mini-list span,.mini-list em{color:#64748b;display:block;font-style:normal;font-size:.9rem}@media(max-width:900px){.billing-admin-hero,.section-head{align-items:stretch;flex-direction:column}.summary-grid,.action-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}

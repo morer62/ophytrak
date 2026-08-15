@@ -1,0 +1,914 @@
+{% extends "templates/base.twig" %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<style>
+:root{
+    --store-primary:#111827;
+    --store-accent:#1f2937;
+    --store-soft:#f8fafc;
+    --store-muted:#6b7280;
+    --store-border:#e5e7eb;
+    --store-success:#16a34a;
+    --store-danger:#dc2626;
+    --store-shadow:0 18px 44px rgba(15,23,42,.08);
+}
+
+body{
+    color:#111827;
+    background:#f8fafc;
+}
+
+.order-wrap{
+    max-width:1240px;
+    margin:0 auto;
+    padding:2rem 1rem 4rem;
+}
+
+.order-header{
+    background:linear-gradient(135deg,#ffffff 0%, #f8fafc 100%);
+    border:1px solid var(--store-border);
+    border-radius:28px;
+    padding:2rem 1.5rem;
+    box-shadow:var(--store-shadow);
+    margin-bottom:1.5rem;
+}
+
+.order-title{
+    font-family:'Poppins', sans-serif;
+    font-weight:900;
+    font-size:clamp(2rem,4vw,3rem);
+    line-height:1.05;
+    color:#111827;
+    margin-bottom:.75rem;
+}
+
+.order-subtitle{
+    color:var(--store-muted);
+    line-height:1.8;
+    max-width:820px;
+    margin:0;
+}
+
+.order-shell{
+    display:grid;
+    grid-template-columns:1fr .95fr;
+    gap:1.2rem;
+}
+
+.order-card{
+    background:#fff;
+    border:1px solid var(--store-border);
+    border-radius:26px;
+    box-shadow:var(--store-shadow);
+    overflow:hidden;
+}
+
+.order-card-body{
+    padding:1.5rem;
+}
+
+.order-section-title{
+    font-size:1.35rem;
+    font-weight:900;
+    color:#111827;
+    margin-bottom:1rem;
+}
+
+.status-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.5rem;
+    border-radius:999px;
+    padding:.6rem 1rem;
+    font-size:.92rem;
+    font-weight:900;
+}
+
+.status-paid{
+    background:#ecfdf3;
+    color:#166534;
+    border:1px solid #bbf7d0;
+}
+
+.status-pending{
+    background:#fff7ed;
+    color:#9a3412;
+    border:1px solid #fed7aa;
+}
+
+.status-failed{
+    background:#fff1f2;
+    color:#be123c;
+    border:1px solid #fecdd3;
+}
+
+.status-refunded{
+    background:#f5f3ff;
+    color:#6d28d9;
+    border:1px solid #ddd6fe;
+}
+
+.info-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:1rem;
+}
+
+.info-box{
+    border:1px solid var(--store-border);
+    border-radius:18px;
+    padding:1rem;
+    background:#fcfcfd;
+}
+
+.info-label{
+    font-size:.85rem;
+    color:var(--store-muted);
+    margin-bottom:.25rem;
+}
+
+.info-value{
+    font-weight:900;
+    color:#111827;
+    word-break:break-word;
+}
+
+.order-items{
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+}
+
+.order-item{
+    display:grid;
+    grid-template-columns:80px 1fr auto;
+    gap:1rem;
+    align-items:center;
+    border:1px solid var(--store-border);
+    border-radius:18px;
+    padding:1rem;
+    background:#fcfcfd;
+}
+
+.order-item-image{
+    width:80px;
+    height:80px;
+    object-fit:cover;
+    border-radius:14px;
+    background:#f6f6f6;
+}
+
+.order-item-title{
+    font-weight:900;
+    color:#111827;
+    margin-bottom:.2rem;
+}
+
+.order-item-meta{
+    color:var(--store-muted);
+    font-size:.94rem;
+    line-height:1.6;
+}
+
+.order-item-chip{
+    display:inline-flex;
+    align-items:center;
+    padding:.38rem .7rem;
+    border-radius:999px;
+    background:#f3f4f6;
+    border:1px solid var(--store-border);
+    color:#374151;
+    font-size:.76rem;
+    font-weight:800;
+    margin:0 .35rem .35rem 0;
+}
+
+.order-item-total{
+    font-weight:900;
+    color:#111827;
+}
+
+.summary-box{
+    background:linear-gradient(135deg,#ffffff, #f8fafc);
+    border:1px solid var(--store-border);
+    border-radius:22px;
+    padding:1rem;
+    margin-bottom:1rem;
+}
+
+.summary-row{
+    display:flex;
+    justify-content:space-between;
+    gap:1rem;
+    padding:.5rem 0;
+    color:#4b5563;
+}
+
+.summary-row.discount{
+    color:#166534;
+    font-weight:800;
+}
+
+.summary-row.total{
+    border-top:1px dashed #d1d5db;
+    margin-top:.35rem;
+    padding-top:.95rem;
+    font-weight:900;
+    color:#111827;
+    font-size:1.05rem;
+}
+
+.notice-box{
+    border-radius:20px;
+    padding:1rem 1.1rem;
+    margin-bottom:1rem;
+    line-height:1.7;
+}
+
+.notice-success{
+    background:#ecfdf3;
+    border:1px solid #bbf7d0;
+    color:#166534;
+}
+
+.notice-soft{
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    color:#475569;
+}
+
+.notice-danger{
+    background:#fff1f2;
+    border:1px solid #fecdd3;
+    color:#be123c;
+}
+
+.tracking-card{
+    border:1px solid #bbf7d0;
+    border-radius:26px;
+    padding:1.1rem;
+    margin-bottom:1rem;
+    background:
+        radial-gradient(circle at top right, rgba(34,197,94,.18), transparent 34%),
+        linear-gradient(135deg,#f0fdf4,#ffffff);
+    box-shadow:0 18px 44px rgba(15,23,42,.08);
+}
+
+.tracking-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:1rem;
+    margin-bottom:.8rem;
+}
+
+.tracking-kicker{
+    color:#15803d;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    font-weight:900;
+    font-size:.78rem;
+}
+
+.tracking-status{
+    font-size:1.35rem;
+    font-weight:900;
+    color:#0f172a;
+}
+
+.tracking-dot{
+    width:54px;
+    height:54px;
+    border-radius:18px;
+    background:#16a34a;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.25rem;
+    box-shadow:0 14px 28px rgba(22,163,74,.28);
+}
+
+.tracking-map{
+    width:100%;
+    min-height:310px;
+    border:0;
+    border-radius:22px;
+    margin-top:.75rem;
+    box-shadow:inset 0 0 0 1px rgba(15,23,42,.08);
+}
+
+.tracking-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.65rem;
+    margin-top:.85rem;
+}
+
+.tracking-action{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.45rem;
+    border-radius:999px;
+    padding:.72rem 1rem;
+    font-weight:900;
+    text-decoration:none;
+    background:#0f172a;
+    color:#fff !important;
+}
+
+.tracking-action.secondary{
+    background:#fff;
+    color:#14532d !important;
+    border:1px solid #bbf7d0;
+}
+
+.tracking-empty{
+    border:1px dashed #86efac;
+    border-radius:20px;
+    padding:1rem;
+    color:#166534;
+    background:rgba(240,253,244,.72);
+}
+
+.proof-image{
+    width:100%;
+    max-height:420px;
+    object-fit:cover;
+    border-radius:18px;
+    border:1px solid var(--store-border);
+    margin-top:.75rem;
+}
+
+.payment-panel{
+    border:1px solid #dbeafe;
+    border-radius:22px;
+    padding:1rem;
+    margin-bottom:1rem;
+    background:linear-gradient(135deg,#eff6ff,#ffffff);
+}
+
+.payment-panel-title{
+    font-size:1.05rem;
+    font-weight:900;
+    color:#111827;
+    margin-bottom:.4rem;
+}
+
+.payment-card-box{
+    border:1px solid var(--store-border);
+    border-radius:16px;
+    background:#fff;
+    padding:1rem;
+    min-height:132px;
+}
+
+.payment-error{
+    color:#be123c;
+    font-weight:800;
+    margin-top:.6rem;
+}
+
+.btn-main{
+    background:#111827;
+    color:#fff !important;
+    padding:1rem 1.75rem;
+    font-size:1rem;
+    border-radius:999px;
+    text-decoration:none;
+    font-weight:900;
+    display:inline-flex;
+    gap:.55rem;
+    align-items:center;
+    justify-content:center;
+    border:none;
+    box-shadow:0 12px 28px rgba(17,24,39,.18);
+    transition:all .22s ease;
+}
+
+.btn-light{
+    padding:.95rem 1.4rem;
+    font-size:1rem;
+    border-radius:999px;
+    font-weight:800;
+    border:1.2px solid #d1d5db;
+    color:#111827 !important;
+    background:#fff;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    justify-content:center;
+}
+
+.cta-stack{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.75rem;
+}
+
+@media (max-width: 991px){
+    .order-shell{
+        grid-template-columns:1fr;
+    }
+}
+
+@media (max-width: 768px){
+    .info-grid{
+        grid-template-columns:1fr;
+    }
+
+    .order-item{
+        grid-template-columns:1fr;
+    }
+
+    .cta-stack{
+        flex-direction:column;
+    }
+
+    .btn-main,
+    .btn-light{
+        width:100%;
+        justify-content:center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+{% set storeStatusLabels = {
+    'NEW': trans('store_status.new'),
+    'CONFIRMED': trans('store_status.confirmed'),
+    'PROCESSING': trans('store_status.processing'),
+    'IN_PREPARATION': trans('store_status.in_preparation'),
+    'READY': trans('store_status.ready'),
+    'READY_FOR_DELIVERY': trans('store_status.ready_for_delivery'),
+    'OUT_FOR_DELIVERY': trans('store_status.out_for_delivery'),
+    'DELIVERY_ATTEMPTED': trans('store_status.delivery_attempted'),
+    'RETURNED_TO_BUSINESS': trans('store_status.returned_to_business'),
+    'REDELIVERY_SCHEDULED': trans('store_status.redelivery_scheduled'),
+    'DELIVERED': trans('store_status.delivered'),
+    'COMPLETED': trans('store_status.completed'),
+    'CANCELLED': trans('store_status.cancelled'),
+    'RETURN_REQUESTED': trans('store_status.return_requested'),
+    'RETURN_APPROVED': trans('store_status.return_approved'),
+    'RETURN_REJECTED': trans('store_status.return_rejected'),
+    'RETURNED': trans('store_status.returned'),
+    'CLOSED': trans('store_status.closed')
+} %}
+{% set paymentStatusLabels = {
+    'PENDING': trans('store_payment_status.pending'),
+    'PAID': trans('store_payment_status.paid'),
+    'FAILED': trans('store_payment_status.failed'),
+    'REFUNDED': trans('store_payment_status.refunded')
+} %}
+<main class="order-wrap">
+    <section class="order-header">
+        <h1 class="order-title">{{ trans('store_order_public.title') }}</h1>
+        <p class="order-subtitle">
+            {{ trans('store_order_public.subtitle') }}
+        </p>
+    </section>
+
+    <section class="order-shell">
+        <div class="order-card">
+            <div class="order-card-body">
+                <h2 class="order-section-title">{{ trans('store_order_public.order_details') }}</h2>
+
+                {% if order.payment_status == 'PAID' %}
+                    <div class="notice-box notice-success">
+                        <strong>{{ trans('store_order_public.payment_completed') }}</strong> {{ trans('store_order_public.payment_completed_body') }}
+                    </div>
+                {% endif %}
+
+                {% if sellerProfile %}
+                    <div class="notice-box notice-soft">
+                        <strong>{{ trans('store_order_public.sold_by') }} {{ sellerProfile.company_name|default('this business') }}</strong>
+                        <span class="d-block">
+                            {% if sellerProfile.city %}{{ sellerProfile.city }}{% endif %}
+                            {% if sellerProfile.state %}{% if sellerProfile.city %}, {% endif %}{{ sellerProfile.state }}{% endif %}
+                            {% if sellerProfile.business_email %}{% if sellerProfile.city or sellerProfile.state %} &middot; {% endif %}{{ sellerProfile.business_email }}{% elseif sellerProfile.email %}{% if sellerProfile.city or sellerProfile.state %} &middot; {% endif %}{{ sellerProfile.email }}{% endif %}
+                            {% if sellerProfile.phone %}{% if sellerProfile.city or sellerProfile.state or sellerProfile.business_email or sellerProfile.email %} &middot; {% endif %}{{ sellerProfile.phone }}{% endif %}
+                        </span>
+                    </div>
+                {% endif %}
+
+                <div class="info-grid mb-4">
+                    <div class="info-box">
+                        <div class="info-label">{{ trans('store_order_public.order_id') }}</div>
+                        <div class="info-value">#{{ order.id }}</div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-label">{{ trans('store_order_public.payment_status') }}</div>
+                        <div class="info-value">
+                            {% if order.payment_status == 'PAID' %}
+                                <span class="status-badge status-paid"><i class="fa-solid fa-circle-check"></i> {{ paymentStatusLabels[order.payment_status]|default(order.payment_status) }}</span>
+                            {% elseif order.payment_status == 'FAILED' %}
+                                <span class="status-badge status-failed"><i class="fa-solid fa-circle-xmark"></i> {{ paymentStatusLabels[order.payment_status]|default(order.payment_status) }}</span>
+                            {% elseif order.payment_status == 'REFUNDED' %}
+                                <span class="status-badge status-refunded"><i class="fa-solid fa-rotate-left"></i> {{ paymentStatusLabels[order.payment_status]|default(order.payment_status) }}</span>
+                            {% else %}
+                                <span class="status-badge status-pending"><i class="fa-solid fa-clock"></i> {{ paymentStatusLabels[order.payment_status]|default(order.payment_status) }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-label">{{ trans('store_order_public.preparation_responsible') }}</div>
+                        <div class="info-value">
+                            {% if preparationResponsible %}
+                                {{ (preparationResponsible.name ~ ' ' ~ preparationResponsible.lastname)|trim }}
+                                <span class="status-badge status-paid ms-1"><i class="fa-solid fa-circle-check"></i> {{ trans('store_order_public.assigned') }}</span>
+                            {% else %}
+                                <span class="status-badge status-pending"><i class="fa-solid fa-clock"></i> {{ trans('store_order_public.not_assigned') }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-label">{{ trans('store_order_public.delivery_responsible') }}</div>
+                        <div class="info-value">
+                            {% if deliveryResponsible %}
+                                {{ (deliveryResponsible.name ~ ' ' ~ deliveryResponsible.lastname)|trim }}
+                                <span class="status-badge status-paid ms-1"><i class="fa-solid fa-circle-check"></i> {{ trans('store_order_public.assigned') }}</span>
+                            {% else %}
+                                <span class="status-badge status-pending"><i class="fa-solid fa-clock"></i> {{ trans('store_order_public.not_assigned') }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-label">{{ trans('store_order_public.customer_name') }}</div>
+                        <div class="info-value">{{ order.guest_name ?: '-' }}</div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-label">{{ trans('ui.email') }}</div>
+                        <div class="info-value">{{ order.guest_email ?: '-' }}</div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-label">{{ trans('ui.phone') }}</div>
+                        <div class="info-value">{{ order.guest_phone ?: '-' }}</div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-label">{{ trans('store_order_public.area_city') }}</div>
+                        <div class="info-value">{{ order.city ?: '-' }}</div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-label">{{ trans('store_order_public.billing_address') }}</div>
+                        <div class="info-value">
+                            {% if order.billing_address_1 %}
+                                {{ order.billing_address_1 }}
+                                {% if order.billing_address_2 %}<br>{{ order.billing_address_2 }}{% endif %}
+                                {% if order.billing_city or order.billing_state or order.billing_zip %}
+                                    <br>{{ order.billing_city }}{% if order.billing_city and order.billing_state %}, {% endif %}{{ order.billing_state }} {{ order.billing_zip }}
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-label">{{ trans('store_order_public.shipping_address') }}</div>
+                        <div class="info-value">
+                            {% if order.shipping_address_1 %}
+                                {{ order.shipping_address_1 }}
+                                {% if order.shipping_address_2 %}<br>{{ order.shipping_address_2 }}{% endif %}
+                                {% if order.shipping_city or order.shipping_state or order.shipping_zip %}
+                                    <br>{{ order.shipping_city }}{% if order.shipping_city and order.shipping_state %}, {% endif %}{{ order.shipping_state }} {{ order.shipping_zip }}
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <h2 class="order-section-title">{{ trans('store_order_public.items_purchased') }}</h2>
+
+                <div class="order-items">
+                    {% for item in order.items %}
+                        <div class="order-item">
+                            {% if item.main_image %}
+                                <img src="{{ item.main_image }}" alt="{{ item.product_name_snapshot }}" class="order-item-image">
+                            {% else %}
+                                <div class="order-item-image d-flex align-items-center justify-content-center text-muted">{{ trans('store_order_public.no_image') }}</div>
+                            {% endif %}
+
+                            <div>
+                                <div class="order-item-title">{{ item.product_name_snapshot }}</div>
+
+                                <div class="order-item-meta">
+                                    {% if item.variation_name_snapshot %}
+                                        <div><strong>{{ item.variation_name_snapshot }}</strong></div>
+                                    {% endif %}
+
+                                    {% if item.variation_options_snapshot %}
+                                        {% set variation_options = item.variation_options_snapshot|json_decode %}
+                                        {% if variation_options %}
+                                            <div class="mt-1">
+                                                {% for opt in variation_options %}
+                                                    <span class="order-item-chip">{{ opt.attribute_name }}: {{ opt.attribute_value }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    <div class="mt-1">
+                                        {{ item.quantity }} x ${{ item.unit_price|number_format(2, '.', ',') }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="order-item-total">
+                                ${{ item.line_total|number_format(2, '.', ',') }}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="notice-box notice-soft">
+                            {{ trans('store_order_public.no_items') }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="order-card">
+            <div class="order-card-body">
+                <h2 class="order-section-title">{{ trans('store_order_public.summary') }}</h2>
+
+                <div class="summary-box">
+                    <div class="summary-row">
+                        <span>{{ trans('store_order_public.items') }}</span>
+                        <strong>{{ order.items_count }}</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>{{ trans('store_order_public.quantity_total') }}</span>
+                        <strong>{{ order.meals_count }}</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>{{ trans('store_order_public.pricing_mode') }}</span>
+                        <strong>{{ order.pricing_mode }}</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>{{ trans('store_order_public.subtotal') }}</span>
+                        <strong>${{ order.subtotal|number_format(2, '.', ',') }}</strong>
+                    </div>
+                    {% if order.discount > 0 %}
+                        <div class="summary-row discount">
+                            <span>{{ trans('store_order_public.discount') }}</span>
+                            <strong>-${{ order.discount|number_format(2, '.', ',') }}</strong>
+                        </div>
+                    {% endif %}
+                    <div class="summary-row total">
+                        <span>{{ trans('ui.total') }}</span>
+                        <strong>${{ order.total|number_format(2, '.', ',') }}</strong>
+                    </div>
+                </div>
+
+                <div class="tracking-card">
+                    <div class="tracking-head">
+                        <div>
+                            <div class="tracking-kicker">{{ trans('store_order_public.live_delivery_tracking') }}</div>
+                            <div class="tracking-status">{{ storeStatusLabels[order.status]|default(order.status|replace({'_':' '})) }}</div>
+                            <div class="text-muted small">Order #{{ order.id }}</div>
+                        </div>
+                        <div class="tracking-dot"><i class="fa-solid fa-location-dot"></i></div>
+                    </div>
+                    {% if latestLocation %}
+                        <span class="d-block small mt-2">{{ trans('store_order_public.updated') }} {{ latestLocation.recorded_at|date('M j, Y g:i A') }}</span>
+                        <iframe class="tracking-map" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q={{ latestLocation.latitude }},{{ latestLocation.longitude }}&z=15&output=embed"></iframe>
+                        <div class="tracking-actions">
+                            <a class="tracking-action" target="_blank" href="https://www.google.com/maps?q={{ latestLocation.latitude }},{{ latestLocation.longitude }}">
+                                <i class="fa-solid fa-route"></i> {{ trans('store_order_public.open_in_maps') }}
+                            </a>
+                            {% if workflow and workflow.delivery_photo_url %}
+                                <a class="tracking-action secondary" target="_blank" href="{{ workflow.delivery_photo_url }}">
+                                    <i class="fa-solid fa-camera"></i> {{ trans('store_order_public.view_proof') }}
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="tracking-empty">{{ trans('store_order_public.tracking_starts') }}</div>
+                    {% endif %}
+                    {% if workflow and workflow.delivery_photo_url %}
+                        <div class="mt-3">
+                            <strong>{{ trans('store_order_public.delivery_update') }}</strong>
+                            {% if workflow.delivery_notes %}
+                                <p class="mb-2">{{ workflow.delivery_notes|nl2br }}</p>
+                            {% endif %}
+                            <a target="_blank" href="{{ workflow.delivery_photo_url }}">{{ trans('store_order_public.view_delivery_proof') }}</a>
+                            <img src="{{ workflow.delivery_photo_url }}" alt="Delivery proof" class="proof-image">
+                        </div>
+                    {% endif %}
+                    {% if order.return_notes or order.return_admin_message %}
+                        <div class="tracking-empty mt-3">
+                            <strong>{{ trans('store_order_public.return_review') }}</strong>
+                            {% if order.return_notes %}
+                                <div class="mt-2">{{ trans('store_returns.customer_note') }}: {{ order.return_notes }}</div>
+                            {% endif %}
+                            {% if order.return_admin_message %}
+                                <div class="mt-2">{{ trans('store_returns.business_response') }}: {{ order.return_admin_message }}</div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if paymentError is defined and paymentError %}
+                    <div class="notice-box notice-danger">
+                        <strong>{{ trans('store_order_public.payment_issue') }}</strong> {{ paymentError }}
+                    </div>
+                {% endif %}
+
+                {% if order.payment_status != 'PAID' %}
+                    <div class="payment-panel">
+                        <div class="payment-panel-title">{{ trans('store_order_public.pay_order') }}</div>
+                        <p class="text-muted mb-3">
+                            {{ trans('store_order_public.paid_in_full') }}
+                            <strong>{{ currencyCode|default('USD') }} {{ order.total|number_format(2, '.', ',') }}</strong>
+                        </p>
+
+                        {% if paymentReady %}
+                            <form id="store-order-payment-form" method="post">
+                                <input type="hidden" name="action" value="pay_store_order">
+                                <input type="hidden" name="token" value="{{ token|default('') }}">
+                                <input type="hidden" name="customer_token" id="store-payment-token">
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">{{ trans('ui.name') }}</label>
+                                    <input type="text" name="customer_name" class="form-control" value="{{ order.guest_name|default('') }}">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Email</label>
+                                    <input type="email" name="customer_email" id="store-payment-email" class="form-control" value="{{ order.guest_email|default('') }}" required>
+                                </div>
+
+                                <div class="mb-3" id="store-card-section" {% if activeProviderType == 'paypal' %}style="display:none;"{% endif %}>
+                                    <label class="form-label fw-bold">{{ trans('store_order_public.payment_information') }}</label>
+                                    <div id="store-payment-card-container" class="payment-card-box"></div>
+                                    <div id="store-payment-errors" class="payment-error"></div>
+                                </div>
+
+                                {% if activeProviderType == 'paypal' and paypalClientId %}
+                                    <div class="mb-3" id="store-paypal-button-container"></div>
+                                {% endif %}
+
+                                <button type="submit" id="store-pay-button" class="btn-main w-100" {% if activeProviderType == 'paypal' %}style="display:none;"{% endif %}>
+                                    <i class="fa-solid fa-credit-card"></i> {{ trans('store_order_public.pay') }} {{ currencyCode|default('USD') }} {{ order.total|number_format(2, '.', ',') }}
+                                </button>
+                                <div id="store-payment-loading" class="text-muted text-center mt-3" style="display:none;">{{ trans('store_order_public.processing_payment') }}</div>
+                            </form>
+                        {% else %}
+                            <div class="notice-box notice-danger mb-0">
+                                <strong>{{ trans('store_order_public.payment_not_available') }}</strong>
+                                {{ trans('store_order_public.payment_not_available_body') }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {% if existingUser %}
+                    <div class="notice-box notice-success">
+                        <strong>{{ trans('store_order_public.account_exists') }}</strong>
+                        {{ trans('store_order_public.account_exists_body', {'email': order.guest_email}) }}
+                    </div>
+                {% else %}
+                    <div class="notice-box notice-soft">
+                        {{ trans('store_order_public.future_info') }}
+                    </div>
+                {% endif %}
+
+                <div class="cta-stack">
+                    {% if existingUser %}
+                        <a href="{{ path('login') }}" class="btn-main">
+                            <i class="fa-solid fa-right-to-bracket"></i> {{ trans('store_order_public.login') }}
+                        </a>
+                    {% endif %}
+
+                    <a href="{{ path('/store') }}" class="btn-light">
+                        <i class="fa-solid fa-store"></i> {{ trans('store_order_public.continue_shopping') }}
+                    </a>
+
+                    <a href="{{ path('/') }}" class="btn-light">
+                        <i class="fa-solid fa-house"></i> {{ trans('store_order_public.back_home') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+{% if order.payment_status != 'PAID' and paymentReady %}
+    {% if activeProviderType == 'stripe' and stripePublishableKey %}
+        <script src="https://js.stripe.com/v3/"></script>
+    {% elseif activeProviderType == 'square' %}
+        <script src="https://{{ squareEnvironment == 'production' ? 'web' : 'sandbox.web' }}.squarecdn.com/v1/square.js"></script>
+    {% elseif activeProviderType == 'paypal' and paypalClientId %}
+        <script src="https://www.paypal.com/sdk/js?client-id={{ paypalClientId|e('html_attr') }}&currency={{ currencyCode|default('USD') }}&intent=capture"></script>
+    {% endif %}
+    <script>
+    (async function () {
+        const form = document.getElementById('store-order-payment-form');
+        const tokenInput = document.getElementById('store-payment-token');
+        const errorBox = document.getElementById('store-payment-errors');
+        const payButton = document.getElementById('store-pay-button');
+        const loading = document.getElementById('store-payment-loading');
+
+        if (!form || !tokenInput) return;
+
+        function setLoading(isLoading) {
+            if (payButton) payButton.disabled = isLoading;
+            if (loading) loading.style.display = isLoading ? 'block' : 'none';
+        }
+
+        {% if activeProviderType == 'paypal' and paypalClientId %}
+            paypal.Buttons({
+                createOrder: function () {
+                    const body = new URLSearchParams(new FormData(form));
+                    body.set('action', 'create_paypal_order');
+                    return fetch(window.location.href, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                        body: body.toString()
+                    })
+                    .then(function (response) { return response.json(); })
+                    .then(function (data) {
+                        if (data.success && data.orderId) return data.orderId;
+                        throw new Error(data.error || 'Could not create PayPal order.');
+                    });
+                },
+                onApprove: function (data) {
+                    const email = document.getElementById('store-payment-email');
+                    if (!email || !email.value.trim()) {
+                        if (errorBox) errorBox.textContent = 'Please enter your email before paying.';
+                        return;
+                    }
+                    tokenInput.value = data.orderID;
+                    setLoading(true);
+                    form.submit();
+                },
+                onError: function (error) {
+                    if (errorBox) errorBox.textContent = error.message || 'Payment failed.';
+                    setLoading(false);
+                }
+            }).render('#store-paypal-button-container');
+            return;
+        {% endif %}
+
+        try {
+            {% if activeProviderType == 'stripe' and stripePublishableKey %}
+                const stripe = Stripe('{{ stripePublishableKey|e('js') }}');
+                const card = stripe.elements().create('card', {style: {base: {fontSize: '16px'}}});
+                card.mount('#store-payment-card-container');
+                form.addEventListener('submit', async function (event) {
+                    event.preventDefault();
+                    setLoading(true);
+                    if (errorBox) errorBox.textContent = '';
+                    const result = await stripe.createToken(card);
+                    if (result.error) {
+                        if (errorBox) errorBox.textContent = result.error.message || 'Payment failed.';
+                        setLoading(false);
+                        return;
+                    }
+                    tokenInput.value = result.token.id;
+                    form.submit();
+                });
+                return;
+            {% endif %}
+
+            {% if activeProviderType == 'square' %}
+                const payments = Square.payments('{{ squareApplicationId|e('js') }}', '{{ squareLocationId|e('js') }}');
+                const card = await payments.card();
+                await card.attach('#store-payment-card-container');
+                form.addEventListener('submit', async function (event) {
+                    event.preventDefault();
+                    setLoading(true);
+                    if (errorBox) errorBox.textContent = '';
+                    const result = await card.tokenize();
+                    if (result.status === 'OK') {
+                        tokenInput.value = result.token;
+                        form.submit();
+                        return;
+                    }
+                    if (errorBox) errorBox.textContent = result.errors && result.errors[0] ? result.errors[0].detail : 'Payment failed.';
+                    setLoading(false);
+                });
+            {% endif %}
+        } catch (error) {
+            if (errorBox) errorBox.textContent = 'Unable to load the payment form.';
+            setLoading(false);
+        }
+    })();
+    </script>
+{% endif %}
+{% endblock %}

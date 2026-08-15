@@ -1,0 +1,9 @@
+{% set data = block.data|default({}) %}
+<section class="cms-block cms-block-body">
+  {% if block.title|default('') %}
+    <h2>{{ block.title }}</h2>
+  {% endif %}
+  {% if data.body|default('') %}
+    <div>{{ data.body|raw }}</div>
+  {% endif %}
+</section>

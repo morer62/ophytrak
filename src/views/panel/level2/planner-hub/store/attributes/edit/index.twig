@@ -1,0 +1,53 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h1 class="h3 mb-1">{{ trans('store_attributes_form.edit_title') }}</h1>
+            <p class="text-muted mb-0">{{ trans('store_attributes_form.edit_subtitle') }}</p>
+        </div>
+        <a href="{{ path('panel/planner-hub/store/attributes/home') }}" class="btn btn-outline-secondary">
+            &larr; {{ trans('store_attributes_form.back_to_attributes') }}
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <form method="post">
+                <input type="hidden" name="id" value="{{ attribute.id }}">
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ trans('store_attributes_form.attribute_name') }}</label>
+                        <input
+                            type="text"
+                            name="name"
+                            class="form-control"
+                            value="{{ attribute.name }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ trans('ui.status') }}</label>
+                        <select name="status" class="form-select">
+                            <option value="ACTIVE" {% if attribute.status == 'ACTIVE' %}selected{% endif %}>{{ trans('ui.active') }}</option>
+                            <option value="INACTIVE" {% if attribute.status == 'INACTIVE' %}selected{% endif %}>{{ trans('ui.inactive') }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="submit" class="btn btn-success">
+                        {{ trans('store_attributes_form.update_attribute') }}
+                    </button>
+                    <a href="{{ path('panel/planner-hub/store/attributes/home') }}" class="btn btn-outline-secondary">
+                        {{ trans('ui.cancel') }}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

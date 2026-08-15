@@ -1,0 +1,189 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+
+	<h1 class="h3 mb-4">💰 {{ trans('planner_hub.pending_hours_to_pay') }}</h1>
+	{{ macros.breadcrumb2() }}
+
+	<section class="card">
+		<div class="card-body">
+
+			<div class="row mb-4">
+				<div class="col-md-6">
+					<label class="form-label">➕ {{ trans('planner_hub.add_manual_hours_user') }}</label>
+					<div class="input-group">
+						<select id="manualUserSelect" class="form-select">
+							<option value="">{{ trans('planner_hub.select_user') }}</option>
+							{% for employee in allEmployees %}
+								<option value="{{ employee.id }}" data-email="{{ employee.email }}">
+									{{ employee.email }}
+								</option>
+							{% endfor %}
+						</select>
+						<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addHoursModal" id="openAddHoursBtn" disabled>
+							{{ trans('planner_hub.add_hours') }}
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<form method="get" class="row mb-4" id="filter-form">
+				<div class="col-md-3">
+					<label class="form-label">{{ trans('planner_hub.employee') }}</label>
+					<select name="user_id" class="form-select">
+						<option value="">{{ trans('planner_hub.all_employees') }}</option>
+						{% for employee in allEmployees %}
+							<option value="{{ employee.id }}" {{ employee.id == employeeId ? 'selected' : '' }}>
+								{{ employee.email }}
+							</option>
+						{% endfor %}
+					</select>
+				</div>
+
+				<div class="col-md-3">
+					<label class="form-label">{{ trans('planner_hub.from') }}</label>
+					<input type="date" name="from" class="form-control" value="{{ from }}">
+				</div>
+
+				<div class="col-md-3">
+					<label class="form-label">{{ trans('planner_hub.to') }}</label>
+					<input type="date" name="to" class="form-control" value="{{ to }}">
+				</div>
+
+				<div class="col-md-3 d-flex align-items-end">
+					<button class="btn btn-primary w-100">{{ trans('planner_hub.filter') }}</button>
+					<button type="button" onclick="resetAndSubmit()" class="btn btn-outline-secondary ms-2">
+						<i data-feather="rotate-ccw"></i>
+					</button>
+				</div>
+			</form>
+
+			<div class="table-responsive">
+				<table class="table table-bordered text-center align-middle">
+					<thead>
+						<tr>
+							<th>{{ trans('planner_hub.employee') }}</th>
+							<th>{{ trans('planner_hub.total_hours') }}</th>
+							<th>{{ trans('planner_hub.details') }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for item in records %}
+							<tr>
+								<td style="min-width: 200px;">{{ item.email }}</td>
+								<td style="min-width: 200px;">
+									{% if item.total_hours > 0 %}
+										{{ item.total_hours }}
+									{% else %}
+										<span class="text-muted">0</span>
+									{% endif %}
+								</td>
+								<td style="min-width: 200px;">
+									<a href="{{ path('panel/planner-hub/management/payroll/pending/details', { id: item.user_id }) }}" class="btn btn-outline-primary btn-sm">
+										<i data-feather="eye"></i>
+										{{ trans('planner_hub.view') }}
+									</a>
+								</td>
+							</tr>
+						{% else %}
+							<tr>
+								<td colspan="3" class="text-muted">{{ trans('planner_hub.no_records_found') }}</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</section>
+
+	<div class="modal fade" id="addHoursModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="addHoursModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<form method="post">
+					<input type="hidden" name="action" value="addManualHour">
+					<input type="hidden" name="user_id" id="modalUserId">
+					<input type="hidden" name="manual_user_timezone" id="manualUserTimezone">
+					<div class="modal-header">
+						<h5 class="modal-title" id="addHoursModalLabel">➕ {{ trans('planner_hub.add_manual_hours') }}</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body">
+						<div class="mb-3">
+							<label class="form-label">{{ trans('planner_hub.user') }}</label>
+							<input type="text" id="modalUserEmail" class="form-control" readonly>
+						</div>
+						<div class="mb-3">
+							<label for="manualStartTime" class="form-label">{{ trans('planner_hub.start_time') }} <span class="text-danger">*</span></label>
+							<input type="datetime-local" id="manualStartTime" name="manual_start_time" class="form-control" required>
+						</div>
+						<div class="mb-3">
+							<label for="manualEndTime" class="form-label">{{ trans('planner_hub.end_time') }} <span class="text-danger">*</span></label>
+							<input type="datetime-local" id="manualEndTime" name="manual_end_time" class="form-control" required>
+						</div>
+						<div class="mb-3">
+							<label for="manualNotes" class="form-label">{{ trans('planner_hub.comments_optional') }}</label>
+							<textarea id="manualNotes" name="manual_notes" class="form-control" rows="3" placeholder="{{ trans('planner_hub.add_short_description') }}"></textarea>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="submit" class="btn btn-primary">💾 {{ trans('planner_hub.save_hours') }}</button>
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans('planner_hub.cancel') }}</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+{% endblock %}
+
+{% block scripts %}
+	<script>
+		function resetAndSubmit() {
+			window.location.href = window.location.pathname
+		}
+
+		document.addEventListener('DOMContentLoaded', function () {
+			const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+			document.getElementById("manualUserTimezone").value = timezone;
+
+			const userSelect = document.getElementById("manualUserSelect");
+			const openBtn = document.getElementById("openAddHoursBtn");
+			const addHoursModal = document.getElementById("addHoursModal");
+			const modalUserId = document.getElementById("modalUserId");
+			const modalUserEmail = document.getElementById("modalUserEmail");
+
+			userSelect.addEventListener('change', function() {
+				if (this.value) {
+					openBtn.disabled = false;
+					const selectedOption = this.options[this.selectedIndex];
+					modalUserId.value = this.value;
+					modalUserEmail.value = selectedOption.dataset.email;
+				} else {
+					openBtn.disabled = true;
+				}
+			});
+
+			addHoursModal.addEventListener('show.bs.modal', function () {
+				const startInput = document.getElementById('manualStartTime');
+				const endInput = document.getElementById('manualEndTime');
+				const now = new Date();
+				if (startInput && !startInput.value) {
+					startInput.value = formatDateTimeLocal(now);
+				}
+				if (endInput && !endInput.value) {
+					const later = new Date(now.getTime() + 60 * 60 * 1000);
+					endInput.value = formatDateTimeLocal(later);
+				}
+			});
+
+			function formatDateTimeLocal(date) {
+				const year = date.getFullYear();
+				const month = String(date.getMonth() + 1).padStart(2, '0');
+				const day = String(date.getDate()).padStart(2, '0');
+				const hours = String(date.getHours()).padStart(2, '0');
+				const minutes = String(date.getMinutes()).padStart(2, '0');
+				return `${year}-${month}-${day}T${hours}:${minutes}`;
+			}
+		});
+	</script>
+{% endblock %}

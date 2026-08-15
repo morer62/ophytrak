@@ -1,0 +1,85 @@
+{% extends 'templates/base.twig' %}
+
+{% block styles %}
+<style>
+    .success-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 2rem;
+    }
+    .success-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        text-align: center;
+    }
+    .success-icon {
+        font-size: 4rem;
+        color: #28a745;
+        margin-bottom: 1rem;
+    }
+    .success-title {
+        color: #28a745;
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    .success-message {
+        color: #6c757d;
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+    }
+    .suborder-badge {
+        background: linear-gradient(45deg, #007bff, #6610f2);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+    .btn-primary {
+        background: linear-gradient(45deg, #007bff, #6610f2);
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        color: white;
+        text-decoration: none;
+        display: inline-block;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="success-container">
+    <div class="success-card">
+        <div class="success-icon">✅</div>
+        <div class="suborder-badge">📋 {{ trans('planner_hub.suborder_payment') }}</div>
+        <h1 class="success-title">{{ trans('planner_hub.payment_successful') }}</h1>
+        <p class="success-message">
+            {{ trans('planner_hub.payment_processed_successfully_suborder', {'suborder_id': suborder.id}) }}
+        </p>
+        
+        <div class="alert alert-info">
+            <h5>📋 {{ trans('planner_hub.payment_details') }}</h5>
+            <p><strong>{{ trans('planner_hub.parent_order_label') }}</strong> VNV-341{{ parentOrder.id }}</p>
+            <p><strong>{{ trans('planner_hub.suborder_id_label') }}</strong> #{{ suborder.id }}</p>
+            <p><strong>{{ trans('planner_hub.status') }}:</strong> {{ trans('planner_hub.payment_completed') }}</p>
+        </div>
+        
+        <div class="mt-4">
+            <a href="{{ path('order-access/suborder?token=' ~ token) }}" class="btn-primary">
+                {{ trans('planner_hub.back_to_suborder') }}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

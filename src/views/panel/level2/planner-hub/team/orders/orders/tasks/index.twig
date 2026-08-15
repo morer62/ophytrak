@@ -1,0 +1,324 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+{% if suborder_id %}
+<h1 class="h3 mb-4">🧠 {{ trans('planner_hub.task_assignment_for_suborder') }} #{{ suborder_id }}</h1>
+{% else %}
+<h1 class="h3 mb-4">🧠 {{ trans('planner_hub.task_assignment') }} #{{ order_id }}</h1>
+{% endif %}
+{{ macros.breadcrumb2() }}
+
+{% for service in services %}
+    {% set hasAssignedTasks = false %}
+    {% for task in service.tasks %}
+        {% if task.assigned_id_user %}
+            {% set hasAssignedTasks = true %}
+        {% endif %}
+    {% endfor %}
+    
+    {% if hasAssignedTasks %}
+    <div class="card mb-4">
+        <div class="card-header fw-bold">
+            {% if service.source == "suborder" %}
+                <span class="badge bg-info me-2">{{ trans('planner_hub.sub_order') }} #{{ service.suborder_id }}</span>
+            {% else %}
+                <span class="badge bg-primary me-2">{{ trans('planner_hub.main_order') }}</span>
+            {% endif %}
+            {{ service.name }}
+        </div>
+        
+    <div class="px-3 py-2 text-danger fw-bold" style="font-size: 0.95rem;">
+        ⏱️ {{ trans('planner_hub.schedule') }} 
+        {{ trans('planner_hub.install') }}  | 
+        {{ trans('planner_hub.execution') }}  | 
+        {{ trans('planner_hub.breakdown') }} ({{ trans('planner_hub.verify_pdf_details')|replace({'PDF': '<a href="' ~ path('panel/planner-hub/team/orders/orders/print/team-assignment') ~ '?id=' ~ order_id ~ '">PDF</a>'})|raw }})
+    </div>
+ 
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped" style="min-width: 768px;">
+                    <thead>
+                        <tr>
+                            <th>{{ trans('planner_hub.task') }}</th>
+                            <th>{{ trans('planner_hub.assigned_to') }}</th>
+                            <th>{{ trans('planner_hub.status') }}</th>
+                            <th>{{ trans('planner_hub.photos') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in service.tasks %}
+                            {% if task.assigned_id_user %}
+                                <tr>
+                                    <td>{{ task.task_name }}</td>
+                                    <td>{{ task.assigned_user_name }}</td>
+                                    <td>
+                                        <form method="post" style="display: inline;">
+                                            <input type="hidden" name="form_type" value="toggle_done">
+                                            <input type="hidden" name="order_id" value="{{ order_id }}">
+                                            <input type="hidden" name="task_id" value="{{ task.id_task }}">
+                                            <button type="submit" class="btn btn-sm {{ task.is_done ? 'btn-success' : 'btn-warning' }}">
+                                                {{ task.is_done ? '✅ ' ~ trans('planner_hub.done') : '➖ ' ~ trans('planner_hub.pending') }}
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#photoModal{{ task.id_task }}">
+                                            📷 {{ trans('planner_hub.photos') }} 
+                                            {% if task.photos|length > 0 %}
+                                                <span class="badge bg-light text-dark">{{ task.photos|length }}</span>
+                                            {% endif %}
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endfor %}
+
+<h1 class="h3 mt-5">📝 {{ trans('planner_hub.additional_manual_tasks') }}</h1>
+<div class="table-responsive">
+    <table class="table table-bordered" style="min-width: 768px;">
+        <thead class="table-dark">
+            <tr>
+                <th>{{ trans('planner_hub.task_description') }}</th>
+                <th>{{ trans('planner_hub.assigned_member') }}</th>
+                <th>{{ trans('planner_hub.status') }}</th>
+                <th>{{ trans('planner_hub.photos') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in manualTasks %}
+                {% if task.assigned_id_user %}
+                    <tr>
+                        <td>{{ task.task_description }}</td>
+                        <td>
+                            {% set assigned = members | filter(m => m.id == task.assigned_id_user) | first %}
+                            {{ assigned ? (assigned.name ~ ' ' ~ assigned.lastname) : '—' }}
+                        </td>
+                        <td>
+                            <form method="post" style="display: inline;">
+                                <input type="hidden" name="form_type" value="toggle_done">
+                                <input type="hidden" name="order_id" value="{{ order_id }}">
+                                <input type="hidden" name="task_id" value="{{ task.id_task }}">
+                                <button type="submit" class="btn btn-sm {{ task.is_done ? 'btn-success' : 'btn-warning' }}">
+                                    {{ task.is_done ? '✅ ' ~ trans('planner_hub.done') : '➖ ' ~ trans('planner_hub.pending') }}
+                                </button>
+                            </form>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#photoModal{{ task.id_task }}">
+                                📷 {{ trans('planner_hub.photos') }} 
+                                {% if task.photos|length > 0 %}
+                                    <span class="badge bg-light text-dark">{{ task.photos|length }}</span>
+                                {% endif %}
+                            </button>
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% for service in services %}
+    {% for task in service.tasks %}
+        {% if task.assigned_id_user and task.id_task %}
+        <div class="modal fade" id="photoModal{{ task.id_task }}" tabindex="-1" aria-labelledby="photoModalLabel{{ task.id_task }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="photoModalLabel{{ task.id_task }}">📷 {{ trans('planner_hub.photos_title') }} - {{ task.task_name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" enctype="multipart/form-data" id="uploadForm{{ task.id_task }}" class="mb-4">
+                            <input type="hidden" name="form_type" value="upload_photo">
+                            <input type="hidden" name="task_id" value="{{ task.id_task }}">
+                            <div class="input-group">
+                                <input type="file" name="photos[]" accept="image/*" class="form-control" multiple required>
+                                <button type="submit" class="btn btn-primary">{{ trans('planner_hub.upload_photos') }}</button>
+                            </div>
+                            <small class="text-muted">{{ trans('planner_hub.accepted_formats') }}</small>
+                        </form>
+
+                        <div id="photosContainer{{ task.id_task }}">
+                            {% if task.photos|length > 0 %}
+                                <div class="row g-3">
+                                    {% for photo in task.photos %}
+                                        <div class="col-md-4">
+                                            <div class="card">
+                                                <img src="{{ photo.photo_url }}" class="card-img-top" alt="Task photo" style="height: 200px; object-fit: cover; cursor: pointer;" onclick="window.open('{{ photo.photo_url }}', '_blank')">
+                                                <div class="card-body p-2">
+                                                    <small class="text-muted d-block">{{ photo.uploaded_at|date('M d, Y H:i') }}</small>
+                                                <form method="post" style="display: inline;" onsubmit="return confirm('{{ trans('planner_hub.confirm_delete_photo')|e('js') }}');">
+                                                    <input type="hidden" name="form_type" value="delete_photo">
+                                                    <input type="hidden" name="photo_id" value="{{ photo.id }}">
+                                                    <button type="submit" class="btn btn-sm btn-danger mt-2">{{ trans('planner_hub.delete') }}</button>
+                                                </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center text-muted py-5">
+                                    <p>{{ trans('planner_hub.no_photos_uploaded_yet') }}</p>
+                                    <p>{{ trans('planner_hub.upload_first_photo') }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans('planner_hub.close') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+
+{% for task in manualTasks %}
+    {% if task.assigned_id_user and task.id_task %}
+    <div class="modal fade" id="photoModal{{ task.id_task }}" tabindex="-1" aria-labelledby="photoModalLabel{{ task.id_task }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="photoModalLabel{{ task.id_task }}">📷 {{ trans('planner_hub.photos_title') }} - {{ task.task_description }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" enctype="multipart/form-data" id="uploadForm{{ task.id_task }}" class="mb-4">
+                        <input type="hidden" name="form_type" value="upload_photo">
+                        <input type="hidden" name="task_id" value="{{ task.id_task }}">
+                        <div class="input-group">
+                            <input type="file" name="photos[]" accept="image/*" class="form-control" multiple required>
+                            <button type="submit" class="btn btn-primary">{{ trans('planner_hub.upload_photos') }}</button>
+                        </div>
+                        <small class="text-muted">{{ trans('planner_hub.accepted_formats') }}</small>
+                    </form>
+
+                    <div id="photosContainer{{ task.id_task }}">
+                        {% if task.photos|length > 0 %}
+                            <div class="row g-3">
+                                {% for photo in task.photos %}
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <img src="{{ photo.photo_url }}" class="card-img-top" alt="Task photo" style="height: 200px; object-fit: cover; cursor: pointer;" onclick="window.open('{{ photo.photo_url }}', '_blank')">
+                                            <div class="card-body p-2">
+                                                <small class="text-muted d-block">{{ photo.uploaded_at|date('M d, Y H:i') }}</small>
+                                                <form method="post" style="display: inline;" onsubmit="return confirm('{{ trans('planner_hub.confirm_delete_photo')|e('js') }}');">
+                                                    <input type="hidden" name="form_type" value="delete_photo">
+                                                    <input type="hidden" name="photo_id" value="{{ photo.id }}">
+                                                    <button type="submit" class="btn btn-sm btn-danger mt-2">{{ trans('planner_hub.delete') }}</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center text-muted py-5">
+                                <p>{{ trans('planner_hub.no_photos_uploaded_yet') }}</p>
+                                <p>{{ trans('planner_hub.upload_first_photo') }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans('planner_hub.close') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endfor %}
+
+<div class="modal fade" id="uploadingPhotosModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
+            <div class="modal-body text-center py-5 px-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="mb-4 position-relative" style="display: inline-block;">
+                    <div class="spinner-border text-white" role="status" style="width: 4rem; height: 4rem; border-width: 4px;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="position-absolute top-50 start-50 translate-middle" style="margin-top: -2px;">
+                        <i class="bi bi-camera-fill text-white" style="font-size: 1.5rem;"></i>
+                    </div>
+                </div>
+                <h5 class="fw-bold text-white mb-2" style="font-size: 1.25rem;">Subiendo fotos...</h5>
+                <p class="text-white mb-0 opacity-90" style="font-size: 0.9rem;">Por favor espera, esto puede tomar unos segundos.</p>
+                <div class="mt-3">
+                    <div class="progress" style="height: 4px; background-color: rgba(255,255,255,0.3); border-radius: 10px;">
+                        <div class="progress-bar bg-white" role="progressbar" style="width: 0%; animation: progressAnimation 2s ease-in-out infinite;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes progressAnimation {
+    0% {
+        width: 0%;
+    }
+    50% {
+        width: 70%;
+    }
+    100% {
+        width: 100%;
+    }
+}
+
+#uploadingPhotosModal .modal-content {
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadForms = document.querySelectorAll('form[id^="uploadForm"]');
+    
+    uploadForms.forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            const fileInput = form.querySelector('input[type="file"]');
+            const files = fileInput.files;
+            
+            if (files.length === 0) {
+                return;
+            }
+            
+            const uploadingModal = new bootstrap.Modal(document.getElementById('uploadingPhotosModal'));
+            uploadingModal.show();
+            
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Subiendo...';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

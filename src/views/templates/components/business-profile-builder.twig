@@ -1,0 +1,608 @@
+<style>
+.profile-builder-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(340px, .82fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+.profile-builder-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 16px 42px rgba(15, 23, 42, .06);
+  padding: 1.25rem;
+}
+.profile-builder-section {
+  border: 1px solid #dbe4ef;
+  border-radius: 10px;
+  padding: 1rem;
+  background: #f8fafc;
+}
+.profile-builder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.profile-context-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem;
+}
+.profile-context-card {
+  border: 1px solid #d9f4ef;
+  border-radius: 10px;
+  padding: .9rem;
+  background: linear-gradient(135deg, #f8fffd, #eefcf8);
+}
+.profile-layout-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+}
+.profile-layout-option {
+  position: relative;
+}
+.profile-layout-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.profile-layout-option label {
+  display: block;
+  height: 100%;
+  cursor: pointer;
+  border: 1px solid #dbe4ef;
+  border-radius: 10px;
+  padding: .95rem;
+  background: #fff;
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.profile-layout-option input:checked + label {
+  border-color: #28aaa0;
+  box-shadow: 0 0 0 3px rgba(40, 170, 160, .14);
+  transform: translateY(-1px);
+}
+.profile-layout-option strong {
+  display: block;
+  color: #0f172a;
+}
+.profile-layout-option span {
+  display: block;
+  color: #64748b;
+  font-size: .88rem;
+  line-height: 1.45;
+  margin-top: .35rem;
+}
+.profile-preview {
+  border: 1px solid #d8eee9;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+.profile-preview[data-preview-layout="business_product"] .profile-preview-hero {
+  background:
+    radial-gradient(circle at top right, rgba(255, 79, 167, .32), transparent 36%),
+    linear-gradient(135deg, #052e2b, #134e4a 58%, #0f172a);
+}
+.profile-preview[data-preview-layout="business_product"] .preview-layout-badge {
+  background: #ff4fa7;
+  color: #fff;
+}
+.profile-preview-hero {
+  padding: 1.35rem;
+  background:
+    radial-gradient(circle at top right, rgba(125, 249, 235, .25), transparent 34%),
+    linear-gradient(135deg, #0f172a, #0f766e);
+  color: #fff;
+}
+.profile-preview-logo {
+  width: 78px;
+  height: 78px;
+  border-radius: 18px;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-weight: 800;
+  color: #64748b;
+  border: 3px solid rgba(255,255,255,.82);
+  flex: 0 0 auto;
+}
+.profile-preview-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.preview-layout-badge,
+.preview-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  border-radius: 999px;
+  padding: .32rem .62rem;
+  font-size: .76rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.preview-layout-badge {
+  background: rgba(125, 249, 235, .16);
+  color: #bffff7;
+  border: 1px solid rgba(190, 255, 247, .32);
+}
+.preview-chip {
+  background: #ecfdf5;
+  color: #047857;
+}
+.profile-preview-section {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1rem;
+}
+.profile-preview-sticky {
+  position: sticky;
+  top: 1rem;
+}
+.profile-address-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem;
+}
+.pac-container {
+  z-index: 10000;
+}
+@media (max-width: 1199.98px) {
+  .profile-context-strip {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 991.98px) {
+  .profile-builder-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-preview-sticky {
+    position: static;
+  }
+}
+@media (max-width: 767.98px) {
+  .profile-builder-card {
+    padding: 1rem;
+  }
+  .profile-builder-actions .btn,
+  .profile-layout-switch {
+    width: 100%;
+  }
+  .profile-layout-switch,
+  .profile-address-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+{% set currentNature = profile.business_nature ?? '' %}
+{% set currentOperation = profile.business_operation_type ?? '' %}
+{% set currentLayout = profile.profile_layout ?? 'social_profile' %}
+{% set sectionList = sections is not empty ? sections : defaultSections %}
+{% set natureLabel = businessNatureOptions[currentNature]|default('Business operations') %}
+{% set operationLabel = operationTypeOptions[currentOperation]|default('Core workflow') %}
+
+<div class="ophyra-page-header">
+  <div>
+    <p class="ophyra-page-kicker">{{ trans('business_profile_builder.title') }}</p>
+    <h1 class="fw-bold mb-1">{{ trans('business_profile_builder.subtitle') }}</h1>
+    <p class="text-muted mb-0">{{ trans('business_profile_builder.profile_clean_help') }}</p>
+  </div>
+  <div class="profile-builder-actions">
+    {% if publicProfileUrl %}
+      <a href="{{ publicProfileUrl }}" target="_blank" class="btn btn-outline-dark fw-bold">{{ trans('business_profile_builder.view_public_profile') }}</a>
+    {% endif %}
+    <button form="businessProfileForm" class="btn btn-primary fw-bold">{{ trans('business_profile_builder.save_profile') }}</button>
+  </div>
+</div>
+
+{% if missingProfileItems is not empty %}
+  <div class="alert alert-warning rounded-4">
+    <strong>{{ trans('business_profile_builder.profile_needs_attention_title') }}</strong>
+    {{ trans('business_profile_builder.missing_prefix') }}: {{ missingProfileItems|join(', ') }}.
+  </div>
+{% else %}
+  <div class="alert alert-success rounded-4">
+    <strong>{{ trans('business_profile_builder.profile_complete_title') }}</strong>
+    {{ trans('business_profile_builder.profile_complete_body') }}
+  </div>
+{% endif %}
+
+<form id="businessProfileForm" method="post" enctype="multipart/form-data">
+  <div class="profile-builder-grid">
+    <div class="d-flex flex-column gap-4">
+      <section class="profile-builder-card">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+          <div>
+            <h3 class="fw-bold mb-1">{{ trans('business_profile_builder.foundation_title') }}</h3>
+            <p class="text-muted mb-0">{{ trans('business_profile_builder.foundation_help') }}</p>
+          </div>
+          <span class="badge {{ profileComplete ? 'bg-success' : 'bg-warning text-dark' }}">{{ profileComplete ? trans('business_profile_builder.complete') : trans('business_profile_builder.setup_needed') }}</span>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <label class="form-label">{{ trans('business_profile_builder.business_name') }}</label>
+            <input type="text" name="company_name" class="form-control" value="{{ profile.company_name ?? '' }}" required data-preview-source="company">
+          </div>
+          <div class="col-lg-6">
+            <label class="form-label">{{ trans('business_profile_builder.business_category') }}</label>
+            <select name="business_nature" class="form-select" required data-preview-source="nature">
+              <option value="">{{ trans('business_profile_builder.choose_category') }}</option>
+              {% for value,label in businessNatureOptions %}
+                <option value="{{ value }}" {% if currentNature == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-lg-6">
+            <label class="form-label">{{ trans('business_profile_builder.operational_focus') }}</label>
+            <select name="business_operation_type" class="form-select" required data-preview-source="operation">
+              <option value="">{{ trans('business_profile_builder.choose_workflow') }}</option>
+              {% for value,label in operationTypeOptions %}
+                <option value="{{ value }}" {% if currentOperation == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-lg-6">
+            <label class="form-label">{{ trans('business_profile_builder.public_profile_type') }}</label>
+            <div class="profile-layout-switch">
+              {% for key,label in layouts %}
+                <div class="profile-layout-option">
+                  <input type="radio" name="profile_layout" id="profile_layout_{{ key }}" value="{{ key }}" {% if currentLayout == key %}checked{% endif %} data-preview-source="layout">
+                  <label for="profile_layout_{{ key }}">
+                    <strong>{{ label }}</strong>
+                    <span>{{ key == 'business_product' ? trans('business_profile_builder.layout_help.business_product') : trans('business_profile_builder.layout_help.social_profile') }}</span>
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-context-strip mt-3">
+          <div class="profile-context-card">
+            <span class="text-uppercase small fw-bold text-success">{{ trans('business_profile_builder.category') }}</span>
+            <p class="mb-0 fw-bold" data-preview-target="nature">{{ natureLabel }}</p>
+          </div>
+          <div class="profile-context-card">
+            <span class="text-uppercase small fw-bold text-success">{{ trans('business_profile_builder.workflow') }}</span>
+            <p class="mb-0 fw-bold" data-preview-target="operation">{{ operationLabel }}</p>
+          </div>
+          <div class="profile-context-card">
+            <span class="text-uppercase small fw-bold text-success">{{ trans('business_profile_builder.layout_label') }}</span>
+            <p class="mb-0 fw-bold" data-preview-target="layout">{{ layouts[currentLayout]|default(trans('business_profile_builder.layout.social_profile')) }}</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-builder-card">
+        <h3 class="fw-bold mb-3">{{ trans('business_profile_builder.logo_title') }}</h3>
+        <div class="row g-3 align-items-center">
+          <div class="col-md-auto">
+            <div class="profile-preview-logo" style="border-color:#e5e7eb;">
+              {% if profile.logo_path %}
+                <img src="{{ profile.logo_path }}" alt="Business logo">
+              {% else %}
+                {{ trans('business_profile_builder.logo_fallback') }}
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-md">
+            <label class="form-label">{{ trans('business_profile_builder.upload_logo') }}</label>
+            <input type="file" name="logo" class="form-control" accept="image/*">
+            <p class="text-muted small mb-0 mt-2">{{ trans('business_profile_builder.logo_help') }}</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-builder-card">
+        <h3 class="fw-bold mb-3">{{ trans('business_profile_builder.public_url_title') }}</h3>
+        <div class="row g-3">
+          <div class="col-md-5">
+            <label class="form-label">{{ trans('business_profile_builder.public_slug') }}</label>
+            <input type="text" class="form-control" value="{{ profile.slug ?? trans('business_profile_builder.generated_after_save') }}" readonly>
+            <p class="text-muted small mb-0 mt-2">{{ trans('business_profile_builder.slug_help') }}</p>
+          </div>
+          <div class="col-md-7">
+            <label class="form-label">{{ trans('business_profile_builder.public_url') }}</label>
+            <input type="text" class="form-control" value="{{ publicProfileUrl ?? trans('business_profile_builder.save_to_generate_url') }}" readonly>
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-builder-card">
+        <h3 class="fw-bold mb-3">{{ trans('business_profile_builder.contact_location') }}</h3>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">{{ trans('ui.phone') }}</label>
+            <input type="text" name="phone" class="form-control" value="{{ profile.phone ?? '' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">{{ trans('ui.email') }}</label>
+            <input type="email" name="email" class="form-control" value="{{ profile.email ?? '' }}">
+          </div>
+          <div class="col-12">
+            <label class="form-label">{{ trans('business_profile_builder.address') }}</label>
+            <input type="text" id="businessAddressAutocomplete" name="address_line1" class="form-control" value="{{ profile.address_line1 ?? '' }}" placeholder="{{ trans('business_profile_builder.address_placeholder') }}" autocomplete="off">
+            <p class="text-muted small mb-0 mt-2">{{ trans('business_profile_builder.address_help') }}</p>
+          </div>
+          <div class="col-12">
+            <div class="profile-address-grid">
+              <div>
+                <label class="form-label">{{ trans('business_profile_builder.city') }}</label>
+                <input type="text" name="city" class="form-control" value="{{ profile.city ?? '' }}" data-address-part="city">
+              </div>
+              <div>
+                <label class="form-label">{{ trans('business_profile_builder.state') }}</label>
+                <input type="text" name="state" class="form-control" value="{{ profile.state ?? '' }}" data-address-part="state">
+              </div>
+              <div>
+                <label class="form-label">{{ trans('business_profile_builder.zip') }}</label>
+                <input type="text" name="zip" class="form-control" value="{{ profile.zip ?? '' }}" data-address-part="zip">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">{{ trans('business_profile_builder.country') }}</label>
+            <input type="text" name="country" class="form-control" value="{{ profile.country ?? 'USA' }}" data-address-part="country">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">{{ trans('business_profile_builder.payment_methods') }}</label>
+            <input type="text" name="payment_method_accepted" class="form-control" value="{{ profile.payment_method_accepted ?? '' }}" placeholder="Card, ACH, PayPal, Zelle">
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-builder-card">
+        <h3 class="fw-bold mb-3">{{ trans('business_profile_builder.about_title') }}</h3>
+        <label class="form-label">{{ trans('business_profile_builder.short_description') }}</label>
+          <input type="text" name="short_description" maxlength="500" class="form-control mb-3" value="{{ profile.short_description ?? '' }}" placeholder="{{ trans('business_profile_builder.short_description_placeholder') }}" data-preview-source="description">
+        <label class="form-label">{{ trans('business_profile_builder.about_business') }}</label>
+          <textarea name="rich_description" class="form-control" rows="6" placeholder="{{ trans('business_profile_builder.about_placeholder') }}">{{ profile.rich_description ?? '' }}</textarea>
+      </section>
+
+      <section class="profile-builder-card">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+          <div>
+            <h3 class="fw-bold mb-1">{{ trans('business_profile_builder.sections_title') }}</h3>
+            <p class="text-muted mb-0">{{ trans('business_profile_builder.sections_help') }}</p>
+          </div>
+        </div>
+        <div id="profileSections" class="d-flex flex-column gap-3">
+          {% for section in sectionList %}
+            {% set key = section.section_key|default(section.key) %}
+            {% set label = section.section_label|default(section.label) %}
+            {% set visible = section.is_visible|default(section.visible) %}
+            {% set fixed = section.is_fixed|default(section.fixed) %}
+            {% set sort = section.sort_order|default(section.sort) %}
+            <div class="profile-builder-section" data-section-card>
+              <input type="hidden" name="sections[{{ key }}][sort_order]" value="{{ sort }}" data-sort-input>
+              <input type="hidden" name="sections[{{ key }}][key]" value="{{ key }}">
+              <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
+                <div class="flex-grow-1">
+                  <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" name="sections[{{ key }}][is_visible]" value="1" id="section_{{ key }}" {% if visible %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="section_{{ key }}">{{ trans('business_profile_builder.show_section') }}</label>
+                  </div>
+                  <label class="form-label small text-muted">{{ trans('business_profile_builder.public_label') }}</label>
+                  <input type="text" name="sections[{{ key }}][label]" class="form-control" value="{{ label }}">
+                  <p class="text-muted small mb-0 mt-2">{{ fixed ? trans('business_profile_builder.recommended_anchor') : trans('business_profile_builder.movable_section') }}</p>
+                </div>
+                <div class="d-flex flex-md-column gap-2">
+                  <button type="button" class="btn btn-outline-secondary btn-sm" data-move-up>{{ trans('business_profile_builder.up') }}</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" data-move-down>{{ trans('business_profile_builder.down') }}</button>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+
+    <aside class="d-flex flex-column gap-4 profile-preview-sticky">
+      <section class="profile-builder-card">
+        <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+          <h3 class="fw-bold mb-0">{{ trans('business_profile_builder.live_preview') }}</h3>
+          <span class="preview-chip" data-preview-target="layoutChip">{{ layouts[currentLayout]|default(trans('business_profile_builder.layout.social_profile')) }}</span>
+        </div>
+        <div class="profile-preview" data-preview-layout="{{ currentLayout }}">
+          <div class="profile-preview-hero">
+            <div class="d-flex align-items-start gap-3">
+              <div class="profile-preview-logo">
+                {% if profile.logo_path %}
+                  <img src="{{ profile.logo_path }}" alt="Business logo">
+                {% else %}
+                  {{ trans('business_profile_builder.logo_fallback') }}
+                {% endif %}
+              </div>
+              <div class="flex-grow-1">
+                <span class="preview-layout-badge mb-2" data-preview-target="natureHero">{{ natureLabel }}</span>
+                <h3 class="fw-bold mb-1" data-preview-target="company">{{ profile.company_name ?? trans('business_profile_builder.preview_business_name') }}</h3>
+                <p class="mb-2" data-preview-target="description">{{ profile.short_description ?? trans('business_profile_builder.preview_description') }}</p>
+                <div class="d-flex flex-wrap gap-2">
+                  <span class="preview-layout-badge" data-preview-target="operationHero">{{ operationLabel }}</span>
+                  <span class="preview-layout-badge" data-preview-target="profileMode">{{ currentLayout == 'business_product' ? trans('business_profile_builder.product_ready') : trans('business_profile_builder.social_ready') }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="p-3 d-flex flex-column gap-3" data-preview-sections>
+            {% for section in sectionList %}
+              {% set key = section.section_key|default(section.key) %}
+              {% set label = section.section_label|default(section.label) %}
+              {% set visible = section.is_visible|default(section.visible) %}
+              {% if visible %}
+                <div class="profile-preview-section" data-preview-section="{{ key }}">
+                  <div class="d-flex justify-content-between gap-2">
+                    <strong>{{ label }}</strong>
+                    <span class="badge bg-light text-dark border">{{ key|replace({'_':' '})|title }}</span>
+                  </div>
+                  <p class="text-muted small mb-0 mt-2">
+                    {% if key == 'contact' %}
+                      {{ profile.email ?? 'Email' }}{% if profile.phone %} - {{ profile.phone }}{% endif %}
+                    {% elseif key == 'map' %}
+                      {{ profile.city ?? trans('business_profile_builder.city') }}{% if profile.state %}, {{ profile.state }}{% endif %}
+                    {% elseif key == 'quote_form' %}
+                      {{ trans('business_profile_builder.preview_quote_help') }}
+                    {% elseif key == 'services' %}
+                      {{ trans('business_profile_builder.preview_services_help') }}
+                    {% elseif key == 'description' %}
+                      {{ profile.rich_description|default(trans('business_profile_builder.preview_about_help'))|striptags|truncate(120) }}
+                    {% else %}
+                      {{ trans('business_profile_builder.preview_section_help') }}
+                    {% endif %}
+                  </p>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-builder-card">
+        <h3 class="fw-bold mb-3">{{ trans('business_profile_builder.profile_status') }}</h3>
+        <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
+          <li><strong>{{ trans('business_profile_builder.status') }}:</strong> {{ profileComplete ? trans('business_profile_builder.complete') : trans('business_profile_builder.needs_setup') }}</li>
+          <li><strong>{{ trans('business_profile_builder.category') }}:</strong> <span data-preview-target="statusNature">{{ natureLabel }}</span></li>
+          <li><strong>{{ trans('business_profile_builder.workflow') }}:</strong> <span data-preview-target="statusOperation">{{ operationLabel }}</span></li>
+          <li><strong>{{ trans('business_profile_builder.public_url') }}:</strong> {% if publicProfileUrl %}<a href="{{ publicProfileUrl }}" target="_blank">{{ trans('business_profile_builder.open') }}</a>{% else %}<span class="text-muted">{{ trans('business_profile_builder.not_generated_yet') }}</span>{% endif %}</li>
+        </ul>
+      </section>
+
+      <button type="submit" class="btn btn-primary btn-lg fw-bold">{{ trans('business_profile_builder.save_business_profile') }}</button>
+    </aside>
+  </div>
+</form>
+
+<script>
+window.initMap = window.initMap || function () {};
+
+document.addEventListener('DOMContentLoaded', function () {
+  const container = document.getElementById('profileSections');
+  const natureLabels = {{ businessNatureOptions|json_encode|raw }};
+  const operationLabels = {{ operationTypeOptions|json_encode|raw }};
+  const layoutLabels = {{ layouts|json_encode|raw }};
+
+  function setText(selector, value) {
+    document.querySelectorAll(selector).forEach((node) => {
+      node.textContent = value;
+    });
+  }
+
+  function selectedText(select, fallback) {
+    if (!select || !select.value) return fallback;
+    return select.options[select.selectedIndex]?.text || fallback;
+  }
+
+  function refreshPreview() {
+    const companyInput = document.querySelector('[data-preview-source="company"]');
+    const descriptionInput = document.querySelector('[data-preview-source="description"]');
+    const natureSelect = document.querySelector('[data-preview-source="nature"]');
+    const operationSelect = document.querySelector('[data-preview-source="operation"]');
+    const layoutInput = document.querySelector('[data-preview-source="layout"]:checked');
+    const layout = layoutInput ? layoutInput.value : 'social_profile';
+    const nature = selectedText(natureSelect, {{ trans('business_profile_builder.business_operations_fallback')|json_encode|raw }});
+    const operation = selectedText(operationSelect, {{ trans('business_profile_builder.core_workflow_fallback')|json_encode|raw }});
+    const layoutLabel = layoutLabels[layout] || '{{ trans('business_profile_builder.layout.social_profile') }}';
+    const preview = document.querySelector('.profile-preview');
+
+    if (preview) preview.dataset.previewLayout = layout;
+    setText('[data-preview-target="company"]', companyInput?.value.trim() || '{{ trans('business_profile_builder.preview_business_name') }}');
+    setText('[data-preview-target="description"]', descriptionInput?.value.trim() || {{ trans('business_profile_builder.preview_description')|json_encode|raw }});
+    setText('[data-preview-target="nature"], [data-preview-target="natureHero"], [data-preview-target="statusNature"]', nature);
+    setText('[data-preview-target="operation"], [data-preview-target="operationHero"], [data-preview-target="statusOperation"]', operation);
+    setText('[data-preview-target="layout"], [data-preview-target="layoutChip"]', layoutLabel);
+    setText('[data-preview-target="profileMode"]', layout === 'business_product' ? {{ trans('business_profile_builder.product_ready')|json_encode|raw }} : {{ trans('business_profile_builder.social_ready')|json_encode|raw }});
+  }
+
+  document.querySelectorAll('[data-preview-source]').forEach((field) => {
+    field.addEventListener('input', refreshPreview);
+    field.addEventListener('change', refreshPreview);
+  });
+  refreshPreview();
+
+  if (container) {
+    function refreshSort() {
+      container.querySelectorAll('[data-section-card]').forEach((card, index) => {
+        const input = card.querySelector('[data-sort-input]');
+        if (input) input.value = String((index + 1) * 10);
+      });
+    }
+
+    container.addEventListener('click', function (event) {
+      const card = event.target.closest('[data-section-card]');
+      if (!card) return;
+
+      if (event.target.matches('[data-move-up]')) {
+        const previous = card.previousElementSibling;
+        if (previous) {
+          container.insertBefore(card, previous);
+          refreshSort();
+        }
+      }
+
+      if (event.target.matches('[data-move-down]')) {
+        const next = card.nextElementSibling;
+        if (next) {
+          container.insertBefore(next, card);
+          refreshSort();
+        }
+      }
+    });
+  }
+
+  function initAddressAutocomplete() {
+    const input = document.getElementById('businessAddressAutocomplete');
+    if (!input || !window.google || !google.maps || !google.maps.places) return;
+
+    const autocomplete = new google.maps.places.Autocomplete(input, {
+      fields: ['address_components', 'formatted_address'],
+      types: ['geocode'],
+    });
+
+    autocomplete.addListener('place_changed', function () {
+      const place = autocomplete.getPlace();
+      if (!place || !place.address_components) return;
+
+      const parts = {
+        city: '',
+        state: '',
+        zip: '',
+        country: '',
+      };
+
+      place.address_components.forEach((component) => {
+        const types = component.types || [];
+        if (types.includes('locality') || types.includes('postal_town')) parts.city = component.long_name;
+        if (!parts.city && types.includes('administrative_area_level_2')) parts.city = component.long_name;
+        if (types.includes('administrative_area_level_1')) parts.state = component.short_name;
+        if (types.includes('postal_code')) parts.zip = component.long_name;
+        if (types.includes('country')) parts.country = component.long_name;
+      });
+
+      if (place.formatted_address) input.value = place.formatted_address;
+      Object.entries(parts).forEach(([key, value]) => {
+        const target = document.querySelector(`[data-address-part="${key}"]`);
+        if (target && value) target.value = value;
+      });
+    });
+  }
+
+  const previousInitMap = window.initMap;
+  window.initMap = function () {
+    if (typeof previousInitMap === 'function') previousInitMap();
+    initAddressAutocomplete();
+  };
+
+  if (window.google && google.maps && google.maps.places) {
+    initAddressAutocomplete();
+  }
+});
+</script>
+
+

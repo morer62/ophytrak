@@ -1,0 +1,494 @@
+﻿{% extends 'templates/base.admin.twig' %}
+
+{% block style %}
+<style>
+    .store-details-image-wrap {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+    }
+
+    .store-details-image-trigger {
+        border: 0;
+        background: transparent;
+        padding: 0;
+        width: 100%;
+        cursor: pointer;
+    }
+
+    .store-details-image {
+        width: 100%;
+        height: 320px;
+        border-radius: 16px;
+        object-fit: cover;
+        border: 1px solid #dee2e6;
+        background: #fff;
+        box-shadow: 0 10px 24px rgba(0,0,0,.06);
+        transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .store-details-image:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 32px rgba(0,0,0,.10);
+    }
+
+    .store-image-hint {
+        font-size: .85rem;
+        color: #6c757d;
+        margin-top: .65rem;
+    }
+
+    .store-info-card {
+        border: 1px solid #e9ecef;
+        border-radius: 16px;
+        background: #fff;
+        padding: 18px;
+        height: 100%;
+    }
+
+    .store-info-card h5,
+    .store-info-card h6 {
+        margin-bottom: 14px;
+    }
+
+    .store-chip {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #f1f3f5;
+        margin: 0 8px 8px 0;
+        font-size: 0.9rem;
+    }
+
+    .store-chip-dark {
+        background: #111827;
+        color: #fff;
+    }
+
+    .store-chip-soft {
+        background: #eef2ff;
+        color: #3730a3;
+    }
+
+    .store-meta-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 4px;
+    }
+
+    .store-meta-value {
+        font-weight: 600;
+        margin-bottom: 14px;
+        word-break: break-word;
+    }
+
+    .store-top-card {
+        border: 1px solid #e9ecef;
+        border-radius: 16px;
+        background: #fff;
+    }
+
+    .store-top-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+
+    .store-image-empty {
+        height: 320px;
+    }
+
+    .store-modal-image {
+        width: 100%;
+        max-height: 80vh;
+        object-fit: contain;
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .store-variation-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        background: #fcfcfd;
+        padding: 16px;
+        margin-bottom: 14px;
+    }
+
+    .store-variation-card:last-child {
+        margin-bottom: 0;
+    }
+
+    .store-variation-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+    }
+
+    .store-variation-name {
+        font-weight: 700;
+        font-size: 1rem;
+        color: #111827;
+        margin-bottom: 2px;
+    }
+
+    .store-variation-sub {
+        color: #6b7280;
+        font-size: 0.88rem;
+    }
+
+    .store-grid-compact {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .store-inline-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    @media (max-width: 768px) {
+        .store-details-image {
+            height: 260px;
+        }
+
+        .store-image-empty {
+            height: 260px;
+        }
+
+        .store-grid-compact {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+
+    <div class="store-top-card shadow-sm mb-4">
+        <div class="card-body p-3 p-md-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div>
+                    <h1 class="h3 mb-1">{{ trans('store_product_details.title') }}</h1>
+                    <p class="text-muted mb-0">{{ trans('store_product_details.subtitle') }}</p>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{{ path('panel/planner-hub/store/products/home') }}" class="btn btn-outline-secondary">
+                        &larr; {{ trans('store_product_form.back_to_products') }}
+                    </a>
+                    <a href="{{ path('panel/planner-hub/store/products/edit') }}?id={{ product.id }}" class="btn btn-primary">
+                        {{ trans('store_product_details.edit_product') }}
+                    </a>
+                </div>
+            </div>
+
+            <div class="store-top-nav">
+                <a href="{{ path('panel/planner-hub/store/products/home') }}" class="btn btn-dark btn-sm">
+                    Products
+                </a>
+                <a href="{{ path('panel/planner-hub/store/categories/home') }}" class="btn btn-outline-dark btn-sm">
+                    Categories
+                </a>
+                <a href="{{ path('panel/planner-hub/store/attributes/home') }}" class="btn btn-outline-dark btn-sm">
+                    Attributes
+                </a>
+                <a href="{{ path('panel/planner-hub/store/attribute-values/home') }}" class="btn btn-outline-dark btn-sm">
+                    {{ trans('store_product_form.attribute_values') }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center p-4">
+                    {% if product.main_image %}
+                        <div class="store-details-image-wrap">
+                            <button type="button"
+                                    class="store-details-image-trigger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#productImageModal">
+                                <img src="{{ product.main_image }}" alt="{{ product.name }}" class="store-details-image">
+                            </button>
+                            <div class="store-image-hint">{{ trans('store_product_details.click_image') }}</div>
+                        </div>
+                    {% else %}
+                        <div class="border rounded d-flex align-items-center justify-content-center bg-light store-image-empty">
+                            <span class="text-muted">{{ trans('store_product_details.no_image') }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">{{ product.name }}</h2>
+                            {% if product.slug %}
+                                <div class="text-muted small">{{ product.slug }}</div>
+                                <div class="mt-1">
+                                    <a href="{{ path(publicStoreUrl ~ '&product=' ~ product.slug ~ '#product-' ~ product.slug) }}" target="_blank" class="small">
+                                        {{ path(publicStoreUrl ~ '&product=' ~ product.slug) }}
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="text-end">
+                            {% if product.status == 'ACTIVE' %}
+                                <span class="badge bg-success">{{ trans('ui.active') }}</span>
+                            {% elseif product.status == 'DRAFT' %}
+                                <span class="badge bg-warning text-dark">{{ trans('store_product_details.draft') }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ trans('ui.inactive') }}</span>
+                            {% endif %}
+
+                            {% if product.is_public %}
+                                <span class="badge bg-primary">{{ trans('store_product_details.public') }}</span>
+                            {% else %}
+                                <span class="badge bg-dark">{{ trans('store_product_details.private') }}</span>
+                            {% endif %}
+
+                            {% if product.is_featured %}
+                                <span class="badge bg-info text-dark">{{ trans('store_product_details.featured') }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="store-meta-label">{{ trans('store_product_form.product_type') }}</div>
+                            <div class="store-meta-value">
+                                {% if product.product_type == 'VARIABLE' %}
+                                    <span class="store-chip store-chip-dark">{{ trans('store_product_details.variable') }}</span>
+                                {% else %}
+                                    <span class="store-chip store-chip-soft">{{ trans('store_product_details.fixed') }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="store-meta-label">SKU</div>
+                            <div class="store-meta-value">{{ product.sku ?: '&mdash;'|raw }}</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="store-meta-label">{{ trans('store_product_details.display_price') }}</div>
+                            <div class="store-meta-value">
+                                {% if product.product_type == 'VARIABLE' %}
+                                    {% if product.min_price == product.max_price %}
+                                        ${{ product.min_price|number_format(2, '.', ',') }}
+                                    {% else %}
+                                        ${{ product.min_price|number_format(2, '.', ',') }} - ${{ product.max_price|number_format(2, '.', ',') }}
+                                    {% endif %}
+                                {% else %}
+                                    ${{ product.display_price|number_format(2, '.', ',') }}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if product.product_type == 'FIXED' %}
+                            <div class="col-md-4">
+                                <div class="store-meta-label">{{ trans('store_product_details.base_price') }}</div>
+                                <div class="store-meta-value">${{ product.price|number_format(2, '.', ',') }}</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="store-meta-label">{{ trans('store_product_form.promo_price') }}</div>
+                                <div class="store-meta-value">
+                                    {% if product.promo_price %}
+                                        ${{ product.promo_price|number_format(2, '.', ',') }}
+                                    {% else %}
+                                        &mdash;
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="store-meta-label">{{ trans('store_product_form.stock') }}</div>
+                                <div class="store-meta-value">{{ product.stock_quantity }}</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="store-meta-label">{{ trans('store_product_details.min_purchase_qty') }}</div>
+                                <div class="store-meta-value">{{ product.min_purchase_qty }}</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="store-meta-label">{{ trans('store_product_details.max_purchase_qty') }}</div>
+                                <div class="store-meta-value">{{ product.max_purchase_qty ?: '&mdash;'|raw }}</div>
+                            </div>
+                        {% else %}
+                            <div class="col-md-4">
+                                <div class="store-meta-label">{{ trans('store_product_details.variation_count') }}</div>
+                                <div class="store-meta-value">{{ product.variations|length }}</div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <h6>{{ trans('store_product_form.short_description') }}</h6>
+                        <p class="mb-0">{{ product.short_description ?: trans('store_product_details.no_short_description') }}</p>
+                    </div>
+
+                    <div>
+                        <h6>{{ trans('store_product_form.full_description') }}</h6>
+                        <div>{{ product.description|default(trans('store_product_details.no_description'))|raw }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="store-info-card shadow-sm">
+                <h5>{{ trans('store_product_form.categories') }}</h5>
+
+                {% if product.categories|length > 0 %}
+                    {% for category in product.categories %}
+                        <span class="store-chip">{{ category.name }}</span>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-0">{{ trans('store_product_details.no_categories') }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="store-info-card shadow-sm">
+                <h5>{{ trans('store_product_form.informational_attributes') }}</h5>
+
+                {% if product.attributes_grouped is not empty %}
+                    {% for attributeName, values in product.attributes_grouped %}
+                        <div class="mb-3">
+                            <h6 class="mb-2">{{ attributeName }}</h6>
+                            {% for value in values %}
+                                <span class="store-chip">{{ value }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-0">{{ trans('store_product_details.no_informational_attributes') }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if product.product_type == 'VARIABLE' %}
+            <div class="col-12 mb-4">
+                <div class="store-info-card shadow-sm">
+                    <h5>{{ trans('store_product_form.variations') }}</h5>
+
+                    {% if product.variations|length > 0 %}
+                        {% for variation in product.variations %}
+                            <div class="store-variation-card">
+                                <div class="store-variation-head">
+                                    <div>
+                                        <div class="store-variation-name">{{ variation.name }}</div>
+                                        <div class="store-variation-sub">
+                                            {% if variation.slug %}Slug: {{ variation.slug }}{% else %}{{ trans('store_product_details.no_slug') }}{% endif %}
+                                            {% if variation.sku %} &middot; SKU: {{ variation.sku }}{% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="text-end">
+                                        {% if variation.status == 'ACTIVE' %}
+                                            <span class="badge bg-success">{{ trans('ui.active') }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ trans('ui.inactive') }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="store-grid-compact mb-3">
+                                    <div>
+                                        <div class="store-meta-label">Price</div>
+                                        <div class="store-meta-value mb-0">${{ variation.price|number_format(2, '.', ',') }}</div>
+                                    </div>
+
+                                    <div>
+                                        <div class="store-meta-label">{{ trans('store_product_form.promo_price') }}</div>
+                                        <div class="store-meta-value mb-0">
+                                            {% if variation.promo_price %}
+                                                ${{ variation.promo_price|number_format(2, '.', ',') }}
+                                            {% else %}
+                                                &mdash;
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div class="store-meta-label">{{ trans('store_product_details.effective_price') }}</div>
+                                        <div class="store-meta-value mb-0">${{ variation.effective_price|number_format(2, '.', ',') }}</div>
+                                    </div>
+
+                                    <div>
+                                        <div class="store-meta-label">{{ trans('store_product_form.stock') }}</div>
+                                        <div class="store-meta-value mb-0">{{ variation.stock_quantity }}</div>
+                                    </div>
+
+                                    <div>
+                                        <div class="store-meta-label">{{ trans('store_product_form.min_qty') }}</div>
+                                        <div class="store-meta-value mb-0">{{ variation.min_purchase_qty }}</div>
+                                    </div>
+
+                                    <div>
+                                        <div class="store-meta-label">{{ trans('store_product_form.max_qty') }}</div>
+                                        <div class="store-meta-value mb-0">{{ variation.max_purchase_qty ?: '&mdash;'|raw }}</div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="store-meta-label">{{ trans('store_product_form.variation_attribute_mapping') }}</div>
+
+                                    {% if variation.attribute_values is defined and variation.attribute_values|length > 0 %}
+                                        <div class="store-inline-stack">
+                                            {% for av in variation.attribute_values %}
+                                                <span class="store-chip">
+                                                    {{ av.attribute_name }}: {{ av.attribute_value }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <div class="text-muted">{{ trans('store_product_details.no_variation_mapping') }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted mb-0">{{ trans('store_product_details.no_variations') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if product.main_image %}
+<div class="modal fade" id="productImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ product.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-3 p-md-4">
+                <img src="{{ product.main_image }}" alt="{{ product.name }}" class="store-modal-image">
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+

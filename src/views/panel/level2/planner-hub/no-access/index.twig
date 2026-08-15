@@ -1,0 +1,141 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set labels = {
+  'services': 'Service Operations',
+  'service_operations': 'Service Operations',
+  'store_delivery_tracking': 'Store + Logistics',
+  'store_logistics': 'Store + Logistics',
+  'inventory_storage': 'Warehouse',
+  'advanced_storage_qr_inventory': 'Warehouse',
+  'ai_advisor': 'AI Advisor',
+  'tickets_rsvp': 'Ticket Sales + RSVP',
+  'ticket_sales_rsvp': 'Ticket Sales + RSVP',
+  'marketplace_connectors': 'Marketplace Connectors',
+  'shared_operational_tools': 'Shared Operational Tools',
+  'operating_core': 'Service Operations',
+  'service_operations': 'Service Operations',
+  'paid_modules': 'a paid module'
+} %}
+{% set primary = requiredModules|first ?: requestedModule %}
+{% set module = moduleCatalog[primary] ?? null %}
+
+<main class="container py-4">
+  <section class="locked-module-panel">
+    <div class="locked-module-icon">
+      <i class="fa-solid fa-lock"></i>
+    </div>
+    <div>
+      <p class="text-uppercase fw-bold text-muted small mb-2">Module locked</p>
+      <h1 class="fw-bold mb-3">{{ labels[requestedModule] ?? labels[primary] ?? 'This module' }} is not active yet</h1>
+      <p class="lead text-muted mb-4">
+        Base Profile is free and keeps your public business profile available. Operational tools unlock only after the matching paid module is active.
+      </p>
+
+      <div class="locked-module-card mb-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
+          <div>
+            <h2 class="h5 fw-bold mb-2">Required activation</h2>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              {% for slug in requiredModules %}
+                <span class="badge rounded-pill bg-dark">{{ labels[slug] ?? slug|replace({'_':' '})|title }}</span>
+              {% endfor %}
+            </div>
+            {% if module %}
+              <p class="text-muted mb-2">{{ module.description }}</p>
+              {% if module.unlocks is defined and module.unlocks is not empty %}
+                <div class="d-flex flex-wrap gap-2">
+                  {% for item in module.unlocks %}
+                    <span class="locked-feature-chip">{{ item }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            {% endif %}
+          </div>
+          <div class="locked-module-price">
+            {% if module and module.selected_price_label is not empty %}
+              <span>{{ module.selected_price_label }}</span>
+              <small>/month</small>
+            {% else %}
+              <span>Locked</span>
+              <small>{% if module and module.is_coming_soon|default(false) %}coming soon{% else %}price unavailable{% endif %}</small>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex flex-column flex-sm-row gap-2">
+        <a href="{{ path('panel/membership/manage?payment_currency=' ~ selectedCurrency) }}" class="btn btn-dark btn-lg fw-bold">Review modules</a>
+        <a href="{{ path('panel/cards') }}" class="btn btn-outline-dark btn-lg fw-bold">Add payment method</a>
+        <a href="{{ path('panel/onboarding') }}" class="btn btn-outline-secondary btn-lg fw-bold">Back to onboarding</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<style>
+  .locked-module-panel {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.5rem;
+    padding: clamp(1.25rem, 4vw, 3rem);
+    border: 1px solid rgba(15, 23, 42, .12);
+    border-radius: 24px;
+    background:
+      radial-gradient(circle at top right, rgba(45, 212, 191, .18), transparent 36%),
+      linear-gradient(135deg, #ffffff, #f8fafc);
+    box-shadow: 0 24px 80px rgba(15, 23, 42, .12);
+  }
+  .locked-module-icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    color: #0f766e;
+    background: #ccfbf1;
+    font-size: 1.6rem;
+  }
+  .locked-module-card {
+    padding: 1.25rem;
+    border: 1px solid rgba(15, 118, 110, .18);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .78);
+  }
+  .locked-feature-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: .35rem .65rem;
+    border-radius: 999px;
+    color: #334155;
+    background: #e2e8f0;
+    font-size: .82rem;
+    font-weight: 700;
+  }
+  .locked-module-price {
+    min-width: 150px;
+    padding: 1rem;
+    border-radius: 16px;
+    color: #fff;
+    background: linear-gradient(135deg, #111827, #0f766e);
+    text-align: center;
+  }
+  .locked-module-price span {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 800;
+  }
+  .locked-module-price small {
+    color: rgba(255,255,255,.78);
+  }
+  @media (max-width: 640px) {
+    .locked-module-panel {
+      grid-template-columns: 1fr;
+    }
+    .locked-module-icon {
+      width: 54px;
+      height: 54px;
+    }
+  }
+</style>
+{% endblock %}

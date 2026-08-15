@@ -1,0 +1,824 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block style %}
+
+<style>
+    .store-section-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+        margin-bottom: 22px;
+    }
+
+    .store-section-card .card-body {
+        padding: 24px;
+    }
+
+    .store-section-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+        color: #111827;
+    }
+
+    .store-section-subtitle {
+        color: #6b7280;
+        margin-bottom: 18px;
+        font-size: 0.92rem;
+    }
+
+    .store-attribute-box {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 14px;
+        background: #fff;
+        height: 100%;
+    }
+
+    .store-attribute-box h6 {
+        margin-bottom: 12px;
+        font-weight: 700;
+    }
+
+    .store-preview-image {
+        width: 110px;
+        height: 110px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 1px solid #dee2e6;
+        display: block;
+        margin-top: 10px;
+    }
+
+    .store-product-type-option {
+        border: 1px solid #dbe3ea;
+        border-radius: 14px;
+        padding: 16px;
+        background: #fff;
+        cursor: pointer;
+        transition: all 0.18s ease;
+        height: 100%;
+    }
+
+    .store-product-type-option:hover {
+        border-color: #b8c4d1;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+    }
+
+    .store-product-type-option.active {
+        border-color: #111827;
+        background: #f8fafc;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    .store-product-type-option .title {
+        display: block;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 6px;
+    }
+
+    .store-product-type-option .desc {
+        display: block;
+        color: #6b7280;
+        font-size: 0.92rem;
+        line-height: 1.45;
+    }
+
+    .store-fixed-fields,
+    .store-variable-fields {
+        display: none;
+    }
+
+    .store-variation-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 18px;
+        background: #fcfcfd;
+        margin-bottom: 16px;
+    }
+
+    .store-variation-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+
+    .store-variation-header h6 {
+        margin: 0;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .store-variation-empty {
+        border: 1px dashed #cbd5e1;
+        border-radius: 14px;
+        padding: 18px;
+        background: #f8fafc;
+        color: #64748b;
+        text-align: center;
+    }
+
+    .store-helper-text {
+        color: #6b7280;
+        font-size: 0.86rem;
+    }
+
+    .store-inline-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .store-variation-attributes {
+        border-top: 1px dashed #dbe3ea;
+        margin-top: 14px;
+        padding-top: 14px;
+    }
+
+    .store-pill-note {
+        display: inline-block;
+        background: #f3f4f6;
+        color: #374151;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .store-sticky-actions {
+        position: sticky;
+        bottom: 16px;
+        z-index: 20;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(229, 231, 235, 0.9);
+        border-radius: 16px;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        padding: 14px 16px;
+        margin-top: 18px;
+    }
+
+    @media (max-width: 767px) {
+        .store-section-card .card-body {
+            padding: 18px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h1 class="h3 mb-1">{{ trans('store_product_form.edit_title') }}</h1>
+            <p class="text-muted mb-0">{{ trans('store_product_form.edit_subtitle') }}</p>
+        </div>
+        <div class="store-inline-actions">
+            <a href="{{ path('panel/planner-hub/store/products/home') }}" class="btn btn-outline-secondary">
+                &larr; {{ trans('store_product_form.back_to_products') }}
+            </a>
+            <a href="{{ path('panel/planner-hub/store/attributes/home') }}" class="btn btn-outline-dark">
+                {{ trans('store_product_form.attributes') }}
+            </a>
+            <a href="{{ path('panel/planner-hub/store/attribute-values/home') }}" class="btn btn-outline-dark">
+                {{ trans('store_product_form.attribute_values') }}
+            </a>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="product-edit-form">
+        <input type="hidden" name="id" value="{{ product.id }}">
+
+        <div class="store-section-card">
+            <div class="card-body">
+                <div class="store-section-title">{{ trans('store_product_form.basic_information') }}</div>
+                <div class="store-section-subtitle">{{ trans('store_product_form.basic_edit_help') }}</div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ trans('store_product_form.product_name') }}</label>
+                        <input type="text" name="name" class="form-control" required value="{{ product.name|default('') }}" placeholder="e.g. Planner Package, DJ Session, Photo Booth Rental">
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">SKU</label>
+                        <input type="text" name="sku" class="form-control" value="{{ product.sku|default('') }}" placeholder="e.g. PRD-001">
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">{{ trans('store_product_form.slug_optional') }}</label>
+                        <input type="text" name="slug" class="form-control" value="{{ product.slug|default('') }}" placeholder="planner-package-premium">
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">{{ trans('ui.status') }}</label>
+                        <select name="status" class="form-select">
+                            <option value="ACTIVE" {{ product.status == 'ACTIVE' ? 'selected' : '' }}>{{ trans('ui.active') }}</option>
+                            <option value="INACTIVE" {{ product.status == 'INACTIVE' ? 'selected' : '' }}>{{ trans('ui.inactive') }}</option>
+                            <option value="DRAFT" {{ product.status == 'DRAFT' ? 'selected' : '' }}>DRAFT</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ trans('store_product_form.short_description') }}</label>
+                        <input type="text" name="short_description" class="form-control" value="{{ product.short_description|default('') }}" placeholder="Short summary for cards and listings">
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">{{ trans('store_product_form.main_image') }}</label>
+                        <input type="file" name="main_image" class="form-control" accept="image/*" id="main-image-input">
+                        {% if product.main_image %}
+                            <img id="main-image-preview" class="store-preview-image" src="{{ product.main_image }}" alt="{{ trans('store_product_form.preview') }}">
+                        {% else %}
+                            <img id="main-image-preview" class="store-preview-image" alt="{{ trans('store_product_form.preview') }}" style="display:none;">
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-3 mb-3 d-flex flex-column justify-content-end">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="is_public" id="is_public" {{ product.is_public ? 'checked' : '' }}>
+                            <label class="form-check-label" for="is_public">
+                                {{ trans('store_product_form.public_product') }}
+                            </label>
+                        </div>
+
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_featured" id="is_featured" {{ product.is_featured ? 'checked' : '' }}>
+                            <label class="form-check-label" for="is_featured">
+                                {{ trans('store_product_form.featured_product') }}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <label class="form-label">{{ trans('store_product_form.full_description') }}</label>
+                        <textarea name="description" id="description-editor" class="form-control" rows="6" placeholder="Describe your product or service...">{{ product.description|default('') }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="store-section-card">
+            <div class="card-body">
+                <div class="store-section-title">{{ trans('store_product_form.product_type') }}</div>
+                <div class="store-section-subtitle">{{ trans('store_product_form.product_type_help_edit') }}</div>
+
+                {% set current_type = product.product_type|default('FIXED') %}
+                <input type="hidden" name="product_type" id="product_type_input" value="{{ current_type }}">
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="store-product-type-option {{ current_type == 'FIXED' ? 'active' : '' }}" data-product-type-card="FIXED">
+                            <span class="title">{{ trans('store_product_form.fixed_price') }}</span>
+                            <span class="desc">{{ trans('store_product_form.fixed_price_help') }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="store-product-type-option {{ current_type == 'VARIABLE' ? 'active' : '' }}" data-product-type-card="VARIABLE">
+                            <span class="title">{{ trans('store_product_form.variable_product') }}</span>
+                            <span class="desc">{{ trans('store_product_form.variable_product_help_edit') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="store-section-card store-fixed-fields" id="fixed-fields-card">
+            <div class="card-body">
+                <div class="store-section-title">{{ trans('store_product_form.fixed_pricing_inventory') }}</div>
+                <div class="store-section-subtitle">{{ trans('store_product_form.fixed_pricing_help') }}</div>
+
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">{{ trans('store_product_form.price') }}</label>
+                        <input type="number" step="0.01" min="0.01" name="price" class="form-control" value="{{ product.price|default('') }}" placeholder="0.00">
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">{{ trans('store_product_form.promo_price') }}</label>
+                        <input type="number" step="0.01" min="0" name="promo_price" class="form-control" value="{{ product.promo_price is not null ? product.promo_price : '' }}" placeholder="0.00">
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label">{{ trans('store_product_form.stock') }}</label>
+                        <input type="number" min="0" name="stock_quantity" class="form-control" value="{{ product.stock_quantity|default(0) }}">
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label">{{ trans('store_product_form.min_qty') }}</label>
+                        <input type="number" min="1" name="min_purchase_qty" class="form-control" value="{{ product.min_purchase_qty|default(1) }}">
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label">{{ trans('store_product_form.max_qty') }}</label>
+                        <input type="number" min="1" name="max_purchase_qty" class="form-control" value="{{ product.max_purchase_qty is not null ? product.max_purchase_qty : '' }}" placeholder="Optional">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="store-section-card store-variable-fields" id="variable-fields-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+                    <div>
+                        <div class="store-section-title">{{ trans('store_product_form.variations') }}</div>
+                        <div class="store-section-subtitle mb-0">{{ trans('store_product_form.variations_help_edit') }}</div>
+                    </div>
+                    <button type="button" class="btn btn-dark" id="add-variation-btn">
+                        + {{ trans('store_product_form.add_variation') }}
+                    </button>
+                </div>
+
+                <div class="mb-3">
+                    <span class="store-pill-note">{{ trans('store_product_form.variation_tip') }}</span>
+                </div>
+
+                <div id="variations-container">
+                    <div class="store-variation-empty" id="variation-empty-state" {% if variations|length > 0 %}style="display:none;"{% endif %}>
+                        {{ trans('store_product_form.no_variations_html')|raw }}
+                    </div>
+
+                    {% for variation in variations %}
+                        <div class="store-variation-card" data-variation-row="{{ loop.index0 }}">
+                            <div class="store-variation-header">
+                                <h6>{{ trans('store_product_form.variation') }} <span class="variation-number">#{{ loop.index }}</span></h6>
+                                <button type="button" class="btn btn-outline-danger btn-sm remove-variation-btn">
+                                    {{ trans('store_product_form.remove') }}
+                                </button>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ trans('store_product_form.variation_name') }}</label>
+                                    <input type="text" name="variation_name[{{ loop.index0 }}]" class="form-control" value="{{ variation.name|default('') }}" placeholder="e.g. Basic, Premium, 4 Hours">
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ trans('store_product_form.slug_optional') }}</label>
+                                    <input type="text" name="variation_slug[{{ loop.index0 }}]" class="form-control" value="{{ variation.slug|default('') }}" placeholder="basic">
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">SKU</label>
+                                    <input type="text" name="variation_sku[{{ loop.index0 }}]" class="form-control" value="{{ variation.sku|default('') }}" placeholder="e.g. PRD-BASIC">
+                                </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">{{ trans('store_product_form.price') }}</label>
+                                    <input type="number" step="0.01" min="0.01" name="variation_price[{{ loop.index0 }}]" class="form-control" value="{{ variation.price|default('') }}" placeholder="0.00">
+                                </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">{{ trans('store_product_form.promo_price') }}</label>
+                                    <input type="number" step="0.01" min="0" name="variation_promo_price[{{ loop.index0 }}]" class="form-control" value="{{ variation.promo_price is not null ? variation.promo_price : '' }}" placeholder="0.00">
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">{{ trans('store_product_form.stock') }}</label>
+                                    <input type="number" min="0" name="variation_stock_quantity[{{ loop.index0 }}]" class="form-control" value="{{ variation.stock_quantity|default(0) }}">
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">{{ trans('store_product_form.min_qty') }}</label>
+                                    <input type="number" min="1" name="variation_min_purchase_qty[{{ loop.index0 }}]" class="form-control" value="{{ variation.min_purchase_qty|default(1) }}">
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">{{ trans('store_product_form.max_qty') }}</label>
+                                    <input type="number" min="1" name="variation_max_purchase_qty[{{ loop.index0 }}]" class="form-control" value="{{ variation.max_purchase_qty is not null ? variation.max_purchase_qty : '' }}" placeholder="Optional">
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">{{ trans('store_product_form.sort_order') }}</label>
+                                    <input type="number" min="0" name="variation_sort_order[{{ loop.index0 }}]" class="form-control" value="{{ variation.sort_order|default(loop.index0) }}">
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">{{ trans('ui.status') }}</label>
+                                    <select name="variation_status[{{ loop.index0 }}]" class="form-select">
+                                        <option value="ACTIVE" {{ variation.status == 'ACTIVE' ? 'selected' : '' }}>{{ trans('ui.active') }}</option>
+                                        <option value="INACTIVE" {{ variation.status == 'INACTIVE' ? 'selected' : '' }}>{{ trans('ui.inactive') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="store-variation-attributes">
+                                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3">
+                                    <div>
+                                        <strong>{{ trans('store_product_form.variation_attribute_mapping') }}</strong>
+                                        <div class="store-helper-text">{{ trans('store_product_form.variation_attribute_mapping_help') }}</div>
+                                    </div>
+                                </div>
+
+                                {% set mapped_values = {} %}
+                                {% if variation.attribute_values is defined and variation.attribute_values %}
+                                    {% for av in variation.attribute_values %}
+                                        {% set mapped_values = mapped_values|merge({ (av.attribute_name): av.attribute_value }) %}
+                                    {% endfor %}
+                                {% endif %}
+
+                                <div class="row">
+                                    {% for attribute in attributes %}
+                                        {% set selected_variation_value_id = '' %}
+                                        {% if variation.attribute_values is defined and variation.attribute_values %}
+                                            {% for av in variation.attribute_values %}
+                                                {% if av.attribute_name == attribute.name %}
+                                                    {% set selected_variation_value_id = av.attribute_value_slug %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+
+                                        <div class="col-lg-4 col-md-6 mb-3">
+                                            <label class="form-label">{{ attribute.name }}</label>
+                                            <select class="form-select" name="variation_attribute_pairs[{{ loop.parent.loop.index0 }}][{{ attribute.id }}]">
+                                                <option value="">{{ trans('store_product_form.not_used') }}</option>
+                                                {% for value in attribute.values %}
+                                                    <option value="{{ value.id }}"
+                                                        {% if variation.attribute_values is defined %}
+                                                            {% for av in variation.attribute_values %}
+                                                                {% if av.attribute_name == attribute.name and av.attribute_value == value.value %}
+                                                                    selected
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                    >
+                                                        {{ value.value }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="store-section-card">
+            <div class="card-body">
+                <div class="store-section-title">{{ trans('store_product_form.categories') }}</div>
+                <div class="store-section-subtitle">{{ trans('store_product_form.categories_help') }}</div>
+
+                <div class="row">
+                    {% for c in categories %}
+                        <div class="col-md-4 mb-2">
+                            <div class="form-check border rounded p-3">
+                                <input class="form-check-input" type="checkbox" name="category_ids[]" value="{{ c.id }}" id="cat-{{ c.id }}" {{ c.id in selected_category_ids ? 'checked' : '' }}>
+                                <label class="form-check-label ms-1" for="cat-{{ c.id }}">
+                                    <strong>{{ c.name }}</strong>
+                                    {% if c.description %}
+                                        <div class="small text-muted">{{ c.description }}</div>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="col-12">
+                            <div class="alert alert-warning mb-0">
+                                {{ trans('store_product_form.no_active_categories') }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="store-section-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                    <div>
+                        <div class="store-section-title">{{ trans('store_product_form.informational_attributes') }}</div>
+                        <div class="store-section-subtitle mb-0">{{ trans('store_product_form.informational_attributes_help') }}</div>
+                    </div>
+                    <div class="store-inline-actions">
+                        <a href="{{ path('panel/planner-hub/store/attributes/create') }}" class="btn btn-outline-dark btn-sm">+ {{ trans('store_product_form.new_attribute') }}</a>
+                        <a href="{{ path('panel/planner-hub/store/attribute-values/create') }}" class="btn btn-outline-dark btn-sm">+ {{ trans('store_product_form.new_value') }}</a>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    {% for attribute in attributes %}
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="store-attribute-box">
+                                <h6>{{ attribute.name }}</h6>
+
+                                {% if attribute.values|length > 0 %}
+                                    {% for value in attribute.values %}
+                                        <div class="form-check mb-2">
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                name="attribute_values[{{ attribute.id }}][]"
+                                                value="{{ value.id }}"
+                                                id="attr-{{ attribute.id }}-value-{{ value.id }}"
+                                                {{ value.id in selected_value_ids ? 'checked' : '' }}
+                                            >
+                                            <label class="form-check-label" for="attr-{{ attribute.id }}-value-{{ value.id }}">
+                                                {{ value.value }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class="text-muted small mb-0">{{ trans('store_product_form.no_values_for_attribute') }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="col-12">
+                            <div class="alert alert-warning mb-0">
+                                {{ trans('store_product_form.no_active_attributes') }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="store-sticky-actions">
+            <div class="d-flex gap-2 flex-wrap justify-content-between align-items-center">
+                <div class="store-helper-text">
+                    {{ trans('store_product_form.save_product_help_edit') }}
+                </div>
+                <div class="store-inline-actions">
+                    <button type="submit" class="btn btn-success">
+                        {{ trans('store_product_form.update_product') }}
+                    </button>
+                    <a href="{{ path('panel/planner-hub/store/products/home') }}" class="btn btn-outline-secondary">
+                        {{ trans('ui.cancel') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<template id="variation-template">
+    <div class="store-variation-card" data-variation-row="__INDEX__">
+        <div class="store-variation-header">
+            <h6>{{ trans('store_product_form.variation') }} <span class="variation-number">#__NUMBER__</span></h6>
+            <button type="button" class="btn btn-outline-danger btn-sm remove-variation-btn">
+                {{ trans('store_product_form.remove') }}
+            </button>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">{{ trans('store_product_form.variation_name') }}</label>
+                <input type="text" name="variation_name[__INDEX__]" class="form-control" placeholder="e.g. Basic, Premium, 4 Hours">
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label class="form-label">{{ trans('store_product_form.slug_optional') }}</label>
+                <input type="text" name="variation_slug[__INDEX__]" class="form-control" placeholder="basic">
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label class="form-label">SKU</label>
+                <input type="text" name="variation_sku[__INDEX__]" class="form-control" placeholder="e.g. PRD-BASIC">
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label">{{ trans('store_product_form.price') }}</label>
+                <input type="number" step="0.01" min="0.01" name="variation_price[__INDEX__]" class="form-control" placeholder="0.00">
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label">{{ trans('store_product_form.promo_price') }}</label>
+                <input type="number" step="0.01" min="0" name="variation_promo_price[__INDEX__]" class="form-control" placeholder="0.00">
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label class="form-label">{{ trans('store_product_form.stock') }}</label>
+                <input type="number" min="0" name="variation_stock_quantity[__INDEX__]" class="form-control" value="0">
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label class="form-label">{{ trans('store_product_form.min_qty') }}</label>
+                <input type="number" min="1" name="variation_min_purchase_qty[__INDEX__]" class="form-control" value="1">
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label class="form-label">{{ trans('store_product_form.max_qty') }}</label>
+                <input type="number" min="1" name="variation_max_purchase_qty[__INDEX__]" class="form-control" placeholder="Optional">
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label class="form-label">{{ trans('store_product_form.sort_order') }}</label>
+                <input type="number" min="0" name="variation_sort_order[__INDEX__]" class="form-control" value="__INDEX__">
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label class="form-label">{{ trans('ui.status') }}</label>
+                <select name="variation_status[__INDEX__]" class="form-select">
+                    <option value="ACTIVE" selected>{{ trans('ui.active') }}</option>
+                    <option value="INACTIVE">{{ trans('ui.inactive') }}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="store-variation-attributes">
+            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3">
+                <div>
+                    <strong>{{ trans('store_product_form.variation_attribute_mapping') }}</strong>
+                    <div class="store-helper-text">{{ trans('store_product_form.variation_attribute_mapping_help') }}</div>
+                </div>
+            </div>
+
+            <div class="row">
+                {% for attribute in attributes %}
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <label class="form-label">{{ attribute.name }}</label>
+                        <select class="form-select" name="variation_attribute_pairs[__INDEX__][{{ attribute.id }}]">
+                            <option value="">{{ trans('store_product_form.not_used') }}</option>
+                            {% for value in attribute.values %}
+                                <option value="{{ value.id }}">{{ value.value }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+
+    const input = document.getElementById('main-image-input');
+    const preview = document.getElementById('main-image-preview');
+
+    if (input) {
+        input.addEventListener('change', function (e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                preview.src = event.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    const productTypeInput = document.getElementById('product_type_input');
+    const productEditForm = document.getElementById('product-edit-form');
+    const typeCards = document.querySelectorAll('[data-product-type-card]');
+    const fixedCard = document.getElementById('fixed-fields-card');
+    const variableCard = document.getElementById('variable-fields-card');
+    const fixedPriceInput = document.querySelector('input[name="price"]');
+
+    function setSectionFieldsEnabled(sectionElement, enabled) {
+        if (!sectionElement) {
+            return;
+        }
+
+        const fields = sectionElement.querySelectorAll('input, select, textarea, button');
+        fields.forEach(field => {
+            field.disabled = !enabled;
+        });
+    }
+
+    function toggleProductType(type) {
+        productTypeInput.value = type;
+
+        typeCards.forEach(card => {
+            card.classList.toggle('active', card.getAttribute('data-product-type-card') === type);
+        });
+
+        if (type === 'VARIABLE') {
+            fixedCard.style.display = 'none';
+            variableCard.style.display = 'block';
+            setSectionFieldsEnabled(fixedCard, false);
+            setSectionFieldsEnabled(variableCard, true);
+            if (fixedPriceInput) {
+                fixedPriceInput.required = false;
+            }
+        } else {
+            fixedCard.style.display = 'block';
+            variableCard.style.display = 'none';
+            setSectionFieldsEnabled(fixedCard, true);
+            setSectionFieldsEnabled(variableCard, false);
+            if (fixedPriceInput) {
+                fixedPriceInput.required = true;
+            }
+        }
+    }
+
+    typeCards.forEach(card => {
+        card.addEventListener('click', function () {
+            toggleProductType(this.getAttribute('data-product-type-card'));
+        });
+    });
+
+    toggleProductType(productTypeInput.value || 'FIXED');
+
+    const addVariationBtn = document.getElementById('add-variation-btn');
+    const variationsContainer = document.getElementById('variations-container');
+    const variationTemplate = document.getElementById('variation-template');
+    const emptyState = document.getElementById('variation-empty-state');
+
+    let variationIndex = {{ variations|length }};
+
+    function refreshVariationNumbers() {
+        const rows = variationsContainer.querySelectorAll('.store-variation-card');
+        rows.forEach((row, idx) => {
+            const label = row.querySelector('.variation-number');
+            if (label) {
+                label.textContent = '#' + (idx + 1);
+            }
+        });
+
+        if (rows.length === 0) {
+            emptyState.style.display = 'block';
+        } else {
+            emptyState.style.display = 'none';
+        }
+    }
+
+    function bindRemoveButtons(scope) {
+        const buttons = scope.querySelectorAll('.remove-variation-btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                const card = this.closest('.store-variation-card');
+                if (card) {
+                    card.remove();
+                    refreshVariationNumbers();
+                }
+            });
+        });
+    }
+
+    function addVariationRow() {
+        let html = variationTemplate.innerHTML;
+        html = html.replaceAll('__INDEX__', variationIndex);
+        html = html.replaceAll('__NUMBER__', variationIndex + 1);
+
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = html.trim();
+
+        const row = wrapper.firstElementChild;
+        variationsContainer.appendChild(row);
+        bindRemoveButtons(row);
+
+        variationIndex++;
+        refreshVariationNumbers();
+    }
+
+    if (addVariationBtn) {
+        addVariationBtn.addEventListener('click', addVariationRow);
+    }
+
+    if (productEditForm) {
+        productEditForm.addEventListener('submit', function (event) {
+            if (productTypeInput.value === 'FIXED') {
+                const fixedPriceValue = fixedPriceInput ? parseFloat(fixedPriceInput.value) : 0;
+                if (!fixedPriceInput || Number.isNaN(fixedPriceValue) || fixedPriceValue <= 0) {
+                    event.preventDefault();
+                    alert('{{ trans('store_product_form.fixed_price_required')|e('js') }}');
+                    if (fixedPriceInput) {
+                        fixedPriceInput.focus();
+                    }
+                    return;
+                }
+
+                return;
+            }
+
+            const variationRows = variationsContainer.querySelectorAll('.store-variation-card');
+            for (let idx = 0; idx < variationRows.length; idx++) {
+                const row = variationRows[idx];
+                const priceInput = row.querySelector('input[name^="variation_price["]');
+                const priceValue = priceInput ? parseFloat(priceInput.value) : 0;
+
+                if (!priceInput || Number.isNaN(priceValue) || priceValue <= 0) {
+                    event.preventDefault();
+                    alert('{{ trans('store_product_form.variation_price_required_prefix')|e('js') }}' + (idx + 1) + '.');
+                    if (priceInput) {
+                        priceInput.focus();
+                    }
+                    return;
+                }
+            }
+        });
+    }
+
+    bindRemoveButtons(document);
+    refreshVariationNumbers();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,70 @@
+<?php
+
+use App\Services\ModuleGuardService;
+
+
+use App\Repositories\StorageContainerRepository;
+use App\Repositories\StorageContainerCategoryRepository;
+use App\Services\LoginService;
+use App\Services\TranslationService;
+use App\Utils\LocationUtils;
+use App\Utils\MessageUtil;
+use App\Utils\Router;
+use App\Utils\TemplateResponse;
+use App\Utils\UserContext;
+
+ModuleGuardService::requireModule('inventory_storage');
+
+
+$router = new Router();
+
+$router->get(function () {
+    $context = UserContext::get();
+
+   
+    return TemplateResponse::render(__DIR__ . "/index.twig", [
+        'categories' => (new StorageContainerCategoryRepository())->getByOwner((int)LoginService::getSession()->getOwner()),
+        ...$context
+    ]);
+});
+
+$router->post(function () {
+    TranslationService::detectLocale();
+    $context = UserContext::get();
+    $repo = new StorageContainerRepository();
+    $user = LoginService::getSession();
+
+    $name = trim($_POST["name"] ?? '');
+    $categoryId = (int)($_POST['id_category'] ?? 0);
+    $categoryRepo = new StorageContainerCategoryRepository();
+    if ($categoryId > 0 && !$categoryRepo->belongsToOwner($categoryId, (int)LoginService::getSession()->getOwner())) {
+        MessageUtil::setMessage(TranslationService::trans('planner_hub.container_category_not_saved'));
+        LocationUtils::reload();
+    }
+
+    if (empty($name)) {
+        MessageUtil::setMessage(TranslationService::trans('planner_hub.container_name_required'));
+        LocationUtils::reload();
+    }
+
+    $imgPath = null;
+
+    if (!empty($_FILES["img_reference"]["tmp_name"])) {
+        $imgPath = \App\Utils\FileUtils::saveFile(
+            $_FILES["img_reference"],
+            "container_img_reference"
+        );
+    }
+
+    $repo->add([
+        "name" => $name,
+        "id_category" => $categoryId > 0 ? $categoryId : null,
+        "img_reference" => $imgPath,
+        ...LoginService::getOwnerAsArray()
+    ]);
+
+    MessageUtil::setMessage(TranslationService::trans('planner_hub.container_created_successfully'));
+    LocationUtils::redirectInternal("panel/planner-hub/management/storage/containers");
+});
+
+$router->run();

@@ -1,0 +1,143 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+	<h2 class="h3 mb-4">🛠 {{ trans('planner_hub.workflow_status') }} #vnv-341{{ order.id }}</h2>
+	{{ macros.breadcrumb2() }}
+
+	<div class="mb-4">
+		<p>
+			<strong>🔗 {{ trans('planner_hub.contract_link') }}</strong>
+			<a href="{{ path('/order-access?token=' ~ contract_token) }}" target="_blank">
+				{{ trans('planner_hub.sign_contract') }}
+			</a>
+		</p>
+		{% if order.payment_type == 'two_steps' %}
+			<p>
+				<strong>💳 {{ trans('planner_hub.payment_link') }}</strong>
+				<a href="{{ path('/order-access?token=' ~ contract_token ~ '#payment') }}" target="_blank">
+					{{ trans('planner_hub.pay_online') }}
+				</a>
+			</p>
+		{% endif %}
+	</div>
+
+
+	<form method="post" enctype="multipart/form-data" class="card mb-4">
+		<div class="card-body row g-3">
+			<input type="hidden" name="id_order" value="{{ order.id|e }}">
+
+			<div class="col-md-6">
+				<label class="form-label">{{ trans('planner_hub.new_status') }}</label>
+				<select name="status" class="form-select" required>
+					<option value="">{{ trans('planner_hub.select_status') }}</option>
+					<option value="INVOICE_DRAFT">{{ trans('planner_hub.invoice_pending_signature') }}</option>
+					<option value="INVOICE_READY">{{ trans('planner_hub.invoice_signed') }}</option>
+					<option value="INVOICE_PARTIAL">{{ trans('planner_hub.invoice_paid_partial') }}</option>
+					<option value="INVOICE_PAID">{{ trans('planner_hub.invoice_paid_full') }}</option>
+					<option value="INVOICE_EXPIRED">{{ trans('planner_hub.invoice_expired') }}</option>
+				</select>
+			</div>
+
+			<div class="col-md-6">
+				<label class="form-label">{{ trans('planner_hub.upload_file_optional') }}</label>
+				<input type="file" name="file" class="form-control" accept=".pdf,.doc,.docx,.jpg,.png">
+			</div>
+
+			<div class="col-md-6" id="paidAtGroup" style="display:none">
+				<label class="form-label">{{ trans('planner_hub.payment_received_date') }}</label>
+				<input type="datetime-local" name="paid_at_manual" class="form-control" id="paidAtManual">
+			</div>
+
+			<div class="col-md-12">
+				<label class="form-label">{{ trans('planner_hub.notes') }}</label>
+				<input type="text" name="note" class="form-control" rows="3" placeholder="{{ trans('planner_hub.add_details_change') }}" required>
+			</div>
+
+			<div class="col-12 text-end">
+				<button class="btn btn-primary">💾 {{ trans('planner_hub.save_status') }}</button>
+			</div>
+		</div>
+	</form>
+
+	<h5 class="mb-3">📜 {{ trans('planner_hub.status_history') }}</h5>
+
+	<div class="table-responsive">
+		<table class="table table-bordered text-center align-middle" style="min-width: 768px;">
+			<thead class="table-dark">
+				<tr>
+					<th style="min-width: 180px;">{{ trans('planner_hub.status') }}</th>
+					<th style="min-width: 250px;">{{ trans('planner_hub.note') }}</th>
+					<th style="min-width: 150px;">{{ trans('planner_hub.file') }}</th>
+					<th style="min-width: 120px;">{{ trans('planner_hub.by') }}</th>
+					<th style="min-width: 180px;">{{ trans('planner_hub.activity') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for h in history %}
+					<tr>
+						<td>
+							<span class="badge bg-secondary" style="min-width: 160px; display: inline-block;">
+								{% if h.status == 'INVOICE_DRAFT' %}
+									{{ trans('planner_hub.signature_pending') }}
+								{% elseif h.status == 'INVOICE_READY' %}
+									{{ trans('planner_hub.signed_payment_pending') }}
+								{% elseif h.status == 'INVOICE_PARTIAL' %}
+									{{ trans('planner_hub.first_payment_completed') }}
+								{% elseif h.status == 'INVOICE_PAID' %}
+									{{ trans('planner_hub.fully_paid') }}
+								{% elseif h.status == 'INVOICE_EXPIRED' %}
+									{{ trans('planner_hub.expired') }}
+								{% else %}
+									{{ h.status }}
+								{% endif %}
+							</span>
+						</td>
+						<td>{{ h.note }}</td>
+						<td>
+							{% if h.file_path %}
+								<a href="{{ h.file_path }}" class="btn btn-sm btn-outline-primary" target="_blank">👁 {{ trans('planner_hub.preview') }}</a>
+								{% set download_url = h.file_path|replace({'/upload/': '/upload/fl_attachment/'}) %}
+								<a href="{{ download_url }}" class="btn btn-sm btn-outline-dark">⬇ {{ trans('planner_hub.download') }}</a>
+							{% else %}
+								-
+							{% endif %}
+						</td>
+						<td>#{{ h.created_by }}</td>
+						<td>
+							{{ h.created_at|date("D, M jS, Y - h:i A") }}
+							{% if loop.last and history|length > 1 %}
+								<br><hr>
+								<form method="post" class="d-inline-block ms-2">
+									<input type="hidden" name="undo_last_status" value="{{ h.id }}">
+									<input type="hidden" name="id_order" value="{{ order.id }}">
+									<button class="btn btn-sm btn-outline-danger" title="{{ trans('planner_hub.undo') }}" onclick="return confirm('{{ trans('planner_hub.undo_last_status') }}')">
+										⏪ {{ trans('planner_hub.undo') }}
+									</button>
+								</form>
+							{% endif %}
+						</td>
+					</tr>
+				{% else %}
+					<tr>
+						<td colspan="5">{{ trans('planner_hub.no_history_found') }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+				</table>
+			</div>
+
+<script>
+document.querySelector('select[name="status"]').addEventListener('change', function() {
+	const paidGroup = document.getElementById('paidAtGroup');
+	const isPayment = ['INVOICE_PAID', 'INVOICE_PARTIAL'].includes(this.value);
+	paidGroup.style.display = isPayment ? 'block' : 'none';
+	if (isPayment && !document.getElementById('paidAtManual').value) {
+		const now = new Date();
+		document.getElementById('paidAtManual').value = now.toISOString().slice(0, 16);
+	}
+});
+// Trigger on load
+document.querySelector('select[name="status"]').dispatchEvent(new Event('change'));
+</script>
+{% endblock %}

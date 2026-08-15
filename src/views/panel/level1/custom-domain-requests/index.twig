@@ -1,0 +1,65 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+<main class="container mt-4">
+  <div class="ophyra-page-header">
+    <div>
+      <p class="ophyra-page-kicker">Ophyra Global Admin</p>
+      <h1 class="fw-bold mb-1">Custom Domain Requests</h1>
+      <p class="text-muted mb-0">Approve or reject public profile domain requests. DNS setup remains manual.</p>
+    </div>
+    <a href="{{ path('panel/home') }}" class="btn btn-outline-dark fw-bold">Admin Dashboard</a>
+  </div>
+
+  <div class="table-responsive bg-white shadow-sm rounded-4">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Business</th>
+          <th>Owner</th>
+          <th>Domain</th>
+          <th>{{ trans('ui.status') }}</th>
+          <th>Requested</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in requests %}
+          <tr>
+            <td>
+              <strong>{{ item.company_name }}</strong>
+              <div class="text-muted small">{{ item.city }}{% if item.state %}, {{ item.state }}{% endif %}</div>
+            </td>
+            <td>
+              {{ item.name }} {{ item.lastname }}
+              <div class="text-muted small">{{ item.owner_email }}</div>
+            </td>
+            <td>{{ item.custom_domain }}</td>
+            <td>
+              <span class="badge {% if item.custom_domain_status == 'APPROVED' %}bg-success{% elseif item.custom_domain_status == 'REJECTED' %}bg-danger{% elseif item.custom_domain_status == 'PENDING' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                {{ item.custom_domain_status }}
+              </span>
+            </td>
+            <td class="text-nowrap">{{ item.custom_domain_requested_at ?: item.updated_at }}</td>
+            <td style="min-width: 280px;">
+              <form method="post" class="d-flex flex-column gap-2">
+                <input type="hidden" name="profile_id" value="{{ item.id }}">
+                <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Internal note or rejection reason">{{ item.custom_domain_notes }}</textarea>
+                <div class="d-flex flex-wrap gap-2">
+                  <button name="action" value="APPROVED" class="btn btn-sm btn-success">Approve</button>
+                  <button name="action" value="REJECTED" class="btn btn-sm btn-outline-danger">Reject</button>
+                  <button name="action" value="PENDING" class="btn btn-sm btn-outline-secondary">Mark Pending</button>
+                </div>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-5">No custom domain requests yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+{% endblock %}

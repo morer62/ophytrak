@@ -1,0 +1,148 @@
+{% set saved_methods = saved_payment_methods|default([]) %}
+{% set supports_saved = gateway_supports_saved_methods|default(false) %}
+
+<input type="hidden" name="payment_token_type" id="payment-token-type" value="new_card">
+<input type="hidden" name="customer_name" value="{{ client_name|default('')|e('html_attr') }}">
+<input type="hidden" name="card_brand" id="payment-card-brand">
+<input type="hidden" name="card_last4" id="payment-card-last4">
+<input type="hidden" name="card_exp_month" id="payment-card-exp-month">
+<input type="hidden" name="card_exp_year" id="payment-card-exp-year">
+
+{% if client_is_authenticated|default(false) and saved_methods|length > 0 %}
+<div class="mb-3 border rounded p-3 bg-white shadow-sm">
+    <label for="saved-payment-method-id" class="form-label fw-bold mb-2">{{ trans('planner_hub.saved_payment_method') }}</label>
+    <select name="saved_payment_method_id" id="saved-payment-method-id" class="form-select form-select-lg">
+        <option value="">-- {{ trans('planner_hub.continue_without_saving') }} --</option>
+        {% for method in saved_methods %}
+            <option value="{{ method.id }}">
+                {{ method.brand|default('Card') }} **** {{ method.last4|default('') }}
+                {% if method.exp_month and method.exp_year %}({{ method.exp_month }}/{{ method.exp_year }}){% endif %}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+{% endif %}
+
+{% if active_provider_type == 'stripe' %}
+<div class="row mb-3" id="payment-billing-zip-wrap">
+    <div class="col-md-7">
+        <label class="form-label fw-bold">{{ trans('planner_hub.zip_code') }}</label>
+        <input type="text" name="billing_zip" id="payment-billing-zip" class="form-control form-control-lg" maxlength="12" autocomplete="postal-code" placeholder="{{ trans('wallet.billing_zip') }}" required>
+        <small class="text-muted">{{ trans('wallet.billing_zip_help') }}</small>
+    </div>
+</div>
+{% else %}
+<input type="hidden" name="billing_zip" value="">
+{% endif %}
+
+{% if supports_saved %}
+<div class="modal fade" id="paymentMethodConsentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ trans('planner_hub.payment_method_preferences') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ trans('planner_hub.close') }}"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">{{ trans('planner_hub.save_payment_method_for_future') }}</p>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="save_payment_method" value="1" id="savePaymentMethodInput">
+                    <label class="form-check-label" for="savePaymentMethodInput">
+                        {{ trans('planner_hub.save_payment_method_for_future') }}
+                    </label>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="auto_charge_consent" value="1" id="autoChargeConsentInput">
+                    <label class="form-check-label" for="autoChargeConsentInput">
+                        {{ trans('planner_hub.authorize_future_charges_text') }}
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-payment-consent-skip>
+                    {{ trans('planner_hub.continue_without_saving') }}
+                </button>
+                <button type="button" class="btn btn-primary" data-payment-consent-continue>
+                    {{ trans('planner_hub.continue_payment') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const savedSelect = document.getElementById('saved-payment-method-id');
+    const tokenTypeInput = document.getElementById('payment-token-type');
+    const cardSection = document.getElementById('card-section') || document.getElementById('cardSection');
+    const zipWrap = document.getElementById('payment-billing-zip-wrap');
+    const saveInput = document.getElementById('savePaymentMethodInput');
+    const autoConsentInput = document.getElementById('autoChargeConsentInput');
+    const consentModalEl = document.getElementById('paymentMethodConsentModal');
+    let consentConfirmed = false;
+
+    function syncSavedPaymentMethodMode() {
+        const usesSaved = !!(savedSelect && savedSelect.value);
+        if (tokenTypeInput) tokenTypeInput.value = usesSaved ? 'stored_card' : 'new_card';
+        if (cardSection) cardSection.style.display = usesSaved ? 'none' : '';
+        if (zipWrap) zipWrap.style.display = usesSaved ? 'none' : '';
+    }
+
+    if (savedSelect) {
+        savedSelect.addEventListener('change', syncSavedPaymentMethodMode);
+        syncSavedPaymentMethodMode();
+    }
+
+    if (autoConsentInput && saveInput) {
+        autoConsentInput.addEventListener('change', function () {
+            if (autoConsentInput.checked) {
+                saveInput.checked = true;
+            }
+        });
+    }
+
+    const form = document.getElementById('payment-form');
+    if (form && consentModalEl) {
+        form.addEventListener('submit', function (event) {
+            const usesSaved = !!(savedSelect && savedSelect.value);
+            if (usesSaved || consentConfirmed) {
+                return;
+            }
+
+            event.prevent{{ trans('wallet.default') }}();
+            event.stopImmediatePropagation();
+
+            if (!window.bootstrap || !window.bootstrap.Modal) {
+                consentConfirmed = true;
+                form.requestSubmit ? form.requestSubmit() : form.submit();
+                return;
+            }
+
+            const modal = window.bootstrap.Modal.getOrCreateInstance(consentModalEl);
+            modal.show();
+        }, true);
+
+        const continueButton = consentModalEl.querySelector('[data-payment-consent-continue]');
+        const skipButton = consentModalEl.querySelector('[data-payment-consent-skip]');
+
+        function continuePayment() {
+            consentConfirmed = true;
+            window.bootstrap.Modal.getOrCreateInstance(consentModalEl).hide();
+            form.requestSubmit ? form.requestSubmit() : form.submit();
+        }
+
+        if (continueButton) {
+            continueButton.addEventListener('click', continuePayment);
+        }
+
+        if (skipButton) {
+            skipButton.addEventListener('click', function () {
+                if (saveInput) saveInput.checked = false;
+                if (autoConsentInput) autoConsentInput.checked = false;
+                continuePayment();
+            });
+        }
+    }
+});
+</script>

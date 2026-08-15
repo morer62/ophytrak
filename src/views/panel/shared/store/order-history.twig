@@ -1,0 +1,149 @@
+<div class="container-fluid">
+  {% set storeStatusLabels = {
+    'DELIVERED': trans('store_status.delivered'),
+    'COMPLETED': trans('store_status.completed'),
+    'DELIVERY_ATTEMPTED': trans('store_status.delivery_attempted'),
+    'RETURNED_TO_BUSINESS': trans('store_status.returned_to_business'),
+    'REDELIVERY_SCHEDULED': trans('store_status.redelivery_scheduled'),
+    'RETURN_REQUESTED': trans('store_status.return_requested'),
+    'RETURN_APPROVED': trans('store_status.return_approved'),
+    'RETURN_REJECTED': trans('store_status.return_rejected'),
+    'RETURNED': trans('store_status.returned'),
+    'CLOSED': trans('store_status.closed'),
+    'CANCELLED': trans('store_status.cancelled')
+  } %}
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+      <p class="text-uppercase text-muted fw-bold small mb-1">{{ trans('store_history.badge') }}</p>
+      <h1 class="h3 mb-1">{{ trans('store_history.title') }}</h1>
+      <p class="text-muted mb-0">{{ trans('store_history.subtitle') }}</p>
+    </div>
+    <a href="{{ back_url }}" class="btn btn-light">{{ trans('store_history.back_to_active_orders') }}</a>
+  </div>
+
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end">
+        {% if operation_context is defined %}
+          <input type="hidden" name="operation" value="{{ operation_context.key|default('vnv_events') }}">
+        {% endif %}
+        <div class="col-md-3">
+          <label class="form-label">{{ trans('store_report.from') }}</label>
+          <input class="form-control" type="date" name="from" value="{{ filters.from }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">{{ trans('store_report.to') }}</label>
+          <input class="form-control" type="date" name="to" value="{{ filters.to }}">
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-dark w-100">{{ trans('store_history.filter_history') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      {% if orders %}
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+            <tr>
+              <th>{{ trans('store_report.order') }}</th>
+              <th>{{ trans('store_report.customer') }}</th>
+              <th>{{ trans('store_report.items') }}</th>
+              <th>{{ trans('ui.total') }}</th>
+              <th>{{ trans('store_report.payment_proof') }}</th>
+              <th>{{ trans('store_history.delivery_proof') }}</th>
+              <th>{{ trans('ui.status') }}</th>
+              <th class="text-end">{{ trans('store_history.update') }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for o in orders %}
+              <tr>
+                <td>
+                  <strong>#{{ o.id }}</strong>
+                  <div class="small text-muted">{{ o.created_at|date('M j, Y g:i A') }}</div>
+                  <a target="_blank" href="{{ path('store/order-access?token=' ~ o.public_token) }}">{{ trans('store_history.public_status') }}</a>
+                </td>
+                <td>
+                  <div class="fw-semibold">{{ o.guest_name ?: trans('store_report.customer') }}</div>
+                  <div class="small text-muted">{{ o.guest_email ?: '-' }}</div>
+                </td>
+                <td class="small">
+                  {% for item in o.items %}
+                    <div>{{ item.product_name_snapshot ?: ('Product #' ~ item.id_product) }} x {{ item.quantity }}</div>
+                  {% else %}
+                    <span class="text-muted">{{ trans('store_history.no_items') }}</span>
+                  {% endfor %}
+                </td>
+                <td>${{ o.total|number_format(2, '.', ',') }}</td>
+                <td class="small">
+                  {% if o.latest_payment %}
+                    <div>{{ o.latest_payment.payment_method|default('payment')|replace({'_':' '})|title }}</div>
+                    <div class="text-muted">{{ o.latest_payment.status|default(o.payment_status) }}</div>
+                    {% if o.latest_payment.proof_url %}
+                      <a target="_blank" href="{{ o.latest_payment.proof_url }}">{{ trans('store_report.view_payment_proof') }}</a>
+                    {% elseif o.latest_payment.external_payment_id %}
+                      <span class="text-muted">{{ trans('store_history.processor_payment') }}: {{ o.latest_payment.external_payment_id }}</span>
+                    {% else %}
+                      <span class="text-muted">{{ trans('store_history.no_payment_proof_file') }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-muted">{{ trans('store_history.no_payment_record') }}</span>
+                  {% endif %}
+                </td>
+                <td class="small">
+                  {% if o.workflow and o.workflow.delivery_photo_url %}
+                    <a target="_blank" href="{{ o.workflow.delivery_photo_url }}">{{ trans('store_history.view_delivery_proof') }}</a>
+                    {% if o.workflow.delivery_notes %}<div class="text-muted mt-1">{{ o.workflow.delivery_notes }}</div>{% endif %}
+                  {% else %}
+                    <span class="text-muted">{{ trans('store_history.no_delivery_proof') }}</span>
+                  {% endif %}
+                  {% if o.latest_location %}
+                    <div><a target="_blank" href="https://www.google.com/maps?q={{ o.latest_location.latitude }},{{ o.latest_location.longitude }}">{{ trans('store_history.final_gps') }}</a></div>
+                  {% endif %}
+                </td>
+                <td>
+                  {% set statusBadge = o.status in ['DELIVERED', 'COMPLETED'] ? 'bg-success' : (o.status in ['CANCELLED', 'RETURN_REJECTED'] ? 'bg-danger' : (o.status in ['DELIVERY_ATTEMPTED', 'RETURNED_TO_BUSINESS', 'RETURN_REQUESTED'] ? 'bg-warning text-dark' : (o.status in ['RETURN_APPROVED', 'REDELIVERY_SCHEDULED'] ? 'bg-primary' : 'bg-secondary'))) %}
+                  <span class="badge {{ statusBadge }}">{{ storeStatusLabels[o.status]|default(o.status|replace({'_':' '})) }}</span>
+                  <div class="small text-muted mt-1">{{ trans('store_report.payment') }}: {{ o.payment_status }}</div>
+                  {% if o.return_notes %}
+                    <div class="small mt-2"><strong>{{ trans('store_returns.customer_note') }}:</strong> {{ o.return_notes }}</div>
+                  {% endif %}
+                  {% if o.return_admin_message %}
+                    <div class="small mt-2 text-muted"><strong>{{ trans('store_returns.admin_response') }}:</strong> {{ o.return_admin_message }}</div>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <form method="post" class="d-grid gap-2 justify-content-end">
+                    <input type="hidden" name="order_id" value="{{ o.id }}">
+                    <select class="form-select form-select-sm" name="status" style="max-width:190px">
+                      <option value="COMPLETED" {{ o.status == 'COMPLETED' ? 'selected' : '' }}>{{ trans('store_status.completed') }}</option>
+                      <option value="RETURN_REQUESTED" {{ o.status == 'RETURN_REQUESTED' ? 'selected' : '' }}>{{ trans('store_status.return_requested') }}</option>
+                      <option value="RETURN_APPROVED" {{ o.status == 'RETURN_APPROVED' ? 'selected' : '' }}>{{ trans('store_status.return_approved') }}</option>
+                      <option value="RETURN_REJECTED" {{ o.status == 'RETURN_REJECTED' ? 'selected' : '' }}>{{ trans('store_status.return_rejected') }}</option>
+                      <option value="RETURNED" {{ o.status == 'RETURNED' ? 'selected' : '' }}>{{ trans('store_history.returned_refunded') }}</option>
+                      <option value="REDELIVERY_SCHEDULED" {{ o.status == 'REDELIVERY_SCHEDULED' ? 'selected' : '' }}>{{ trans('store_status.redelivery_scheduled') }}</option>
+                      <option value="CLOSED" {{ o.status == 'CLOSED' ? 'selected' : '' }}>{{ trans('store_status.closed') }}</option>
+                      <option value="CANCELLED" {{ o.status == 'CANCELLED' ? 'selected' : '' }}>{{ trans('store_status.cancelled') }}</option>
+                    </select>
+                    <textarea class="form-control form-control-sm" name="return_admin_message" rows="2" maxlength="800" placeholder="{{ trans('store_returns.admin_response_placeholder') }}">{{ o.return_admin_message }}</textarea>
+                    <button class="btn btn-sm btn-outline-dark">{{ trans('ui.save') }}</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-5">
+          <h5 class="mb-2">{{ trans('store_history.empty_title') }}</h5>
+          <p class="text-muted mb-0">{{ trans('store_history.empty_text') }}</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>

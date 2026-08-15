@@ -1,0 +1,156 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="mt-4 container">
+
+  {{ macros.breadcrumb2() }}
+
+  <h3 class="fw-bold mb-4">{{ trans('planner_hub.team_operations') }}</h3>
+
+  <section>
+    <div class="row text-center g-4">
+
+      <!-- CRM -->
+      <div class="col-md-4">
+        <div class="p-5 bg-white rounded-4 shadow-sm h-100">
+          <img src="{{ asset_for('assets/images/icons_website/icon_4.png') }}" alt="CRM" class="mb-4" style="height: 110px;">
+          <h5 class="fw-bold mb-2">📇 {{ trans('planner_hub.crm') }}</h5>
+          <p class="text-muted fs-6 mb-3">{{ trans('planner_hub.crm_desc') }}</p>
+          <a href="{{ path('panel/planner-hub/management/crm') }}" class="btn btn-primary fw-bold px-4">{{ trans('planner_hub.access') }}</a>
+        </div>
+      </div>
+
+      <!-- Orders -->
+      <div class="col-md-4">
+        <div class="p-5 bg-white rounded-4 shadow-sm h-100">
+          <img src="{{ asset_for('assets/images/icons_website/icon_3.png') }}" alt="Orders" class="mb-4" style="height: 110px;">
+          <h5 class="fw-bold mb-2">📦 {{ trans('planner_hub.orders') }}</h5>
+          <p class="text-muted fs-6 mb-3">{{ trans('planner_hub.orders_desc') }}</p>
+          <a href="{{ path('panel/planner-hub/management/orders') }}" class="btn btn-secondary fw-bold px-4">{{ trans('planner_hub.access') }}</a>
+        </div>
+      </div>
+
+      <!-- Payroll -->
+      <div class="col-md-4">
+        <div class="p-5 bg-white rounded-4 shadow-sm h-100">
+          <img src="{{ asset_for('assets/images/icons_website/icon_7.png') }}" alt="Payroll" class="mb-4" style="height: 110px;">
+          <h5 class="fw-bold mb-2">💰 {{ trans('planner_hub.payroll') }}</h5>
+          <p class="text-muted fs-6 mb-3">{{ trans('planner_hub.payroll_desc') }}</p>
+          <a href="{{ path('panel/planner-hub/management/payroll') }}" class="btn btn-primary fw-bold px-4">{{ trans('planner_hub.access') }}</a>
+        </div>
+      </div>
+
+
+</section>
+
+  <!-- 🔹 Explore More -->
+  <section>
+    <h3 class="fw-bold mb-4"><br><br>{{ trans('planner_hub.essential_tools') }}</h3>
+    <div class="d-flex overflow-auto gap-4 pb-3">
+
+    <!-- Inventory -->
+    <div class="col-md-4">
+      <div class="p-5 bg-white rounded-4 shadow-sm h-100">
+        <img src="{{ asset_for('assets/images/icons_website/icon_1.png') }}" alt="Inventory" class="mb-4" style="height: 90px;">
+        <h5 class="fw-bold mb-2">📦 {{ trans('planner_hub.inventory') }}</h5>
+        <p class="text-muted fs-6 mb-3">{{ trans('planner_hub.inventory_desc') }}</p>
+        <a href="{{ path('panel/planner-hub/management/storage') }}" class="btn btn-dark btn-lg fw-bold px-4">{{ trans('planner_hub.access') }}</a>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div class="col-md-4">
+      <div class="p-5 bg-white rounded-4 shadow-sm h-100 d-flex flex-column align-items-center justify-content-between">
+        <div>
+          <img src="{{ asset_for('assets/images/icons_website/icon_2.png') }}" alt="Users" class="mb-4" style="height: 90px;">
+          <h5 class="fw-bold mb-2">👥 {{ trans('planner_hub.users') }}</h5>
+          <p class="text-muted fs-6 mb-3">{{ trans('planner_hub.users_desc') }}</p>
+        </div>
+        <div>
+          <a href="{{ path('panel/planner-hub/management/users') }}" class="btn btn-primary btn-lg fw-bold px-4 mb-2">{{ trans('planner_hub.access') }}</a><br> 
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Chat -->
+    <div class="col-md-4">
+      <div class="p-5 bg-white rounded-4 shadow-sm h-100 d-flex flex-column align-items-center justify-content-between">
+        <div>
+          <img src="{{ asset_for('assets/images/icons_website/icon_8.png') }}" alt="Team Chat" class="mb-4" style="height: 90px;">
+          <h5 class="fw-bold mb-2">Team Chat</h5>
+          <p class="text-muted fs-6 mb-3">Central inbox for admins, team members and client conversations.</p>
+        </div>
+        <div>
+          <a href="{{ path('panel/planner-hub/team/chat') }}" class="btn btn-success btn-lg fw-bold px-4 mb-2">Open Chat</a><br>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payments -->
+    <div class="col-md-4">
+      <div class="p-5 bg-white rounded-4 shadow-sm h-100 d-flex flex-column align-items-center justify-content-between">
+        <div>
+          <img src="{{ asset_for('assets/images/icons_website/icon_5.png') }}" alt="Payments" class="mb-4" style="height: 90px;">
+          <h5 class="fw-bold mb-2">💳 {{ trans('planner_hub.payments') }}</h5>
+          <p class="text-muted fs-6 mb-3">{{ trans('planner_hub.payments_desc') }}</p>
+        </div>
+        <div>
+          <a href="{{ path('panel/planner-hub/management/payments') }}" class="btn btn-secondary btn-lg fw-bold px-4 mb-2">{{ trans('planner_hub.access') }}</a><br>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Chat -->
+    <div class="col-md-4">
+      <div class="p-5 bg-white rounded-4 shadow-sm h-100 d-flex flex-column align-items-center justify-content-between">
+        <div>
+          <img src="{{ asset_for('assets/images/icons_website/icon_8.png') }}" alt="AI Chat" class="mb-4" style="height: 90px;">
+          <h5 class="fw-bold mb-2">🤖 Ophyra app</h5>
+          <p class="text-muted fs-6 mb-3">Ask about your next event, this month's earnings, etc.</p>
+        </div>
+        <div>
+          <a href="{{ path('panel/planner-hub/management/chatia') }}" class="btn btn-secondary btn-lg fw-bold px-4 mb-2">Access</a><br>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="p-5 bg-white rounded-4 shadow-sm h-100 d-flex flex-column align-items-center justify-content-between">
+        <div>
+          <img src="{{ asset_for('assets/images/icons_website/icon_10.png') }}" alt="Users" class="mb-4" style="height: 90px;">
+          <h5 class="fw-bold mb-2">👥 {{ trans('planner_hub.roles_access') }}</h5>
+
+          
+          <p class="text-muted fs-6 mb-3">{{ trans('planner_hub.roles_access_desc') }}</p>
+        </div>
+        <div> 
+
+            {% if user.level in [1, 2, 3] %}
+                
+                <a href="{{ path('panel/planner-hub/management/roles') }}"  class="btn btn-primary btn-lg fw-bold px-4 mb-2">{{ trans('planner_hub.access') }}</a>
+            {% elseif user.level == 4 %}
+            
+                  <p>{{ trans('planner_hub.management_access_only') }}</p>
+            {% endif %}
+
+          
+        </div>
+      </div>
+    </div>
+
+   </section>
+
+  </div>
+</section>
+
+
+      
+
+      
+
+    </div>
+  </section>
+
+</main>
+{% endblock %}

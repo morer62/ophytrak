@@ -1,0 +1,241 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set status = affiliate_status|default('NOT_APPLIED') %}
+{% set approved = status == 'APPROVED' %}
+{% set pending = status == 'PENDING' %}
+{% set rejected = status == 'REJECTED' %}
+{% set suspended = status == 'SUSPENDED' %}
+
+<main class="container-fluid py-4 affiliate-hub-page">
+  <section class="p-4 p-md-5 rounded-4 mb-4" style="background:linear-gradient(135deg,#071312,#0f766e);color:#fff;">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-4">
+      <div>
+        <div class="text-uppercase fw-bold small mb-2" style="color:#a7f3d0;">{{ trans('affiliate_hub.kicker') }}</div>
+        <h1 class="fw-bold mb-2" style="color:#fff;">{{ trans('affiliate_hub.title') }}</h1>
+        <p class="mb-0" style="max-width:760px;color:#d1fae5;">
+          {{ trans('affiliate_hub.subtitle') }}
+        </p>
+      </div>
+      <div class="align-self-start">
+        {% if approved %}
+          <span class="badge bg-success fs-6">{{ trans('affiliate_hub.status_approved') }}</span>
+        {% elseif rejected %}
+          <span class="badge bg-danger fs-6">{{ trans('affiliate_hub.status_rejected') }}</span>
+        {% elseif suspended %}
+          <span class="badge bg-dark fs-6">{{ trans('affiliate_hub.status_suspended') }}</span>
+        {% elseif pending %}
+          <span class="badge bg-warning text-dark fs-6">{{ trans('affiliate_hub.status_pending') }}</span>
+        {% else %}
+          <span class="badge bg-light text-dark fs-6">{{ trans('affiliate_hub.status_not_applied') }}</span>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  {% if not approved %}
+    <section class="card border-0 shadow-sm mb-4">
+      <div class="card-body p-4">
+        {% if pending %}
+          <h2 class="h4 fw-bold">{{ trans('affiliate_hub.pending_title') }}</h2>
+          <p class="text-muted mb-0">{{ trans('affiliate_hub.pending_body') }}</p>
+        {% elseif rejected %}
+          <h2 class="h4 fw-bold">{{ trans('affiliate_hub.rejected_title') }}</h2>
+          <p class="text-muted mb-0">{{ trans('affiliate_hub.rejected_body') }}</p>
+        {% elseif suspended %}
+          <h2 class="h4 fw-bold">{{ trans('affiliate_hub.suspended_title') }}</h2>
+          <p class="text-muted mb-0">{{ trans('affiliate_hub.suspended_body') }}</p>
+        {% else %}
+          <h2 class="h4 fw-bold">{{ trans('affiliate_hub.apply_title') }}</h2>
+          <p class="text-muted mb-0">{{ trans('affiliate_hub.apply_body') }}</p>
+        {% endif %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if approved %}
+    {% set base_link = path('/r/' ~ affiliate_code) %}
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-xl-3"><div class="card h-100 border-0 shadow-sm"><div class="card-body">
+        <div class="text-muted small">{{ trans('affiliate_hub.referred_users') }}</div>
+        <div class="fs-2 fw-bold">{{ stats.confirmed_referrals }}</div>
+      </div></div></div>
+      <div class="col-6 col-xl-3"><div class="card h-100 border-0 shadow-sm"><div class="card-body">
+        <div class="text-muted small">{{ trans('affiliate_hub.pending_payout') }}</div>
+        <div class="fs-2 fw-bold">${{ pending_total|number_format(2,'.',',') }}</div>
+      </div></div></div>
+      <div class="col-6 col-xl-3"><div class="card h-100 border-0 shadow-sm"><div class="card-body">
+        <div class="text-muted small">{{ trans('affiliate_hub.total_earned') }}</div>
+        <div class="fs-2 fw-bold">${{ stats.total_commissions_earned|number_format(2,'.',',') }}</div>
+      </div></div></div>
+      <div class="col-6 col-xl-3"><div class="card h-100 border-0 shadow-sm"><div class="card-body">
+        <div class="text-muted small">{{ trans('affiliate_hub.commission_rate') }}</div>
+        <div class="fs-2 fw-bold">{{ affiliate_profile.commission_rate|default(30)|number_format(0) }}%</div>
+      </div></div></div>
+    </div>
+
+    <section class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h2 class="h5 fw-bold mb-3">{{ trans('affiliate_hub.referral_link') }}</h2>
+        <div class="input-group input-group-lg">
+          <input id="affLink" type="text" class="form-control" value="" readonly>
+          <button id="copyMainLink" class="btn btn-dark fw-bold" type="button">{{ trans('affiliate_hub.copy') }}</button>
+        </div>
+        <small class="text-muted d-block mt-2">{{ trans('affiliate_hub.code') }}: {{ affiliate_code }}</small>
+      </div>
+    </section>
+  {% endif %}
+
+  <div class="row g-4">
+    <div class="col-xl-7">
+      {% if approved %}
+        <section class="card border-0 shadow-sm mb-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h2 class="h5 fw-bold mb-0">{{ trans('affiliate_hub.people_used_link') }}</h2>
+              <span class="badge bg-light text-dark">{{ referrals|length }} {{ trans('affiliate_hub.total') }}</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead><tr><th>{{ trans('affiliate_hub.customer') }}</th><th>{{ trans('affiliate_hub.status') }}</th><th>{{ trans('affiliate_hub.paid') }}</th><th>{{ trans('affiliate_hub.commission') }}</th><th>{{ trans('affiliate_hub.joined') }}</th></tr></thead>
+                <tbody>
+                  {% for referral in referrals %}
+                    <tr>
+                      <td><strong>{{ referral.name }} {{ referral.lastname }}</strong><br><small class="text-muted">{{ referral.email }}</small></td>
+                      <td>{{ referral.status|default('confirmed')|title }}</td>
+                      <td>${{ referral.total_gross_generated|default(0)|number_format(2,'.',',') }}</td>
+                      <td class="fw-bold text-success">${{ referral.total_commissions_generated|default(0)|number_format(2,'.',',') }}</td>
+                      <td><small>{{ referral.user_registered_at|date('M d, Y') }}</small></td>
+                    </tr>
+                  {% else %}
+                    <tr><td colspan="5" class="text-center text-muted py-4">{{ trans('affiliate_hub.no_referrals') }}</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="card border-0 shadow-sm mb-4">
+          <div class="card-body">
+            <h2 class="h5 fw-bold mb-3">{{ trans('affiliate_hub.commissions') }}</h2>
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead><tr><th>{{ trans('affiliate_hub.date') }}</th><th>{{ trans('affiliate_hub.customer') }}</th><th>{{ trans('affiliate_hub.module') }}</th><th>{{ trans('affiliate_hub.gross') }}</th><th>{{ trans('affiliate_hub.commission') }}</th><th>{{ trans('affiliate_hub.status') }}</th></tr></thead>
+                <tbody>
+                  {% for commission in commissions %}
+                    <tr>
+                      <td><small>{{ commission.created_at|date('M d, Y') }}</small></td>
+                      <td>{{ commission.referred_name }}</td>
+                      <td>{{ commission.product_name|default(commission.module_slug|default(commission.transaction_type)|replace({'_':' '})|title) }}</td>
+                      <td>${{ commission.gross_amount|number_format(2,'.',',') }}</td>
+                      <td class="fw-bold text-success">${{ commission.commission_amount|number_format(2,'.',',') }}</td>
+                      <td><span class="badge bg-secondary">{{ commission.status|title }}</span></td>
+                    </tr>
+                  {% else %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">{{ trans('affiliate_hub.no_commissions') }}</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      {% endif %}
+    </div>
+
+    <div class="col-xl-5">
+      <section class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h2 class="h5 fw-bold mb-3">{{ trans('affiliate_hub.application_payout_info') }}</h2>
+          <form method="post" class="row g-3">
+            <div class="col-md-6"><label class="form-label">{{ trans('affiliate_hub.legal_name') }}</label><input class="form-control" name="legal_name" value="{{ affiliate_profile.legal_name|default(user.name ~ ' ' ~ user.lastname) }}"></div>
+            <div class="col-md-6"><label class="form-label">{{ trans('affiliate_hub.business_name') }}</label><input class="form-control" name="business_name" value="{{ affiliate_profile.business_name|default('') }}"></div>
+            <div class="col-md-6"><label class="form-label">{{ trans('affiliate_hub.contact_email') }}</label><input class="form-control" name="contact_email" type="email" value="{{ affiliate_profile.contact_email|default(user.email) }}"></div>
+            <div class="col-md-6"><label class="form-label">{{ trans('affiliate_hub.phone') }}</label><input class="form-control" name="contact_phone" value="{{ affiliate_profile.contact_phone|default('') }}"></div>
+            <div class="col-md-6"><label class="form-label">{{ trans('affiliate_hub.country') }}</label><input class="form-control" name="country" value="{{ affiliate_profile.country|default('') }}" required></div>
+            <div class="col-md-6">
+              <label class="form-label">{{ trans('affiliate_hub.preferred_payout_method') }}</label>
+              <select class="form-select" name="payout_method" required>
+                <option value="">{{ trans('affiliate_hub.select_method') }}</option>
+                <option value="ACH" {{ affiliate_profile.payout_method|default('') == 'ACH' ? 'selected' : '' }}>{{ trans('affiliate_hub.usa_bank_transfer') }}</option>
+                <option value="PAYPAL" {{ affiliate_profile.payout_method|default('') == 'PAYPAL' ? 'selected' : '' }}>PayPal</option>
+              </select>
+            </div>
+            <div class="col-12"><label class="form-label">{{ trans('affiliate_hub.paypal_email') }}</label><input class="form-control" name="paypal_email" type="email" value="{{ affiliate_profile.paypal_email|default('') }}"></div>
+            <div class="col-md-6"><label class="form-label">{{ trans('affiliate_hub.account_holder_name') }}</label><input class="form-control" name="account_holder_name" value="{{ affiliate_profile.account_holder_name|default('') }}"></div>
+            <div class="col-md-6"><label class="form-label">{{ trans('affiliate_hub.bank_name') }}</label><input class="form-control" name="bank_name" value="{{ affiliate_profile.bank_name|default('') }}"></div>
+            <div class="col-md-4"><label class="form-label">{{ trans('affiliate_hub.routing_number') }}</label><input class="form-control" name="routing_number" placeholder="{{ affiliate_profile.routing_number_masked|default('') }}"></div>
+            <div class="col-md-4"><label class="form-label">{{ trans('affiliate_hub.account_number') }}</label><input class="form-control" name="account_number" placeholder="{{ affiliate_profile.account_number_masked|default('') }}"></div>
+            <div class="col-md-4">
+              <label class="form-label">{{ trans('affiliate_hub.account_type') }}</label>
+              <select class="form-select" name="account_type">
+                <option value="">{{ trans('affiliate_hub.select') }}</option>
+                <option value="checking" {{ affiliate_profile.account_type|default('') == 'checking' ? 'selected' : '' }}>{{ trans('affiliate_hub.checking') }}</option>
+                <option value="savings" {{ affiliate_profile.account_type|default('') == 'savings' ? 'selected' : '' }}>{{ trans('affiliate_hub.savings') }}</option>
+              </select>
+            </div>
+            <div class="col-12"><label class="form-label">{{ trans('affiliate_hub.notes') }}</label><textarea class="form-control" name="payout_notes" rows="3">{{ affiliate_profile.payout_notes|default('') }}</textarea></div>
+            {% if status == 'NOT_APPLIED' or rejected %}
+              <div class="col-12">
+                <label class="form-check">
+                  <input class="form-check-input" type="checkbox" name="terms_accepted" required>
+                  <span class="form-check-label">{{ trans('affiliate_hub.terms_acceptance') }}</span>
+                </label>
+              </div>
+            {% endif %}
+            <div class="col-12"><button class="btn btn-dark w-100">{{ approved ? trans('affiliate_hub.save_payout_information') : trans('affiliate_hub.submit_application') }}</button></div>
+          </form>
+        </div>
+      </section>
+
+      {% if approved %}
+        <section class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h2 class="h5 fw-bold mb-3">{{ trans('affiliate_hub.payout_history') }}</h2>
+            <div class="table-responsive">
+              <table class="table mb-0">
+                <thead><tr><th>{{ trans('affiliate_hub.date') }}</th><th>{{ trans('affiliate_hub.amount') }}</th><th>{{ trans('affiliate_hub.method') }}</th><th>{{ trans('affiliate_hub.proof') }}</th></tr></thead>
+                <tbody>
+                  {% for payout in payout_history %}
+                    <tr>
+                      <td>{{ payout.paid_at ? payout.paid_at|date('M d, Y') : payout.created_at|date('M d, Y') }}</td>
+                      <td>${{ payout.total_amount|number_format(2,'.',',') }}</td>
+                      <td>{{ payout.payout_method|default(payout.payment_method)|replace({'_':' '})|title }}</td>
+                      <td>{% if payout.payment_proof_url %}<a href="{{ payout.payment_proof_url }}" target="_blank" rel="noopener">{{ trans('affiliate_hub.view') }}</a>{% else %}<span class="text-muted">{{ trans('affiliate_hub.none') }}</span>{% endif %}</td>
+                    </tr>
+                  {% else %}
+                    <tr><td colspan="4" class="text-center text-muted py-4">{{ trans('affiliate_hub.no_payouts') }}</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      {% endif %}
+    </div>
+  </div>
+</main>
+
+{% if approved %}
+<script>
+(function(){
+  const input = document.getElementById('affLink');
+  const button = document.getElementById('copyMainLink');
+  if (!input) return;
+  const url = new URL("{{ base_link }}", window.location.origin);
+  url.searchParams.set('ref', "{{ affiliate_code }}");
+  input.value = url.toString();
+  if (button) {
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(input.value);
+        button.textContent = '{{ trans('affiliate_hub.copied') }}';
+        setTimeout(() => button.textContent = '{{ trans('affiliate_hub.copy') }}', 1400);
+      } catch(e) {}
+    });
+  }
+})();
+</script>
+{% endif %}
+{% endblock %}
+

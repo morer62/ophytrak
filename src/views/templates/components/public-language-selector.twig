@@ -1,0 +1,155 @@
+{% set _public_locales = supported_locales is defined and supported_locales is not empty ? supported_locales : ['en', 'es', 'pt', 'fr'] %}
+{% set _public_current_locale = locale is defined ? locale : 'en' %}
+
+<div class="public-language-switcher" data-public-language-switcher>
+    <button class="public-language-button" type="button" aria-haspopup="true" aria-expanded="false" title="{{ trans('common.language') }}">
+        <span aria-hidden="true">&#127760;</span>
+        <span>{{ _public_current_locale|upper }}</span>
+    </button>
+    <div class="public-language-menu" role="menu">
+        {% for loc in _public_locales %}
+            <button class="public-language-option{% if _public_current_locale == loc %} is-active{% endif %}" type="button" data-locale="{{ loc }}" role="menuitem">
+                <span>{{ getLocaleName(loc) }}</span>
+                {% if _public_current_locale == loc %}
+                    <span aria-hidden="true">&check;</span>
+                {% endif %}
+            </button>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.public-language-switcher{
+    position:fixed;
+    top:1rem;
+    right:1rem;
+    z-index:1055;
+    font-family:Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.public-language-button{
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    min-height:2.6rem;
+    padding:.65rem .85rem;
+    border:1px solid rgba(255,255,255,.22);
+    border-radius:999px;
+    background:rgba(8,19,18,.82);
+    color:#fff;
+    font-weight:800;
+    line-height:1;
+    box-shadow:0 14px 34px rgba(0,0,0,.22);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+}
+.public-language-menu{
+    position:absolute;
+    top:calc(100% + .55rem);
+    right:0;
+    min-width:11.5rem;
+    padding:.45rem;
+    border:1px solid rgba(38,166,154,.28);
+    border-radius:14px;
+    background:rgba(8,19,18,.94);
+    box-shadow:0 18px 46px rgba(0,0,0,.28);
+    display:none;
+}
+.public-language-switcher.is-open .public-language-menu{
+    display:block;
+}
+.public-language-option{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.8rem;
+    padding:.75rem .8rem;
+    border:0;
+    border-radius:10px;
+    background:transparent;
+    color:#e8f3f2;
+    font-weight:700;
+    text-align:left;
+}
+.public-language-option:hover,
+.public-language-option.is-active{
+    background:rgba(38,166,154,.18);
+    color:#7ff3e7;
+}
+@media (max-width: 575.98px){
+    .public-language-switcher{
+        top:.75rem;
+        right:.75rem;
+        max-width:calc(50vw - .9rem);
+    }
+    .public-language-button{
+        min-height:2.35rem;
+        padding:.58rem .72rem;
+        max-width:100%;
+    }
+    .public-language-menu{
+        right:0;
+        min-width:min(11.5rem, calc(100vw - 1.5rem));
+        max-width:calc(100vw - 1.5rem);
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const switcher = document.querySelector('[data-public-language-switcher]');
+    if (!switcher) return;
+
+    const button = switcher.querySelector('.public-language-button');
+    const menu = switcher.querySelector('.public-language-menu');
+
+    function closeMenu() {
+        switcher.classList.remove('is-open');
+        button.setAttribute('aria-expanded', 'false');
+    }
+
+    button.addEventListener('click', function () {
+        const isOpen = switcher.classList.toggle('is-open');
+        button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+
+    document.addEventListener('click', function (event) {
+        if (!switcher.contains(event.target)) {
+            closeMenu();
+        }
+    });
+
+    menu.querySelectorAll('[data-locale]').forEach(function (item) {
+        item.addEventListener('click', function () {
+            const locale = item.getAttribute('data-locale');
+            if (!locale) return;
+
+            try {
+                localStorage.setItem('app_locale', locale);
+                document.cookie = 'app_locale=' + locale + '; path=/; max-age=' + (365 * 24 * 60 * 60) + '; SameSite=Lax';
+            } catch (error) {
+                console.warn('Language persistence unavailable:', error);
+            }
+
+            fetch('{{ app_url|default("") }}/api/change-language', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'locale=' + encodeURIComponent(locale)
+            })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    if (data && data.success) {
+                        window.location.reload();
+                        return;
+                    }
+                    window.location.reload();
+                })
+                .catch(function () {
+                    window.location.reload();
+                });
+        });
+    });
+});
+</script>

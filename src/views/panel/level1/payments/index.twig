@@ -1,0 +1,104 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h3 mb-0">
+                {{ trans('planner_hub.payments_received') }}{% if type %} - {{ type == 'services' ? trans('planner_hub.services') : (type == 'venues' ? trans('planner_hub.venues') : (type == 'memberships' ? trans('planner_hub.memberships') : trans('planner_hub.events'))) }}{% endif %}
+            </h1>
+        </div>
+        <div>
+            <a href="{{ path('panel/subscriptions-manager') }}" class="btn btn-outline-primary">
+                <i class="feather-users"></i> {{ trans('planner_hub.subscriptions_manager') }}
+            </a>
+        </div>
+    </div>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('panel/home') }}">{{ trans('planner_hub.home') }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ trans('planner_hub.payments') }}</li>
+        </ol>
+    </nav>
+
+    <form method="get" class="mb-4 row g-2">
+        <div class="col-md-3">
+            <select name="type" class="form-select">
+                <option value="">{{ trans('planner_hub.all_types') }}</option>
+                <option value="services" {{ type == 'services' ? 'selected' : '' }}>{{ trans('planner_hub.services') }}</option>
+                <option value="venues" {{ type == 'venues' ? 'selected' : '' }}>{{ trans('planner_hub.venues') }}</option>
+                <option value="memberships" {{ type == 'memberships' ? 'selected' : '' }}>{{ trans('planner_hub.memberships') }}</option>
+                <option value="events" {{ type == 'events' ? 'selected' : '' }}>{{ trans('planner_hub.events') }}</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="email" name="email" class="form-control" placeholder="{{ trans('planner_hub.user_email') }}" value="{{ email }}">
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="from" class="form-control" value="{{ from }}">
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="to" class="form-control" value="{{ to }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">{{ trans('planner_hub.filter') }}</button>
+        </div>
+    </form>
+
+    <div class="card">
+        <div class="card-body table-responsive">
+            <table class="table table-striped table-bordered text-center">
+                <thead>
+                    <tr>
+                        <th>{{ trans('planner_hub.user') }}</th>
+                        <th>{{ trans('planner_hub.email') }}</th>
+                        <th>{{ trans('planner_hub.phone') }}</th>
+                        <th>{{ trans('planner_hub.item') }}</th>
+                        <th>{{ trans('planner_hub.payment_date') }}</th>
+                        <th>{{ trans('planner_hub.renewal') }}</th>
+                        <th>{{ trans('planner_hub.amount') }}</th>
+                        <th>{{ trans('planner_hub.status') }}</th>
+                        <th>{{ trans('planner_hub.action') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                        <tr>
+                            <td>{{ payment.name }}</td>
+                            <td>{{ payment.email }}</td>
+                            <td>{{ payment.phone }}</td>
+                            <td>{{ payment.item }}</td>
+                            <td>{{ payment.payment_date }}</td>
+                            <td>{{ payment.renewal }}</td>
+                            <td>${{ payment.total|number_format(2) }}</td>
+                            <td>
+                                {% if payment.status == 'ACTIVE' %}
+                                    <span class="badge bg-success">{{ trans('planner_hub.active') }}</span>
+                                {% elseif payment.status == 'PENDING' %}
+                                    <span class="badge bg-warning text-dark">{{ trans('planner_hub.pending') }}</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{{ trans('planner_hub.expired') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if payment.concept in ['Membership', 'OphyraAddon'] %}
+                                    <a href="{{ path('panel/customer-billing?customer_id=' ~ payment.user_id) }}" class="btn btn-sm btn-outline-primary">{{ trans('planner_hub.view') }}</a>
+                                {% else %}
+                                    <a href="{{ path('panel/payments/details') }}?id={{ payment.id }}" class="btn btn-sm btn-outline-primary">{{ trans('planner_hub.view') }}</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="9">{{ trans('planner_hub.no_payments_found') }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+{% endblock %}
+

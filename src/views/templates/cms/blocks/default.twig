@@ -1,0 +1,10 @@
+<section class="cms-block cms-block-default">
+  {% if block.title|default('') %}
+    <h2>{{ block.title }}</h2>
+  {% endif %}
+  {% if block.body|default('') %}
+    <div>{{ block.body|raw }}</div>
+  {% elseif block.data.body|default('') %}
+    <div>{{ block.data.body|raw }}</div>
+  {% endif %}
+</section>

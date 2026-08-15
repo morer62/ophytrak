@@ -1,0 +1,91 @@
+<div class="ophyra-cookie-consent" data-cookie-consent hidden>
+    <div class="ophyra-cookie-consent__copy">
+        <strong>Cookies</strong>
+        <span>We use essential cookies for security, login, language and pricing preferences.</span>
+        <a href="{{ path('cookie-policy') }}" target="_blank" rel="noopener">Cookie Policy</a>
+    </div>
+    <button type="button" data-cookie-consent-accept>Accept</button>
+</div>
+
+<style>
+.ophyra-cookie-consent{
+    position:fixed;
+    left:1rem;
+    right:1rem;
+    bottom:1rem;
+    z-index:1060;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    max-width:920px;
+    margin:0 auto;
+    padding:.9rem 1rem;
+    border:1px solid rgba(38,166,154,.26);
+    border-radius:14px;
+    background:rgba(8,19,18,.94);
+    color:#e8f3f2;
+    box-shadow:0 20px 54px rgba(0,0,0,.28);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+}
+.ophyra-cookie-consent__copy{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:.45rem .7rem;
+    line-height:1.45;
+}
+.ophyra-cookie-consent__copy strong{
+    color:#8df4e8;
+}
+.ophyra-cookie-consent__copy span{
+    color:#d7e6e4;
+}
+.ophyra-cookie-consent__copy a{
+    color:#8df4e8;
+    font-weight:800;
+    text-decoration:none;
+}
+.ophyra-cookie-consent button{
+    flex:0 0 auto;
+    border:0;
+    border-radius:999px;
+    padding:.65rem .95rem;
+    background:#26a69a;
+    color:#041312;
+    font-weight:900;
+}
+@media (max-width: 575.98px){
+    .ophyra-cookie-consent{
+        align-items:flex-start;
+        flex-direction:column;
+    }
+    .ophyra-cookie-consent button{
+        width:100%;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const banner = document.querySelector('[data-cookie-consent]');
+    if (!banner) return;
+
+    const KEY = 'ophyra_cookie_consent';
+    let accepted = document.cookie.includes('ophyra_cookie_consent=accepted');
+    try {
+        accepted = accepted || localStorage.getItem(KEY) === 'accepted';
+    } catch (error) {}
+    if (accepted) return;
+
+    banner.hidden = false;
+    banner.querySelector('[data-cookie-consent-accept]')?.addEventListener('click', function () {
+        try {
+            localStorage.setItem(KEY, 'accepted');
+            document.cookie = 'ophyra_cookie_consent=accepted; path=/; max-age=' + (365 * 24 * 60 * 60) + '; SameSite=Lax';
+        } catch (error) {}
+        banner.hidden = true;
+    });
+});
+</script>

@@ -1,0 +1,165 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+
+<h2 class="mb-4">{{ trans('planner_hub.suborders_for_order') }} VNV 341{{ order.id }}</h2>
+{{ macros.breadcrumb2() }}
+<a href="{{ path('panel/planner-hub/orders/orders') }}" class="btn btn-sm btn-light mb-3">{{ trans('planner_hub.back_to_orders') }}</a>
+
+<div class="alert alert-info mb-4">
+    <h5>{{ trans('planner_hub.parent_order_information') }}</h5>
+    <p><strong>{{ trans('planner_hub.order_id_label') }}</strong> VNV 341{{ order.id }}</p>
+    <p><strong>{{ trans('planner_hub.event_date') }}:</strong> {{ order.event_date|date("l, M j, Y") }}</p>
+    <p><strong>{{ trans('planner_hub.time') }}:</strong> {{ order.start_time|date("g:i A") }} - {{ order.end_time|date("g:i A") }}</p>
+    <p><strong>{{ trans('planner_hub.address') }}:</strong> {{ order.address }}</p>
+    <p><strong>{{ trans('planner_hub.company') }}:</strong> {{ order.institution.company_name ?? 'N/A' }}</p>
+    <p class="mb-0"><strong>{{ trans('planner_hub.status') }}:</strong> 
+        {% if order.status_workflow == 'INVOICE_DRAFT' %}
+            {{ trans('planner_hub.signature_pending') }}
+        {% elseif order.status_workflow == 'INVOICE_READY' %}
+            {{ trans('planner_hub.signed_payment_pending') }}
+        {% elseif order.status_workflow == 'INVOICE_PARTIAL' %}
+            {{ trans('planner_hub.first_payment_completed') }}
+        {% elseif order.status_workflow == 'INVOICE_PAID' %}
+            {{ trans('planner_hub.fully_paid') }}
+        {% elseif order.status_workflow == 'INVOICE_EXPIRED' %}
+            {{ trans('planner_hub.expired') }}
+        {% else %}
+            {{ order.status_workflow }}
+        {% endif %}
+    </p>
+</div>
+
+<section class="card">
+    <div class="card-body">
+        {% if suborders|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered align-middle text-center">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>{{ trans('client_service_orders.sub_order_id') }}</th>
+                            <th>{{ trans('planner_hub.created_date') }}</th>
+                            <th>{{ trans('planner_hub.services') }}</th>
+                            <th>{{ trans('planner_hub.payment_split') }}</th>
+                            <th>{{ trans('client_service_orders.tax_percent') }}</th>
+                            <th>{{ trans('planner_hub.total_amount') }}</th>
+                            <th>{{ trans('planner_hub.amount_paid') }}</th>
+                            <th>{{ trans('planner_hub.balance_due') }}</th>
+                            <th>{{ trans('planner_hub.status') }}</th>
+                            <th>{{ trans('planner_hub.payment_link_btn') }}</th>
+                            <th>{{ trans('planner_hub.actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for suborder in suborders %}
+                            <tr>
+                                <td style="min-width: 150px;">
+                                    <strong>Sub-{{ suborder.id }}</strong><br>
+                                    <small class="text-muted">{{ trans('client_service_orders.parent_order') }} VNV 341{{ order.id }}</small>
+                                </td>
+                                <td style="min-width: 200px;">
+                                    {{ suborder.created_at|date("M j, Y g:i A") }}
+                                </td>
+                                <td style="min-width: 300px; text-align: left;">
+                                    {% if suborder.services|length > 0 %}
+                                        {% for service in suborder.services %}
+                                            <div class="mb-1">
+                                                <strong>{{ service.service_name }}</strong><br>
+                                                <small class="text-muted">
+                                                    {{ trans('client_service_orders.qty') }}: {{ service.quantity }} | 
+                                                    {{ trans('client_service_orders.price') }}: ${{ service.actual_price|number_format(2) }} | 
+                                                    {{ trans('client_service_orders.subtotal') }}: ${{ (service.quantity * service.actual_price)|number_format(2) }}
+                                                </small>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted">{{ trans('planner_hub.no_services_assigned') }}</span>
+                                    {% endif %}
+                                </td>
+                                <td style="min-width: 150px;">
+                                    {% if suborder.payment_split_type == 1 %}
+                                        <span class="text-success">100%</span>
+                                    {% elseif suborder.payment_split_type == 2 %}
+                                        <span class="text-primary">{{ suborder.payment_split_percent_1 }}% / {{ suborder.payment_split_percent_2 }}%</span>
+                                    {% else %}
+                                        <span class="text-muted">{{ trans('client_service_orders.not_available') }}</span>
+                                    {% endif %}
+                                </td>
+                                <td style="min-width: 100px;">
+                                    {{ suborder.tax_percertance|number_format(2) }}%
+                                </td>
+                                <td style="min-width: 120px;">
+                                    <strong class="text-primary">${{ suborder.total_amount|number_format(2) }}</strong>
+                                </td>
+                                <td style="min-width: 120px;">
+                                    <span class="text-success">${{ suborder.amount_paid|number_format(2) }}</span>
+                                </td>
+                                <td style="min-width: 120px;">
+                                    {% if suborder.balance_due > 0 %}
+                                        <strong class="text-warning">${{ suborder.balance_due|number_format(2) }}</strong>
+                                    {% else %}
+                                        <span class="text-success">$0.00</span>
+                                    {% endif %}
+                                </td>
+                                <td style="min-width: 100px;">
+                                    {% if suborder.is_archived == 1 %}
+                                        <span class="badge bg-secondary">{{ trans('planner_hub.archived') }}</span>
+                                    {% else %}
+                                        <span class="badge bg-success">{{ trans('planner_hub.active') }}</span>
+                                    {% endif %}
+                                </td>
+                                <td style="min-width: 200px;">
+                                    {% if suborder.payment_token %}
+                                        <div class="d-grid gap-1">
+                                            <a href="{{ path('/order-access/suborder?token=' ~ suborder.payment_token) }}" target="_blank" class="btn btn-sm btn-outline-success">{{ trans('planner_hub.pay_suborder') }}</a>
+                                            <button type="button" class="btn btn-sm btn-outline-info" onclick="copyPaymentLink('{{ path('/order-access/suborder?token=' ~ suborder.payment_token) }}')">{{ trans('planner_hub.copy_link') }}</button>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">{{ trans('client_service_orders.not_available') }}</span>
+                                    {% endif %}
+                                </td>
+                                <td style="min-width: 160px;">
+                                    <div class="btn-group">
+                                        <a href="{{ path('/panel/planner-hub/orders/orders/files') }}?id={{ order.id }}" class="btn btn-sm btn-outline-secondary">{{ trans('planner_hub.files') }}</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <h4 class="text-muted">{{ trans('planner_hub.no_suborders_found') }}</h4>
+                <p class="text-muted">{{ trans('planner_hub.no_suborders_desc') }}</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyPaymentLink(url) {
+        navigator.clipboard.writeText(url).then(function() {
+            // temporary success message
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '{{ trans('planner_hub.copied')|e('js') }}';
+            btn.classList.remove('btn-outline-info');
+            btn.classList.add('btn-success');
+            
+            setTimeout(function() {
+                btn.innerHTML = originalText;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-info');
+            }, 2000);
+        }).catch(function(err) {
+            console.error({{ trans('client_service_orders.could_not_copy_console')|json_encode|raw }}, err);
+            alert({{ trans('planner_hub.could_not_copy')|json_encode|raw }});
+        });
+    }
+</script>
+{% endblock %}

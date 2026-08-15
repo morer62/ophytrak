@@ -1,0 +1,59 @@
+<?php
+
+use App\Services\LoginService;
+use App\Services\TranslationService;
+use App\Repositories\MusicSessionRepository;
+use App\Repositories\MusicSessionsCategoryRepository;
+use App\Utils\LocationUtils;
+use App\Utils\MessageUtil;
+use App\Utils\Router;
+use App\Utils\TemplateResponse;
+use App\Utils\UserContext;
+
+$router = new Router();
+
+$router->get(function () {
+    $context = UserContext::get();
+    $user = LoginService::getSession();
+    $sessionRepo = new MusicSessionRepository();
+    $categoryRepo = new MusicSessionsCategoryRepository();
+
+    $userId = $user->getId();
+    $sessions = $sessionRepo->getAllWithCategory($userId);
+    $categories = $categoryRepo->getAllByUser($userId);
+
+    return TemplateResponse::render(__DIR__ . "/index.twig", [
+        ...$context,
+        "sessions" => $sessions,
+        "categories" => $categories
+    ]);
+});
+
+$router->post(function () {
+    $user = LoginService::getSession();
+    $sessionRepo = new MusicSessionRepository();
+    $id = $_POST["id"] ?? null;
+
+    if (!$id) {
+        TranslationService::detectLocale();
+        MessageUtil::setMessage(TranslationService::trans('planner_hub.invalid_session_id'));
+        LocationUtils::reload();
+    }
+
+    $session = $sessionRepo->getOne(["id" => $id]);
+
+    if (!$session) {
+        TranslationService::detectLocale();
+        MessageUtil::setMessage(TranslationService::trans('planner_hub.session_not_found'));
+        LocationUtils::reload();
+    }
+
+    $sessionRepo->delete(["id" => $id]);
+
+    TranslationService::detectLocale();
+    MessageUtil::setMessage(TranslationService::trans('planner_hub.multimedia_session_deleted_successfully'));
+    LocationUtils::reload();
+});
+
+$router->run();
+

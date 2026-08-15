@@ -1,0 +1,109 @@
+
+{#
+    This macro blocks all csrf token attacks
+#}
+{% macro csrf() %}
+    <input type="hidden" name="csrf_token" value="{{ get_csrf() }}" />
+{% endmacro %}
+
+{% macro icon(iconName) %}
+    <i class="align-middle" data-feather="{{ iconName }}"></i>
+{% endmacro %}
+
+{% macro delete_form(value, expected_key="id", action="") %}
+    <form {% if action %}action="{{ action }}" {% endif %} method="post" form-delete="true">
+        <input type="hidden" name="{{ expected_key }}" value="{{ value }}" />
+        <input type="hidden" name="action" value="delete" />
+
+        <button type="submit" class="btn btn-danger">
+            <i class="align-middle" data-feather="trash-2"></i>{{ trans('planner_hub.delete') }}
+        </button>
+    </form>
+{% endmacro %}
+
+{% macro back_btn(classes="", title="Back") %}
+    <button type="button" class="btn btn-secondary" onclick="window.history.back()">{{ title }}</button>
+{% endmacro %}
+
+{% macro breadcrumb(paths=[]) %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+
+            {% for currentPath in paths %}
+                {% if currentPath | length > 1 %}
+                    <li class="breadcrumb-item"><a href="{{ path(currentPath[1]) }}">{{ currentPath[0] }}</a></li>
+                {% else %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ currentPath[0] }}</li>
+                {% endif %}
+
+            {% endfor %}
+        </ol>
+    </nav>
+{% endmacro %}
+
+{% macro breadcrumb2() %}
+    {% set breadcrumbTranslations = {
+        'Home': trans('planner_hub.home'),
+        'Planner Hub': trans('planner_hub.planner_hub'),
+        'Management': trans('planner_hub.management'),
+        'Orders': trans('planner_hub.orders'),
+        'Services': trans('planner_hub.services'),
+        'Contracts': trans('planner_hub.contracts'),
+        'Tips': trans('planner_hub.tips'),
+        'CRM': trans('planner_hub.crm'),
+        'Categories': trans('planner_hub.categories'),
+        'Leads': trans('planner_hub.leads'),
+        'Create': trans('planner_hub.create'),
+        'Edit': trans('planner_hub.edit'),
+        'Status': trans('planner_hub.status'),
+        'Files': trans('planner_hub.files'),
+        'Print': trans('planner_hub.print'),
+        'Archived': trans('planner_hub.archived'),
+        'Reminders': trans('planner_hub.reminders'),
+        'Previous': trans('planner_hub.previous'),
+        'History': trans('planner_hub.lead_history'),
+        'Team': trans('planner_hub.team'),
+        'Payroll': trans('planner_hub.payroll'),
+        'Clock': trans('planner_hub.clock'),
+        'Pending': trans('planner_hub.pending'),
+        'Paid': trans('planner_hub.paid'),
+        'Details': trans('planner_hub.details'),
+        'Storage': trans('planner_hub.storage'),
+        'Containers': trans('planner_hub.containers'),
+        'Items': trans('planner_hub.items'),
+        'Search': trans('planner_hub.search'),
+        'Payments': trans('planner_hub.payments'),
+        'Chat': trans('planner_hub.chat'),
+        'Tasks': trans('planner_hub.tasks'),
+        'Subscription Manager': trans('planner_hub.subscription_manager'),
+        'Tools': trans('planner_hub.tools'),
+        'Text Humanizer': trans('planner_hub.text_humanizer'),
+        'Voice Generator': trans('planner_hub.voice_generator'),
+        'Google Leads': trans('planner_hub.google_leads'),
+        'Collections': trans('planner_hub.leads_collections'),
+        'Forum': trans('planner_hub.forum_management'),
+        'Archive': trans('planner_hub.archive'),
+        'Commissions': trans('planner_hub.pending_commissions_to_pay'),
+        'Membership Expiry Notifications': trans('planner_hub.membership_expiry_notifications'),
+        'Affiliate Hub': trans('planner_hub.your_affiliate_link'),
+        'Service': trans('planner_hub.service'),
+        'Event Invitations': trans('planner_hub.event_invitations'),
+        'Multimedia Sessions': trans('planner_hub.multimedia_sessions'),
+        'Payment Providers': trans('planner_hub.payment_providers_config'),
+        'Settings': trans('planner_hub.settings')
+    } %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path("panel") }}">{{ trans('planner_hub.home') }}</a></li>
+            {% for currentPath in getTreeRoutes() %}
+                {% set pathName = currentPath[0] %}
+                {% set translatedName = breadcrumbTranslations[pathName]|default(pathName) %}
+                {% if not loop.last %}
+                    <li class="breadcrumb-item"><a href="{{ path('panel/' ~ currentPath[1]) }}">{{ translatedName }}</a></li>
+                {% else %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ translatedName }}</li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+{% endmacro %}

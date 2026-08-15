@@ -1,0 +1,369 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<style>
+  .module-hub {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding-bottom: 2rem;
+  }
+
+  .module-hub-hero,
+  .module-card,
+  .profile-status-card {
+    border: 1px solid rgba(15, 118, 110, .14);
+    box-shadow: 0 18px 44px rgba(15, 23, 42, .08);
+  }
+
+  .module-hub-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 380px);
+    gap: 1.5rem;
+    padding: clamp(1.5rem, 4vw, 2.4rem);
+    border-radius: 22px;
+    color: #fff;
+    background:
+      radial-gradient(circle at 82% 18%, rgba(236, 72, 153, .25), transparent 27%),
+      linear-gradient(135deg, #071512, #0f766e);
+  }
+
+  .module-hub-hero h1 {
+    margin: 0 0 .65rem;
+    color: #fff;
+    font-size: clamp(2.1rem, 4vw, 4rem);
+    font-weight: 900;
+  }
+
+  .module-hub-hero p {
+    max-width: 760px;
+    margin: 0;
+    color: rgba(255, 255, 255, .82);
+    font-size: 1.04rem;
+    line-height: 1.7;
+  }
+
+  .module-kicker {
+    margin: 0 0 .45rem;
+    color: #0f766e;
+    font-size: .78rem;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .module-hub-hero .module-kicker,
+  .profile-status-card span,
+  .profile-status-card a {
+    color: #7df7e9;
+  }
+
+  .profile-status-card {
+    align-self: center;
+    display: grid;
+    gap: .45rem;
+    padding: 1rem;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .12);
+  }
+
+  .profile-status-card span {
+    font-size: .78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .profile-status-card strong {
+    color: #fff;
+    font-size: 1.1rem;
+  }
+
+  .profile-status-card p {
+    font-size: .92rem;
+  }
+
+  .profile-status-card a,
+  .module-link {
+    font-weight: 900;
+    text-decoration: none;
+  }
+
+  .module-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: .45rem .8rem;
+    border-radius: 999px;
+    color: #0f766e;
+    background: #ccfbf1;
+  }
+
+  .module-section {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .module-section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 1rem;
+  }
+
+  .module-section h2 {
+    margin: 0;
+    color: #111827;
+    font-size: clamp(1.45rem, 2vw, 2rem);
+    font-weight: 900;
+  }
+
+  .module-count {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: .4rem .8rem;
+    border-radius: 999px;
+    color: #065f46;
+    background: #ccfbf1;
+    font-size: .82rem;
+    font-weight: 900;
+  }
+
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .module-grid-compact {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .module-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 280px;
+    padding: 1rem;
+    border-radius: 18px;
+    background: #fff;
+  }
+
+  .module-card.is-active {
+    background: linear-gradient(180deg, rgba(240, 253, 250, .85), #fff);
+  }
+
+  .module-card.is-locked {
+    background: #f8fafc;
+    opacity: .92;
+  }
+
+  .module-card.is-coming-soon {
+    background: #f5f5f3;
+    border-color: #e0ded8;
+    box-shadow: none;
+    filter: grayscale(.35);
+    opacity: .76;
+  }
+
+  .module-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .module-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    color: #06201b;
+    background: linear-gradient(135deg, #7ddbd3, #ec4899);
+  }
+
+  .module-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: .35rem .7rem;
+    border-radius: 999px;
+    color: #334155;
+    background: #e2e8f0;
+    font-size: .78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .is-active .module-pill {
+    color: #065f46;
+    background: #ccfbf1;
+  }
+
+  .is-coming-soon .module-pill {
+    color: #737373;
+    background: #ebebeb;
+  }
+
+  .module-card h3 {
+    margin: 0 0 .55rem;
+    color: #111827;
+    font-size: 1.12rem;
+    font-weight: 900;
+  }
+
+  .module-card p {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.6;
+  }
+
+  .module-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin: 1rem 0;
+  }
+
+  .module-tags span {
+    padding: .25rem .55rem;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 118, 110, .18);
+    color: #0f766e;
+    background: rgba(240, 253, 250, .75);
+    font-size: .76rem;
+    font-weight: 800;
+  }
+
+  .module-action {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    margin-top: auto;
+    color: #0f766e;
+    font-weight: 900;
+    text-decoration: none;
+  }
+
+  .module-action svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  @media (max-width: 1199px) {
+    .module-grid,
+    .module-grid-compact {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 767px) {
+    .module-hub-hero,
+    .module-grid,
+    .module-grid-compact {
+      grid-template-columns: 1fr;
+    }
+
+    .module-section-head {
+      align-items: start;
+      flex-direction: column;
+    }
+  }
+</style>
+<main class="module-hub">
+  {{ macros.breadcrumb2() }}
+
+  <section class="module-hub-hero">
+    <div>
+      <p class="module-kicker">{{ trans('planner_hub_module_center.kicker') }}</p>
+      <h1>{{ trans('planner_hub_module_center.title') }}</h1>
+      <p>
+        {{ trans('planner_hub_module_center.subtitle') }}
+      </p>
+    </div>
+    <div class="profile-status-card">
+      <span>{{ trans('planner_hub_module_center.base_profile') }}</span>
+      <strong>{{ profile.company_name|default(user.name ~ ' ' ~ user.lastname) }}</strong>
+      <p>
+        {% if profile and profile.slug %}
+          {{ trans('planner_hub_module_center.public_url_ready') }}
+        {% else %}
+          {{ trans('planner_hub_module_center.complete_profile') }}
+        {% endif %}
+      </p>
+      <a href="{{ path('panel/planner-hub/institution-profile') }}">{{ trans('planner_hub_module_center.update_profile') }}</a>
+    </div>
+  </section>
+
+  <section class="module-section">
+    <div class="module-section-head">
+      <div>
+        <p class="module-kicker">{{ trans('planner_hub_module_center.available_now') }}</p>
+        <h2>{{ trans('planner_hub_module_center.active_workspace_modules') }}</h2>
+      </div>
+      <span class="module-count">{{ trans('planner_hub_module_center.active_count', {'count': activeModules|length}) }}</span>
+    </div>
+
+    <div class="module-grid">
+      {% for module in activeModules %}
+        <article class="module-card is-active">
+          <div class="module-card-top">
+            <span class="module-icon"><i data-feather="{{ module.icon }}"></i></span>
+            <span class="module-pill">{{ trans('planner_hub_module_center.active') }}</span>
+          </div>
+          <h3>{{ trans(module.title_key) }}</h3>
+          <p>{{ trans(module.summary_key) }}</p>
+          <div class="module-tags">
+            {% for feature in module.features %}
+              <span>{{ feature }}</span>
+            {% endfor %}
+          </div>
+          <a class="module-action" href="{{ path(module.route) }}">
+            {{ trans('planner_hub_module_center.open_module') }} <i data-feather="arrow-right"></i>
+          </a>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% if lockedModules|length > 0 %}
+    <section class="module-section">
+      <div class="module-section-head">
+        <div>
+          <p class="module-kicker">{{ trans('planner_hub_module_center.locked_modules') }}</p>
+          <h2>{{ trans('planner_hub_module_center.activate_when_needed') }}</h2>
+        </div>
+        <a class="module-link" href="{{ path('panel/membership/manage?payment_currency=' ~ preferredCurrency) }}">{{ trans('planner_hub_module_center.manage_modules') }}</a>
+      </div>
+
+      <div class="module-grid module-grid-compact">
+        {% for module in lockedModules %}
+          <article class="module-card {{ module.status == 'COMING_SOON' ? 'is-coming-soon' : 'is-locked' }}">
+            <div class="module-card-top">
+              <span class="module-icon"><i data-feather="{{ module.icon }}"></i></span>
+              <span class="module-pill">{{ module.status == 'COMING_SOON' ? trans('nav.coming_soon') : trans('planner_hub_module_center.locked') }}</span>
+            </div>
+            <h3>{{ trans(module.title_key) }}</h3>
+            <p>{{ trans(module.summary_key) }}</p>
+            <div class="module-tags">
+              {% for feature in module.features %}
+                <span>{{ feature }}</span>
+              {% endfor %}
+            </div>
+            {% if module.status == 'COMING_SOON' %}
+              <span class="module-action text-muted">{{ trans('nav.coming_soon') }} <i data-feather="clock"></i></span>
+            {% else %}
+              <a class="module-action" href="{{ path('panel/planner-hub/no-access?module=' ~ module.slug ~ '&required=' ~ module.slug) }}">
+                {{ trans('planner_hub_module_center.view_activation') }} <i data-feather="lock"></i>
+              </a>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+</main>
+{% endblock %}

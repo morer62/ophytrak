@@ -1,0 +1,193 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="container py-4">
+  <h2 class="mb-3 text-center">{{ trans('planner_hub.client_requests') }} {{ trans('planner_hub.for_this_service') }}</h2>
+
+  <a href="{{ app_url }}/panel/services" class="btn btn-secondary mb-3">
+    {{ macros.icon('arrow-left') }} {{ trans('planner_hub.back_to_services') }}
+  </a>
+
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle text-center">
+      <thead class="table-dark">
+        <tr>
+          <th>{{ trans('planner_hub.event_date') }}</th>
+          <th>{{ trans('planner_hub.client') }}</th>
+          <th>{{ trans('planner_hub.event_type') }}</th>
+          <th>{{ trans('planner_hub.guests') }}</th>
+          <th>{{ trans('planner_hub.budget') }}</th>
+          <th>{{ trans('planner_hub.status') }}</th>
+          <th>{{ trans('planner_hub.actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if requests|length > 0 %}
+          {% for r in requests %}
+            <tr>
+              <td>{{ r.event_date ? r.event_date|date("M j, Y") : 'N/A' }}</td>
+              <td>
+                <strong>{{ r.client_name }}</strong><br>
+                <a href="mailto:{{ r.client_email }}">{{ r.client_email }}</a><br>
+                <a href="tel:{{ r.client_phone }}">{{ r.client_phone }}</a>
+              </td>
+              <td>{{ r.event_type ?? 'N/A' }}</td>
+              <td>{{ r.guests ?? 'N/A' }}</td>
+              <td>{{ r.budget ? "$" ~ r.budget|number_format(2) : 'N/A' }}</td>
+              <td>
+                <form method="post" action="{{ app_url }}/panel/service/requests?id={{ service_id }}" class="d-inline">
+                  {{ macros.csrf() }}
+                  <input type="hidden" name="action" value="update_status">
+                  <input type="hidden" name="request_id" value="{{ r.id }}">
+                  <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="PENDING" {% if r.status == 'PENDING' %}selected{% endif %}>{{ trans('planner_hub.pending') }}</option>
+                    <option value="CONTACTED" {% if r.status == 'CONTACTED' %}selected{% endif %}>{{ trans('planner_hub.contacted') }}</option>
+                    <option value="COMPLETED" {% if r.status == 'COMPLETED' %}selected{% endif %}>{{ trans('planner_hub.completed') }}</option>
+                    <option value="CANCELLED" {% if r.status == 'CANCELLED' %}selected{% endif %}>{{ trans('planner_hub.cancelled') }}</option>
+                  </select>
+                </form>
+              </td>
+              <td>
+                <div class="btn-group" role="group">
+                  {% if r.details %}
+                    <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#details{{ r.id }}">
+                      {{ macros.icon('eye') }} {{ trans('planner_hub.view') }}
+                    </button>
+                  {% endif %}
+                  
+                  <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#emailModal{{ r.id }}">
+                    {{ macros.icon('mail') }} {{ trans('planner_hub.email') }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            {# Modal para ver detalles #}
+            {% if r.details %}
+            <div class="modal fade" id="details{{ r.id }}" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">{{ trans('planner_hub.request_details') }}</h5>
+                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <h6>{{ trans('planner_hub.client_message') }}</h6>
+                      <p>{{ r.details }}</p>
+                    </div>
+                    {% if r.notes %}
+                      <div class="mb-3">
+                        <h6>{{ trans('planner_hub.your_notes') }}</h6>
+                        <p>{{ r.notes }}</p>
+                      </div>
+                    {% endif %}
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans('planner_hub.close') }}</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            {# Modal para enviar correo #}
+            <div class="modal fade" id="emailModal{{ r.id }}" tabindex="-1">
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                  <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                      {{ macros.icon('mail') }} {{ trans('planner_hub.send_email_to') }} {{ r.client_name }}
+                    </h5>
+                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                  </div>
+                  <form method="post" action="{{ app_url }}/panel/service/requests?id={{ service_id }}">
+                    <div class="modal-body">
+                      {{ macros.csrf() }}
+                      <input type="hidden" name="action" value="send_email">
+                      <input type="hidden" name="request_id" value="{{ r.id }}">
+                      
+                      <div class="row mb-3">
+                        <div class="col-md-6">
+                          <label class="form-label"><strong>{{ trans('planner_hub.to') }}</strong></label>
+                          <p class="form-control-plaintext">{{ r.client_email }}</p>
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label"><strong>{{ trans('planner_hub.client') }}:</strong></label>
+                          <p class="form-control-plaintext">{{ r.client_name }}</p>
+                        </div>
+                      </div>
+
+                      <div class="mb-3">
+                        <label for="emailSubject{{ r.id }}" class="form-label">{{ trans('planner_hub.subject') }} *</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="emailSubject{{ r.id }}" 
+                               name="email_subject" 
+                               value="Re: Your event inquiry - {{ r.event_type ?? trans('planner_hub.event') }}" 
+                               required>
+                      </div>
+
+                      <div class="mb-3">
+                        <label for="emailMessage{{ r.id }}" class="form-label">{{ trans('planner_hub.message') }} *</label>
+                        <textarea class="form-control" 
+                                  id="emailMessage{{ r.id }}" 
+                                  name="email_message" 
+                                  rows="8" 
+                                  required 
+                                  placeholder="{{ trans('planner_hub.write_message_here') }}"></textarea>
+                      </div>
+
+                      <div class="alert alert-info">
+                        <small>
+                          {{ macros.icon('info-circle') }}
+                          <strong>{{ trans('planner_hub.event_information') }}</strong><br>
+                          {{ trans('planner_hub.date') }} {{ r.event_date ? r.event_date|date("M j, Y") : trans('planner_hub.not_specified') }} | 
+                          {{ trans('planner_hub.guests_colon') }} {{ r.guests ?? trans('planner_hub.not_specified') }} | 
+                          {{ trans('planner_hub.budget_colon') }} {{ r.budget ? "$" ~ r.budget|number_format(2) : trans('planner_hub.not_specified') }}
+                        </small>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans('planner_hub.cancel') }}</button>
+                      <button type="submit" class="btn btn-success">
+                        {{ macros.icon('send') }} {{ trans('planner_hub.send_email') }}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" class="text-center py-5">
+              <div class="mb-3">
+                {{ macros.icon('inbox', 'text-muted', 48) }}
+              </div>
+              <h5 class="text-muted">{{ trans('planner_hub.no_requests_found') }}</h5>
+              <p class="text-muted">{{ trans('planner_hub.no_requests_for_service') }}</p>
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+// Auto-resize textareas
+document.addEventListener('DOMContentLoaded', function() {
+    const textareas = document.querySelectorAll('textarea[name="email_message"]');
+    textareas.forEach(function(textarea) {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    });
+});
+</script>
+
+{% endblock %}

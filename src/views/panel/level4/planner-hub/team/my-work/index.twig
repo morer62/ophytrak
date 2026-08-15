@@ -1,0 +1,312 @@
+﻿{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set storeTaskTypeLabels = {
+    'PREPARATION': trans('store_task_types.preparation'),
+    'DELIVERY': trans('store_task_types.delivery'),
+    'FULFILLMENT': trans('store_task_types.fulfillment'),
+    'ASSISTANCE': trans('store_task_types.assistance'),
+    'CUSTOMER_SUPPORT': trans('store_task_types.customer_support'),
+    'OTHER': trans('store_task_types.other')
+} %}
+{% set storeTaskStatusLabels = {
+    'PENDING': trans('store_task_statuses.pending'),
+    'IN_PROGRESS': trans('store_task_statuses.in_progress'),
+    'WAITING_REVIEW': trans('store_task_statuses.waiting_review'),
+    'COMPLETED': trans('store_task_statuses.completed'),
+    'CANCELED': trans('store_task_statuses.canceled')
+} %}
+<div class="container-fluid team-work-page">
+    <style>
+        .team-work-page .team-work-hero { border-radius: 24px; padding: 1.5rem; background: linear-gradient(135deg, #071513, #0f766e); color: #fff; box-shadow: 0 18px 46px rgba(15,23,42,.12); }
+        .team-work-page .team-work-hero h1 { color: #fff; font-weight: 900; }
+        .team-work-page .team-work-hero p { color: rgba(255,255,255,.82); }
+        .team-work-page .team-work-card { border: 1px solid rgba(15,23,42,.08); border-radius: 20px; box-shadow: 0 16px 38px rgba(15,23,42,.06); overflow: hidden; }
+        .team-work-page .team-work-section-title { font-weight: 900; color: #0f172a; }
+        .team-work-page .team-task-map { width: 100%; height: 190px; border: 0; border-radius: 16px; margin-bottom: 1rem; }
+        .team-work-page .team-task-route { border: 1px solid #dbeafe; border-radius: 18px; padding: .85rem; background: linear-gradient(135deg,#eff6ff,#fff); margin-bottom: 1rem; }
+        .team-work-page .team-task-route-title { font-weight: 900; color: #0f172a; }
+        .team-work-page .team-quick-actions .btn { border-radius: 999px; font-weight: 800; }
+        .team-work-page .team-order-link { border-radius: 999px; font-weight: 800; }
+    </style>
+    <div class="team-work-hero d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="h3 mb-1">{{ trans('store_logistics.my_work') }}</h1>
+            <p class="text-muted mb-0">{{ trans('store_logistics.my_work_subtitle') }}</p>
+        </div>
+        <div class="team-quick-actions d-flex flex-wrap gap-2">
+            <a href="{{ path('panel/planner-hub/team/driver-mode') }}" class="btn btn-outline-light">
+                <i class="align-middle me-1" data-feather="navigation"></i> {{ trans('store_logistics.driver_mode') }}
+            </a>
+            <a href="{{ path('panel/planner-hub/team/chat') }}" class="btn btn-light">
+                <i class="align-middle me-1" data-feather="message-circle"></i> {{ trans('store_logistics.team_chat') }}
+            </a>
+            <a href="{{ path('panel/planner-hub/team/payroll/clock') }}" class="btn btn-outline-light">
+                <i class="align-middle me-1" data-feather="clock"></i> My Hours
+            </a>
+        </div>
+    </div>
+
+    <div class="alert alert-light border mb-4">
+        <strong>Current workspace:</strong>
+        {{ teamContext.selectedInstitution.company_name ?: 'Company workspace' }}
+        {% if teamContext.hasMultipleInstitutions %}
+            <span class="text-muted">Use Company / Workspace to change the company you are working with.</span>
+        {% endif %}
+    </div>
+
+    <section class="mb-5">
+        <h2 class="h5 mb-3 team-work-section-title">{{ trans('store_logistics.store_delivery_assignments') }}</h2>
+        <div class="nav nav-pills gap-2 mb-3">
+            <a class="nav-link rounded-pill {{ workTab == 'active' ? 'active' : '' }}" href="{{ path('panel/planner-hub/team/my-work?tab=active') }}">{{ trans('store_orders.active_orders') }} ({{ storeTaskCounts.active }})</a>
+            <a class="nav-link rounded-pill {{ workTab == 'incidents' ? 'active' : '' }}" href="{{ path('panel/planner-hub/team/my-work?tab=incidents') }}">{{ trans('store_orders.incidents') }} ({{ storeTaskCounts.incidents }})</a>
+            <a class="nav-link rounded-pill {{ workTab == 'closed' ? 'active' : '' }}" href="{{ path('panel/planner-hub/team/my-work?tab=closed') }}">{{ trans('store_orders.closed_orders') }} ({{ storeTaskCounts.closed }})</a>
+        </div>
+        <div class="row g-3">
+            {% for task in storeTasks %}
+                <div class="col-xl-4 col-md-6">
+                    <article class="card border-0 team-work-card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between gap-2 mb-2">
+                                <span class="badge bg-primary-subtle text-primary">{{ storeTaskTypeLabels[task.task_type]|default(task.task_type|replace({'_':' '})) }}</span>
+                                <span class="badge {{ task.status == 'COMPLETED' ? 'bg-success' : (task.status == 'WAITING_REVIEW' ? 'bg-warning text-dark' : 'bg-secondary') }}">{{ storeTaskStatusLabels[task.status]|default(task.status|replace({'_':' '})) }}</span>
+                            </div>
+                            <h3 class="h6 fw-bold">{{ task.title }}</h3>
+                            <p class="small text-muted mb-2">{{ trans('store_logistics.store_order') }} #{{ task.id_store_order }} | {{ task.guest_name ?: task.guest_email }}</p>
+                            {% if task.cancellation_status|default('NONE') == 'REQUESTED' %}<div class="alert alert-warning py-2 small">{{ trans('store_orders.cancellation_pending_owner') }}</div>{% endif %}
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                {% if task.public_token %}
+                                    <a class="btn btn-sm btn-outline-primary team-order-link" target="_blank" href="{{ path('store/order-access') }}?token={{ task.public_token|url_encode }}">{{ trans('store_logistics.open_client_status') }}</a>
+                                    {% if task.task_type == 'PREPARATION' %}
+                                        <button type="button" class="btn btn-sm btn-outline-dark team-order-link print-package-tag"
+                                                data-order-id="{{ task.id_store_order }}"
+                                                data-tracking-code="{{ task.package_code|default('OPH-' ~ task.id_store_order) }}"
+                                                data-order-date="{{ task.order_created_at|date('Y-m-d H:i') }}"
+                                                data-customer="{{ task.guest_name ?: task.guest_email }}"
+                                                data-destination-address="{{ task.shipping_address_1 ?: '' }}"
+                                                data-destination-address2="{{ task.shipping_address_2 ?: '' }}"
+                                                data-destination-city="{{ task.shipping_city ?: '' }}"
+                                                data-destination-state="{{ task.shipping_state ?: '' }}"
+                                                data-destination-postal="{{ task.shipping_zip ?: '' }}"
+                                                data-destination-country="{{ task.shipping_country ?: '' }}"
+                                                data-instructions="{{ task.shipping_instructions ?: '' }}"
+                                                data-sender-name="{{ businessProfile.company_name|default('Ophyra') }}"
+                                                data-sender-address="{{ businessProfile.address_line1|default('') }}"
+                                                data-sender-city="{{ businessProfile.city|default('') }}"
+                                                data-sender-state="{{ businessProfile.state|default('') }}"
+                                                data-sender-postal="{{ businessProfile.zip|default('') }}"
+                                                data-sender-country="{{ businessProfile.country|default('') }}"
+                                                data-carrier-name="{{ trans('store_orders.label_logistics') }}"
+                                                data-url="{{ path('store/order-access') }}?token={{ task.public_token|url_encode }}">
+                                            {{ trans('store_logistics.print_package_tag') }}
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
+                                {% if task.task_type == 'DELIVERY' %}
+                                    <a class="btn btn-sm btn-outline-secondary team-order-link" href="{{ path('panel/planner-hub/team/driver-mode') }}">{{ trans('store_logistics.open_driver_mode') }}</a>
+                                {% endif %}
+                            </div>
+                            {% if task.instructions %}<p class="small">{{ task.instructions }}</p>{% endif %}
+                            {% if task.shipping_address_1 %}
+                                <p class="small mb-3"><strong>{{ trans('store_task_types.delivery') }}:</strong> {{ task.shipping_address_1 }}, {{ task.shipping_city }} {{ task.shipping_state }} {{ task.shipping_zip }}</p>
+                                {% if task.task_type == 'DELIVERY' %}
+                                    <div class="team-task-route">
+                                        <div class="team-task-route-title">{{ trans('store_logistics.route_destination') }}</div>
+                                        <iframe class="team-task-map" loading="lazy" src="https://maps.google.com/maps?q={{ (task.shipping_address_1 ~ ' ' ~ task.shipping_city ~ ' ' ~ task.shipping_state ~ ' ' ~ task.shipping_zip)|url_encode }}&z=14&output=embed"></iframe>
+                                        <a class="btn btn-sm btn-outline-success" target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ (task.shipping_address_1 ~ ' ' ~ task.shipping_city ~ ' ' ~ task.shipping_state ~ ' ' ~ task.shipping_zip)|url_encode }}">Open in Maps</a>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+
+                            {% if task.status != 'COMPLETED' and task.status != 'CANCELED' and task.cancellation_status|default('NONE') != 'REQUESTED' %}
+                                <form method="post" enctype="multipart/form-data" class="store-task-form" data-task-id="{{ task.id }}" data-live-tracking="{{ task.task_type == 'DELIVERY' and task.status == 'IN_PROGRESS' ? '1' : '0' }}">
+                                    <input type="hidden" name="task_id" value="{{ task.id }}">
+                                    <input type="hidden" name="location_lat">
+                                    <input type="hidden" name="location_long">
+                                    <input type="hidden" name="location_accuracy">
+                                    <input type="hidden" name="location_platform" value="web_mobile">
+                                    <input type="hidden" name="location_source" value="browser_geolocation">
+                                    <input type="hidden" name="location_permission_status" value="prompt">
+                                    <input type="hidden" name="location_context" value="store_delivery">
+                                    <textarea name="notes" class="form-control form-control-sm mb-2" rows="2" maxlength="500" placeholder="{{ trans('store_logistics.optional_note') }}"></textarea>
+                                    {% if task.task_type == 'DELIVERY' %}
+                                        <label class="form-label small">{{ trans('store_logistics.dispatch_photo_label') }}</label>
+                                        <input type="file" name="dispatch_proof" class="form-control form-control-sm mb-2" accept="image/jpeg,image/png,image/webp" capture="environment">
+                                        <div class="form-text mb-2">{{ trans('store_logistics.dispatch_photo_help') }}</div>
+                                    {% endif %}
+                                    {% if task.task_type == 'DELIVERY' and task.allow_team_close_delivery %}
+                                        <label class="form-label small">{{ trans('store_logistics.delivery_proof_photo') }}</label>
+                                        <input type="file" name="delivery_proof" class="form-control form-control-sm mb-2" accept="image/jpeg,image/png,image/webp">
+                                    {% endif %}
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% if task.status == 'PENDING' %}
+                                            <button class="btn btn-sm btn-primary location-action" name="action" value="start">{{ trans('store_logistics.start') }}</button>
+                                        {% endif %}
+                                        {% if task.task_type == 'DELIVERY' %}
+                                            {% if task.order_status == 'READY_FOR_DELIVERY' or task.order_status == 'REDELIVERY_SCHEDULED' %}
+                                                <button class="btn btn-sm btn-outline-primary location-action" name="action" value="out_for_delivery">{{ trans('store_logistics.out_for_delivery') }}</button>
+                                            {% elseif task.order_status == 'OUT_FOR_DELIVERY' %}
+                                                <button class="btn btn-sm btn-outline-secondary location-action" name="action" value="arrived">{{ trans('store_logistics.arrived') }}</button>
+                                                <button class="btn btn-sm btn-warning location-action" name="action" value="delivery_attempted">{{ trans('store_logistics.could_not_deliver') }}</button>
+                                                <button class="btn btn-sm btn-outline-dark location-action" name="action" value="returned_to_business">{{ trans('store_logistics.returned_to_business') }}</button>
+                                                <a class="btn btn-sm btn-success" href="{{ path('panel/planner-hub/team/driver-mode') }}">{{ task.allow_team_close_delivery ? trans('store_logistics.open_delivery_proof') : trans('store_logistics.request_delivery_review') }}</a>
+                                            {% else %}
+                                                <span class="badge bg-warning-subtle text-warning border">{{ trans('store_logistics.waiting_for_preparation') }}</span>
+                                            {% endif %}
+                                        {% elseif task.allow_assignee_complete %}
+                                            <button class="btn btn-sm btn-success" name="action" value="complete">{{ trans('store_logistics.complete') }}</button>
+                                        {% endif %}
+                                    </div>
+                                </form>
+                            {% endif %}
+
+                            <div class="border-top pt-3 mt-3">
+                                <div class="small fw-bold text-muted mb-2">Order communication</div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% if task.admin_contact_id %}
+                                        <a href="{{ path('panel/planner-hub/team/chat?to=' ~ task.admin_contact_id) }}" class="btn btn-sm btn-outline-dark">
+                                            {{ trans('store_logistics.message_admin') }}
+                                        </a>
+                                    {% endif %}
+                                    {% if task.can_chat_with_client and task.client_user_id %}
+                                        <a href="{{ path('panel/planner-hub/team/chat?to=' ~ task.client_user_id) }}" class="btn btn-sm btn-outline-success">
+                                            {{ trans('store_logistics.message_customer') }}
+                                        </a>
+                                    {% endif %}
+                                    {% for member in task.order_team_contacts %}
+                                        <a href="{{ path('panel/planner-hub/team/chat?to=' ~ member.id) }}" class="btn btn-sm btn-outline-primary">
+                                            {{ trans('store_logistics.message') }} {{ (member.name ~ ' ' ~ member.lastname)|trim ?: member.email }}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            {% else %}
+                <div class="col-12"><div class="alert alert-light border">{{ trans('store_logistics.no_store_assignments') }}</div></div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section>
+        <h2 class="h5 mb-3 team-work-section-title">Service / Event Tasks</h2>
+        <div class="card border-0 team-work-card">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th>Task</th><th>Order</th><th>{{ trans('ui.date') }}</th><th>{{ trans('ui.status') }}</th><th class="text-end">Action</th></tr></thead>
+                    <tbody>
+                    {% for task in serviceTasks %}
+                        <tr>
+                            <td>{{ task.task_description }}</td>
+                            <td>#{{ task.id_order ?: task.id_suborder }}</td>
+                            <td>{{ task.event_date ?: '-' }}</td>
+                            <td><span class="badge {{ task.is_done ? 'bg-success' : 'bg-warning text-dark' }}">{{ task.is_done ? 'COMPLETED' : 'PENDING' }}</span></td>
+                            <td class="text-end">
+                                <div class="d-flex flex-wrap gap-2 justify-content-end">
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ path('panel/planner-hub/team/orders/orders/tasks?id=' ~ task.id_order ~ (task.id_suborder ? '&suborder=' ~ task.id_suborder : '')) }}">Open</a>
+                                    {% if task.admin_contact_id %}
+                                        <a class="btn btn-sm btn-outline-dark" href="{{ path('panel/planner-hub/team/chat?to=' ~ task.admin_contact_id) }}">Admin</a>
+                                    {% endif %}
+                                    {% if task.can_chat_with_client and task.id_client %}
+                                        <a class="btn btn-sm btn-outline-success" href="{{ path('panel/planner-hub/team/chat?to=' ~ task.id_client) }}">Client</a>
+                                    {% endif %}
+                                    {% for member in task.order_team_contacts %}
+                                        <a class="btn btn-sm btn-outline-secondary" href="{{ path('panel/planner-hub/team/chat?to=' ~ member.id) }}">{{ (member.name ~ ' ' ~ member.lastname)|trim ?: member.email }}</a>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">No service or event tasks assigned.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <div class="modal fade" id="packageTagModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+            <div class="modal-header"><h2 class="modal-title fs-5">{{ trans('store_logistics.package_tag') }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body" id="packageTagPreview"></div>
+            <div class="modal-footer"><button type="button" class="btn btn-primary" id="printPackageTag">{{ trans('store_logistics.print_package_tag') }}</button></div>
+        </div></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="{{ asset_for('assets/js/storeShippingLabel.js') }}"></script>
+<script>
+const packageLabelText = {
+    sender: {{ trans('store_orders.label_sender')|json_encode|raw }}, recipient: {{ trans('store_orders.label_recipient')|json_encode|raw }},
+    orderNumber: {{ trans('store_orders.label_order_number')|json_encode|raw }}, orderDate: {{ trans('store_orders.label_order_date')|json_encode|raw }},
+    instructions: {{ trans('store_orders.label_instructions')|json_encode|raw }}, packageHandledBy: {{ trans('store_orders.label_package_handled_by')|json_encode|raw }},
+    logistics: {{ trans('store_orders.label_logistics')|json_encode|raw }}, customer: {{ trans('store_report.customer')|json_encode|raw }}
+};
+document.querySelectorAll('.print-package-tag').forEach(function (button) {
+    button.addEventListener('click', function () {
+        const preview = document.getElementById('packageTagPreview');
+        OphyraShippingLabel.render(preview, { ...button.dataset, url: new URL(button.dataset.url, window.location.origin).href, recipientName: button.dataset.customer }, packageLabelText);
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('packageTagModal')).show();
+    });
+});
+document.getElementById('printPackageTag').addEventListener('click', function () {
+    OphyraShippingLabel.print(document.getElementById('packageTagPreview'), {{ trans('store_logistics.package_tag')|json_encode|raw }});
+});
+
+document.querySelectorAll('.store-task-form').forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+        const submitter = event.submitter;
+        if (!submitter || !submitter.classList.contains('location-action')) return;
+        if (form.dataset.locationReady === '1') return;
+        event.preventDefault();
+        if (!navigator.geolocation) {
+            alert('You need to allow location access to start this task.');
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(function (position) {
+            form.querySelector('[name="location_lat"]').value = position.coords.latitude;
+            form.querySelector('[name="location_long"]').value = position.coords.longitude;
+            form.querySelector('[name="location_accuracy"]').value = position.coords.accuracy || '';
+            form.querySelector('[name="location_permission_status"]').value = 'granted';
+            form.dataset.locationReady = '1';
+            submitter.click();
+        }, function () {
+            const permission = form.querySelector('[name="location_permission_status"]');
+            if (permission) permission.value = 'denied';
+            alert('You need to allow location access to start this task.');
+        }, { enableHighAccuracy: true, timeout: 10000 });
+    });
+});
+
+document.querySelectorAll('.store-task-form[data-live-tracking="1"]').forEach(function (form) {
+    if (!navigator.geolocation) return;
+    let lastSentAt = 0;
+    navigator.geolocation.watchPosition(function (position) {
+        const now = Date.now();
+        if (now - lastSentAt < 60000) return;
+        lastSentAt = now;
+        const data = new FormData();
+        data.append('action', 'update_location');
+        data.append('task_id', form.dataset.taskId);
+        data.append('location_lat', position.coords.latitude);
+        data.append('location_long', position.coords.longitude);
+        data.append('location_accuracy', position.coords.accuracy || '');
+        data.append('location_platform', 'web_mobile');
+        data.append('location_source', 'browser_geolocation');
+        data.append('location_permission_status', 'granted');
+        data.append('location_context', 'store_delivery_live_tracking');
+        fetch(window.location.href, {
+            method: 'POST',
+            body: data,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).catch(function () {});
+    }, function () {}, { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 });
+});
+</script>
+{% endblock %}
+

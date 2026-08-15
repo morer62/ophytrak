@@ -1,0 +1,3215 @@
+﻿{% extends "templates/base.twig" %}
+
+{% block styles %}
+<style>
+:root{
+    --ophyra-primary:#087568;
+    --ophyra-primary-dark:#065f54;
+    --ophyra-dark:#081312;
+    --ophyra-dark-2:#0d1918;
+    --ophyra-text:#1f2937;
+    --ophyra-muted:#6b7280;
+    --ophyra-light:#f8fafc;
+    --ophyra-border:#e5e7eb;
+}
+
+*,
+*::before,
+*::after{
+    box-sizing:border-box;
+}
+
+body{
+    color: var(--ophyra-text);
+    background:#fff;
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden;
+}
+
+html{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden;
+}
+
+@supports (overflow-x: clip){
+    html,
+    body{
+        overflow-x:clip;
+    }
+}
+
+.section{
+    padding: 5rem 1.25rem;
+}
+
+.section-alt{
+    background:#f6f8fa;
+}
+
+.venue-title{
+    font-family:'Poppins', sans-serif;
+    font-weight:300;
+    font-size:2.3rem;
+    line-height:1.2;
+    margin-bottom:1rem;
+}
+
+.venue-title .highlight{
+    color:var(--ophyra-primary);
+    font-weight:700;
+}
+
+.section-subtitle{
+    max-width: 860px;
+    margin: 0 auto 2.5rem;
+    color: var(--ophyra-muted);
+    font-size:1.1rem;
+    line-height:1.7;
+}
+
+.btn-main{
+    background:var(--ophyra-primary);
+    color:#fff !important;
+    padding:.95rem 2rem;
+    font-size:1.05rem;
+    border-radius:999px;
+    text-decoration:none;
+    font-weight:700;
+    display:inline-block;
+    border:none;
+    box-shadow:0 10px 24px rgba(8,117,104,.28);
+    transition:all .22s ease;
+}
+.btn-main:hover{
+    background:var(--ophyra-primary-dark);
+    transform:translateY(-1px);
+}
+
+.btn-outline-secondary{
+    padding:.9rem 1.6rem;
+    font-size:1rem;
+    border-radius:999px;
+    font-weight:700;
+    border:1.5px solid rgba(255,255,255,.55);
+    color:#ffffff !important;
+    background:rgba(255,255,255,.10);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    box-shadow:0 8px 24px rgba(0,0,0,.18);
+    transition:all .22s ease;
+}
+
+.btn-outline-secondary:hover{
+    background:rgba(255,255,255,.18);
+    border-color:rgba(255,255,255,.82);
+    color:#ffffff !important;
+    transform:translateY(-1px);
+}
+
+/* HERO VIDEO */
+.hero-video{
+    position:relative;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    background:
+        linear-gradient(180deg, rgba(0,0,0,.34), rgba(0,0,0,.34)),
+        url("{{ asset_for('assets/images/banner-planner-hub.png') }}") center / cover no-repeat,
+        #081312;
+    color:#fff;
+    text-align:center;
+    max-width:100%;
+    isolation:isolate;
+}
+
+.hero-video-bg{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    z-index:0;
+    background:#081312;
+}
+.hero-video-overlay{
+    position:absolute;
+    inset:0;
+    background:
+        linear-gradient(180deg, rgba(0,0,0,.30) 0%, rgba(0,0,0,.30) 35%, rgba(0,0,0,.30) 100%),
+        linear-gradient(135deg, rgba(8,19,18,.30) 0%, rgba(13,25,24,.30) 45%, rgba(8,19,18,.30) 100%);
+    z-index:1;
+}
+
+.hero-content{
+    position:relative;
+    z-index:2;
+    width:100%;
+    max-width:1200px;
+    padding:2rem 1rem 3rem;
+    min-width:0;
+    content-visibility:visible;
+    contain:none;
+}
+
+.hero-kicker{
+    display:inline-block;
+    padding:.5rem .9rem;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.08);
+    border-radius:999px;
+    color:#d7fffa;
+    font-weight:700;
+    font-size:.92rem;
+    margin-bottom:1.2rem;
+    backdrop-filter: blur(4px);
+}
+
+.hero-chip-row{
+    margin-top:1.25rem;
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:.65rem;
+}
+
+.hero-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    padding:.62rem 1rem;
+    border-radius:999px;
+    background:rgba(118,255,240,.16);
+    border:1px solid rgba(118,255,240,.35);
+    color:#eafffb;
+    font-weight:800;
+    box-shadow:0 18px 45px rgba(0,0,0,.22);
+    backdrop-filter:blur(8px);
+    max-width:100%;
+}
+
+.hero-video h1{
+    font-size: clamp(2.4rem, 5vw, 5.3rem);
+    font-weight:800;
+    line-height:1.03;
+    letter-spacing:-1.3px;
+    margin-bottom:1.1rem;
+    text-shadow:0 8px 30px rgba(0,0,0,.35);
+    max-width:100%;
+}
+
+.hero-title-main,
+.hero-title-tail{
+    display:block;
+    overflow-wrap:break-word;
+}
+
+.hero-title-tail{
+    margin-top:.35rem;
+    font-size:clamp(1.55rem, 3.1vw, 3.35rem);
+    line-height:1.18;
+    color:rgba(235,243,242,.82);
+    font-weight:700;
+    letter-spacing:-.6px;
+}
+
+.hero-lead{
+    max-width:900px;
+    margin:0 auto;
+    font-size:clamp(1.18rem, 2vw, 1.45rem);
+    line-height:1.7;
+    color:#ebf3f2;
+    text-shadow:0 2px 8px rgba(0,0,0,.25);
+}
+
+.hero-cta-row{
+    margin-top:2rem;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.9rem;
+    justify-content:center;
+    align-items:center;
+}
+
+.hero-micro{
+    margin-top:.8rem;
+    font-size:.96rem;
+    color:#d7dddf;
+}
+
+.hero-points{
+    margin-top:2.4rem;
+}
+
+.hero-point-card{
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:18px;
+    padding:1.1rem 1rem;
+    height:100%;
+    backdrop-filter: blur(5px);
+    box-shadow:0 10px 30px rgba(0,0,0,.18);
+    text-align:left;
+}
+
+.hero-point-card i{
+    color:#5fe5d6;
+    font-size:1.2rem;
+    margin-bottom:.7rem;
+}
+
+.hero-point-card strong{
+    display:block;
+    color:#fff;
+    margin-bottom:.35rem;
+    font-size:1rem;
+}
+
+.hero-point-card span{
+    color:#e1e7e8;
+    font-size:.97rem;
+    line-height:1.55;
+}
+
+/* GENERIC CARDS */
+.benefit-card{
+    background:#fff;
+    padding:2rem 1.5rem;
+    border-radius:18px;
+    box-shadow:0 15px 40px rgba(15,23,42,.06);
+    text-align:center;
+    margin-bottom:1.6rem;
+    border:1px solid rgba(15,23,42,.05);
+    transition:all .22s ease;
+    height:100%;
+}
+.benefit-card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 22px 44px rgba(15,23,42,.08);
+}
+.benefit-card i{
+    font-size:2rem;
+    margin-bottom:1rem;
+    color:var(--ophyra-primary);
+}
+.benefit-card h3{
+    font-size:1.3rem;
+    font-weight:700;
+    margin-bottom:.8rem;
+}
+.dark-feature-card h3,
+.module-detail-card h3{
+    font-size:1.15rem;
+    font-weight:800;
+    margin-bottom:.65rem;
+}
+.benefit-card p{
+    color:var(--ophyra-muted);
+    line-height:1.65;
+}
+
+/* TOOL SPRAWL SECTION */
+.tool-sprawl-section{
+    position:relative;
+    overflow:hidden;
+    background:
+        radial-gradient(820px 360px at 8% 14%, rgba(38,166,154,.13), transparent 62%),
+        radial-gradient(760px 360px at 96% 78%, rgba(17,24,39,.08), transparent 58%),
+        linear-gradient(180deg,#fffaf3 0%,#f7fbfa 100%);
+}
+.tool-sprawl-shell{
+    position:relative;
+    max-width:1180px;
+    margin:auto;
+    border-radius:8px;
+    padding:2rem;
+    background:rgba(255,255,255,.76);
+    border:1px solid rgba(15,23,42,.08);
+    box-shadow:0 30px 80px rgba(15,23,42,.10);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+}
+.tool-sprawl-header{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(280px,420px);
+    gap:2rem;
+    align-items:center;
+    margin-bottom:1.8rem;
+}
+.tool-alert-mark{
+    width:58px;
+    height:58px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:1rem;
+    color:#081312;
+    background:linear-gradient(135deg,#ffd166,#f59e0b);
+    box-shadow:0 16px 34px rgba(245,158,11,.25);
+}
+.tool-alert-mark i{
+    font-size:1.45rem;
+}
+.tool-sprawl-title{
+    font-family:'Poppins', sans-serif;
+    font-size:clamp(2rem, 4vw, 3.35rem);
+    line-height:1.05;
+    font-weight:850;
+    color:#081312;
+    margin:0 0 1rem;
+}
+.tool-sprawl-title .highlight{
+    color:var(--ophyra-primary);
+}
+.tool-sprawl-lead{
+    max-width:760px;
+    margin:0;
+    color:#4b5563;
+    font-size:1.08rem;
+    line-height:1.75;
+}
+.tool-cloud{
+    position:relative;
+    min-height:250px;
+    border-radius:8px;
+    padding:1.1rem;
+    background:
+        linear-gradient(180deg, rgba(8,19,18,.96), rgba(12,23,22,.92)),
+        radial-gradient(360px 180px at 80% 0%, rgba(38,166,154,.22), transparent 62%);
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 26px 64px rgba(8,19,18,.22);
+    color:#fff;
+}
+.tool-cloud::before{
+    content:"";
+    position:absolute;
+    inset:18px;
+    border:1px dashed rgba(141,244,232,.20);
+    border-radius:8px;
+    pointer-events:none;
+}
+.tool-cloud-label{
+    position:relative;
+    z-index:1;
+    color:#8df4e8;
+    text-transform:uppercase;
+    font-weight:850;
+    font-size:.78rem;
+    margin-bottom:.9rem;
+}
+.tool-chip-field{
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex-wrap:wrap;
+    gap:.58rem;
+}
+.tool-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    padding:.54rem .68rem;
+    border-radius:999px;
+    color:#e9fffc;
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.14);
+    font-weight:750;
+    font-size:.92rem;
+}
+.tool-chip i{
+    color:#8df4e8;
+}
+.tool-cloud-base{
+    position:relative;
+    z-index:1;
+    display:flex;
+    justify-content:space-between;
+    gap:1rem;
+    align-items:center;
+    margin-top:1rem;
+    padding:.85rem .95rem;
+    border-radius:8px;
+    background:linear-gradient(135deg, rgba(38,166,154,.22), rgba(141,244,232,.08));
+    border:1px solid rgba(141,244,232,.22);
+}
+.tool-cloud-base strong{
+    color:#fff;
+}
+.tool-cloud-base span{
+    color:#cfeee9;
+    font-size:.88rem;
+}
+.tool-flow-grid{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    gap:1rem;
+    align-items:stretch;
+}
+.tool-flow-panel{
+    border-radius:8px;
+    padding:1.15rem;
+    background:#fff;
+    border:1px solid rgba(15,23,42,.08);
+    box-shadow:0 18px 42px rgba(15,23,42,.06);
+}
+.tool-flow-panel.is-good{
+    background:linear-gradient(180deg,#ffffff,#f3fffd);
+    border-color:rgba(38,166,154,.22);
+}
+.tool-flow-panel h3{
+    display:flex;
+    align-items:center;
+    gap:.55rem;
+    font-size:1rem;
+    font-weight:850;
+    margin-bottom:1rem;
+    color:#081312;
+}
+.tool-flow-panel h3 i{
+    color:var(--ophyra-primary);
+}
+.tool-flow-list{
+    display:grid;
+    gap:.72rem;
+}
+.tool-flow-item{
+    display:flex;
+    gap:.68rem;
+    align-items:flex-start;
+    color:#374151;
+    line-height:1.45;
+}
+.tool-flow-item .mark{
+    flex:0 0 auto;
+    width:26px;
+    height:26px;
+    border-radius:7px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:.05rem;
+    font-size:.82rem;
+}
+.tool-flow-item.is-bad .mark{
+    color:#8a1f35;
+    background:#ffe6eb;
+}
+.tool-flow-item.is-good .mark{
+    color:#064e3b;
+    background:#d7fbf4;
+}
+.tool-bridge{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:.65rem;
+    color:#0f766e;
+    font-weight:850;
+    min-width:112px;
+}
+.tool-bridge-line{
+    width:2px;
+    flex:1;
+    min-height:36px;
+    background:linear-gradient(180deg, transparent, rgba(38,166,154,.45), transparent);
+}
+.tool-bridge-icon{
+    width:48px;
+    height:48px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#061615;
+    background:linear-gradient(135deg,#8df4e8,#26a69a);
+    box-shadow:0 16px 34px rgba(38,166,154,.25);
+}
+.tool-sprawl-note{
+    margin:1.25rem auto 0;
+    max-width:880px;
+    color:#5b6778;
+    line-height:1.7;
+    text-align:center;
+}
+
+.funnel-grid{
+    align-items:stretch;
+}
+.funnel-link-card{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    min-height:342px;
+    height:100%;
+    overflow:hidden;
+    border:1px solid rgba(15,23,42,.10);
+    border-radius:8px;
+    background:#081312;
+    color:#fff;
+    text-decoration:none;
+    box-shadow:0 24px 54px rgba(15,23,42,.12);
+    isolation:isolate;
+    transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+.funnel-link-card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 30px 70px rgba(15,23,42,.18);
+    border-color:rgba(38,166,154,.52);
+    color:#fff;
+}
+.funnel-card-media{
+    position:absolute;
+    inset:0;
+    z-index:-2;
+}
+.funnel-card-media img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    transform:scale(1.02);
+    filter:saturate(1.04) contrast(1.03);
+    transition:transform .35s ease;
+}
+.funnel-link-card:hover .funnel-card-media img{
+    transform:scale(1.08);
+}
+.funnel-link-card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:-1;
+    background:
+        linear-gradient(180deg, rgba(8,19,18,.25) 0%, rgba(8,19,18,.82) 56%, rgba(8,19,18,.97) 100%),
+        radial-gradient(520px 240px at 100% 0%, rgba(38,166,154,.34), transparent 58%);
+}
+.funnel-card-body{
+    display:flex;
+    flex-direction:column;
+    flex:1;
+    padding:1.15rem;
+}
+.funnel-card-top{
+    display:flex;
+    justify-content:space-between;
+    gap:.75rem;
+    align-items:flex-start;
+    margin-bottom:auto;
+}
+.funnel-icon{
+    width:46px;
+    height:46px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.20);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.20), 0 12px 28px rgba(0,0,0,.22);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+}
+.funnel-icon i{
+    color:#8df4e8;
+    font-size:1.2rem;
+}
+.funnel-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    min-height:30px;
+    padding:.38rem .65rem;
+    border-radius:999px;
+    color:#dffbf7;
+    background:rgba(255,255,255,.11);
+    border:1px solid rgba(255,255,255,.18);
+    font-size:.72rem;
+    font-weight:800;
+    text-transform:uppercase;
+    line-height:1;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+}
+.funnel-card-copy{
+    margin-top:4.8rem;
+}
+.funnel-link-card h3{
+    color:#fff;
+    font-size:1.36rem;
+    font-weight:850;
+    line-height:1.15;
+    margin-bottom:.65rem;
+    text-shadow:0 12px 24px rgba(0,0,0,.34);
+}
+.funnel-link-card p{
+    color:#d7e6e4;
+    line-height:1.58;
+    margin-bottom:1rem;
+    font-size:1rem;
+}
+.funnel-card-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.45rem;
+    margin-bottom:1rem;
+}
+.funnel-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    padding:.38rem .55rem;
+    border-radius:999px;
+    color:#dffbf7;
+    background:rgba(38,166,154,.16);
+    border:1px solid rgba(141,244,232,.20);
+    font-size:.78rem;
+    font-weight:700;
+    line-height:1.1;
+}
+.funnel-cta{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:.8rem;
+    margin-top:auto;
+    padding-top:.95rem;
+    border-top:1px solid rgba(255,255,255,.12);
+    color:#91fff1;
+    font-weight:850;
+}
+.funnel-cta i{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#061615;
+    background:#8df4e8;
+    transition:transform .22s ease;
+}
+.funnel-link-card:hover .funnel-cta i{
+    transform:translateX(3px);
+}
+
+/* DARK FEATURE BAND */
+.dark-band{
+    position:relative;
+    background:
+        radial-gradient(1000px 500px at 0% 0%, rgba(38,166,154,.15), transparent 60%),
+        linear-gradient(135deg, #091514 0%, #0d1918 100%);
+    color:#fff;
+    overflow:hidden;
+}
+.dark-band .section-subtitle{
+    color:#ccdad9;
+}
+.dark-feature-card{
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:18px;
+    padding:1.4rem;
+    height:100%;
+}
+.dark-feature-card i{
+    font-size:1.7rem;
+    color:#58e2d3;
+    margin-bottom:.7rem;
+}
+.dark-feature-card h4{
+    font-weight:700;
+    font-size:1.15rem;
+    margin-bottom:.55rem;
+    color:#fff;
+}
+.dark-feature-card p{
+    margin:0;
+    color:#d6e3e3;
+    line-height:1.65;
+}
+
+/* COMPARISON */
+.compare-wrap{
+    background:#111827;
+    color:#fff;
+    border-radius:24px;
+    padding:2rem 1.4rem;
+    box-shadow:0 18px 50px rgba(0,0,0,.18);
+}
+.compare-title{
+    font-size:2rem;
+    font-weight:800;
+    text-align:center;
+    margin-bottom:.8rem;
+}
+.compare-sub{
+    text-align:center;
+    color:#cbd5e1;
+    max-width:860px;
+    margin:0 auto 2rem;
+}
+.compare-grid{
+    background:#fff;
+    border-radius:18px;
+    overflow:hidden;
+}
+.compare-row{
+    display:flex;
+    flex-wrap:nowrap;
+    border-bottom:1px solid #e5e7eb;
+}
+.compare-row:last-child{
+    border-bottom:none;
+}
+.compare-cell{
+    flex:1;
+    padding:1rem;
+    text-align:center;
+    color:#111827;
+    font-weight:600;
+}
+.compare-cell.label{
+    flex:1.5;
+    text-align:left;
+    font-weight:700;
+    background:#f8fafc;
+}
+.compare-head .compare-cell{
+    background:#f1f5f9;
+    font-weight:800;
+}
+.ok{
+    color:#16a34a;
+    font-size:1.2rem;
+}
+.no{
+    color:#dc2626;
+    font-size:1.2rem;
+}
+.meh{
+    color:#6b7280;
+    font-size:.98rem;
+    font-weight:700;
+}
+
+/* PRICING */
+.pricing-section{
+    background:
+        radial-gradient(820px 360px at 80% 8%, rgba(38,166,154,.14), transparent 64%),
+        linear-gradient(180deg,#f8fbfb 0%,#eef6f5 100%);
+}
+.pricing-wrap{
+    position:relative;
+    overflow:hidden;
+    background:
+        radial-gradient(900px 430px at 88% 0%, rgba(38,166,154,.24), transparent 62%),
+        linear-gradient(135deg,#07100f 0%,#0c1716 52%,#101a1a 100%);
+    padding:2.1rem;
+    border-radius:8px;
+    max-width:1160px;
+    margin:auto;
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 34px 90px rgba(8,19,18,.26);
+    color:#fff;
+}
+.pricing-wrap::before{
+    content:"";
+    position:absolute;
+    inset:-1px;
+    pointer-events:none;
+    background:
+        linear-gradient(115deg, transparent 0 55%, rgba(255,255,255,.08) 55.2% 55.8%, transparent 56% 100%),
+        radial-gradient(360px 220px at 22% 0%, rgba(141,244,232,.13), transparent 70%);
+}
+.pricing-wrap > *{
+    position:relative;
+    z-index:1;
+}
+.pricing-wrap .venue-title{
+    color:#f5fffd;
+}
+.pricing-wrap .section-subtitle{
+    color:#c8d8d6;
+}
+.pricing-card{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    height:100%;
+    overflow:hidden;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,.14);
+    background:linear-gradient(180deg, rgba(255,255,255,.105), rgba(255,255,255,.045));
+    color:#fff;
+    box-shadow:0 24px 58px rgba(0,0,0,.25);
+    transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+}
+.pricing-card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+        radial-gradient(280px 160px at 86% 0%, rgba(141,244,232,.18), transparent 64%),
+        linear-gradient(135deg, rgba(255,255,255,.10), transparent 46%);
+    pointer-events:none;
+}
+.pricing-card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 32px 76px rgba(0,0,0,.32);
+    border-color:rgba(141,244,232,.36);
+}
+.pricing-card.featured{
+    border-color:rgba(141,244,232,.56);
+    box-shadow:0 34px 86px rgba(38,166,154,.20), 0 26px 64px rgba(0,0,0,.32);
+}
+.pricing-card .card-body{
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex-direction:column;
+    height:100%;
+    padding:1.45rem;
+}
+.pricing-card .badge{
+    width:max-content;
+    border-radius:999px;
+    padding:.48rem .68rem;
+    font-size:.72rem;
+    text-transform:uppercase;
+}
+.pricing-card h3{
+    color:#fff;
+    font-weight:850;
+}
+.pricing-kicker{
+    color:#8df4e8;
+    font-weight:800;
+}
+.pricing-orb{
+    width:54px;
+    height:54px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:1rem;
+    color:#07100f;
+    background:linear-gradient(135deg,#8df4e8,#26a69a);
+    box-shadow:0 16px 34px rgba(38,166,154,.32);
+}
+.pricing-orb i{
+    font-size:1.25rem;
+}
+.pricing-popular{
+    position:absolute;
+    top:1rem;
+    right:1rem;
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    color:#eafffb;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:999px;
+    padding:.42rem .65rem;
+    font-size:.78rem;
+    font-weight:800;
+}
+.price-big{
+    color:#fff;
+    font-size:2.25rem;
+    font-weight:800;
+    line-height:1.1;
+}
+.pricing-note{
+    color:#b7c8c6;
+    font-size:.95rem;
+}
+.pricing-card ul{
+    list-style:none;
+    padding-left:0;
+    line-height:1.55;
+    color:#e0ecea;
+}
+.pricing-card li{
+    display:flex;
+    gap:.55rem;
+    align-items:flex-start;
+    margin-bottom:.68rem;
+}
+.pricing-card li i{
+    color:#8df4e8;
+    margin-top:.22rem;
+}
+.pricing-card .btn-main{
+    border-radius:8px;
+    color:#061615 !important;
+    background:linear-gradient(135deg,#8df4e8,#26a69a);
+    box-shadow:0 16px 34px rgba(38,166,154,.30);
+}
+.pricing-footnote{
+    color:#b7c8c6;
+}
+
+/* BUSINESS PLAN MODEL */
+.plan-model-grid{
+    display:grid;
+    grid-template-columns:repeat(5, minmax(0,1fr));
+    gap:1rem;
+}
+.plan-model-card{
+    position:relative;
+    min-height:248px;
+    padding:1.15rem;
+    border-radius:8px;
+    background:#fff;
+    border:1px solid rgba(15,23,42,.08);
+    box-shadow:0 18px 42px rgba(15,23,42,.06);
+    overflow:hidden;
+}
+.plan-model-card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:radial-gradient(260px 160px at 90% 0%, rgba(38,166,154,.12), transparent 64%);
+    pointer-events:none;
+}
+.plan-step-number{
+    position:relative;
+    width:42px;
+    height:42px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#061615;
+    background:linear-gradient(135deg,#8df4e8,#26a69a);
+    font-weight:900;
+    box-shadow:0 14px 28px rgba(38,166,154,.20);
+    margin-bottom:1.05rem;
+}
+.plan-model-card h3{
+    position:relative;
+    font-size:1.08rem;
+    font-weight:850;
+    color:#081312;
+    margin-bottom:.7rem;
+}
+.plan-model-card p{
+    position:relative;
+    color:#5b6778;
+    line-height:1.58;
+    margin:0;
+}
+.inside-proof{
+    position:relative;
+    margin:3rem auto 0;
+    max-width:1120px;
+    overflow:hidden;
+    border-radius:24px;
+    background:
+        radial-gradient(760px 260px at 85% 0%, rgba(68,224,208,.18), transparent 60%),
+        linear-gradient(135deg,#071312 0%,#0c2d2a 58%,#0f172a 100%);
+    border:1px solid rgba(141,244,232,.18);
+    box-shadow:0 34px 90px rgba(8,19,18,.32);
+}
+.inside-proof-copy{
+    display:grid;
+    grid-template-columns:minmax(0,1.1fr) auto;
+    gap:1.25rem;
+    align-items:center;
+    padding:1.35rem 1.5rem;
+    color:#fff;
+}
+.inside-proof-copy h3{
+    color:#fff;
+    font-size:clamp(1.35rem,2.5vw,2rem);
+    font-weight:900;
+    margin:0 0 .4rem;
+}
+.inside-proof-copy p{
+    color:#d8e8e6;
+    line-height:1.62;
+    margin:0;
+}
+.inside-proof-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    padding:.7rem .9rem;
+    border-radius:999px;
+    color:#061615;
+    background:#8df4e8;
+    border:0;
+    font-weight:900;
+    white-space:nowrap;
+    cursor:pointer;
+    box-shadow:0 14px 32px rgba(68,224,208,.18);
+    transition:transform .18s ease, box-shadow .18s ease;
+}
+.inside-proof-pill:hover,
+.inside-proof-pill:focus{
+    transform:translateY(-2px);
+    box-shadow:0 18px 40px rgba(68,224,208,.28);
+    outline:0;
+}
+.inside-proof img{
+    display:block;
+    width:100%;
+    height:auto;
+    background:#f3f7fb;
+}
+.workspace-preview-modal{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:1.25rem;
+    background:rgba(2,10,18,.76);
+    backdrop-filter:blur(10px);
+}
+.workspace-preview-modal.is-open{
+    display:flex;
+}
+.workspace-preview-shell{
+    width:min(1120px,96vw);
+    max-height:92vh;
+    overflow:hidden;
+    border-radius:28px;
+    background:#071312;
+    border:1px solid rgba(141,244,232,.22);
+    box-shadow:0 34px 90px rgba(0,0,0,.38);
+    display:flex;
+    flex-direction:column;
+}
+.workspace-preview-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    padding:1rem 1.1rem;
+    color:#fff;
+}
+.workspace-preview-head h3{
+    color:#fff;
+    font-size:1.1rem;
+    font-weight:900;
+    margin:0;
+}
+.workspace-preview-close,
+.workspace-preview-nav{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:42px;
+    height:42px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.18);
+    color:#fff;
+    background:rgba(255,255,255,.08);
+}
+.workspace-preview-stage{
+    position:relative;
+    background:#f3f7fb;
+    flex:1 1 auto;
+    min-height:0;
+    max-height:calc(92vh - 142px);
+    overflow:auto;
+}
+.workspace-preview-slide{
+    display:none;
+}
+.workspace-preview-slide.is-active{
+    display:block;
+}
+.workspace-preview-slide img{
+    display:block;
+    width:100%;
+    max-height:calc(92vh - 142px);
+    height:auto;
+    object-fit:contain;
+}
+.workspace-preview-controls{
+    flex:0 0 auto;
+    display:flex;
+    justify-content:center;
+    gap:.7rem;
+    padding:1rem;
+    background:#071312;
+}
+.workspace-preview-nav{
+    width:auto;
+    padding:0 1rem;
+    font-weight:850;
+}
+@media (max-width: 768px){
+    body,
+    html,
+    .hero-video,
+    .hero-content,
+    .section,
+    .container{
+        max-width:100%;
+        overflow-x:hidden;
+    }
+
+    .hero-content{
+        padding-left:1rem;
+        padding-right:1rem;
+    }
+
+    .hero-video h1{
+        font-size:clamp(2.15rem, 14vw, 4.25rem);
+    }
+
+    .hero-title-tail{
+        font-size:clamp(1.25rem, 7.5vw, 2rem);
+    }
+
+    .hero-chip-row,
+    .hero-cta-row{
+        width:100%;
+        max-width:100%;
+    }
+
+    .hero-chip,
+    .hero-cta-row .btn{
+        max-width:100%;
+        white-space:normal;
+        text-align:center;
+    }
+
+    .inside-proof-copy{
+        grid-template-columns:1fr;
+    }
+    .workspace-preview-shell,
+    .workspace-preview-stage,
+    .workspace-preview-slide img{
+        max-height:none;
+    }
+    .workspace-preview-stage{
+        overflow:auto;
+    }
+}
+
+/* MODULE ACTIVATION PATH */
+.module-path-section{
+    position:relative;
+    overflow:hidden;
+    background:
+        radial-gradient(900px 420px at 86% 8%, rgba(38,166,154,.16), transparent 62%),
+        linear-gradient(180deg,#f7fbfb 0%,#eef6f5 100%);
+}
+.module-path-shell{
+    max-width:1180px;
+    margin:auto;
+    padding:2rem;
+    border-radius:8px;
+    background:
+        radial-gradient(900px 430px at 88% 0%, rgba(38,166,154,.22), transparent 62%),
+        linear-gradient(135deg,#07100f 0%,#0c1716 58%,#101a1a 100%);
+    color:#fff;
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 34px 90px rgba(8,19,18,.24);
+}
+.module-path-shell .venue-title{
+    color:#fff;
+}
+.module-path-shell .section-subtitle{
+    color:#c8d8d6;
+}
+.module-path-map{
+    display:grid;
+    gap:1rem;
+    margin-top:2rem;
+}
+.module-path-row{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    gap:1rem;
+    align-items:stretch;
+}
+.module-node{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    gap:.8rem;
+    min-height:210px;
+    padding:1.2rem;
+    border-radius:8px;
+    color:#fff;
+    text-align:left;
+    border:1px solid rgba(255,255,255,.14);
+    background:linear-gradient(180deg, rgba(255,255,255,.105), rgba(255,255,255,.045));
+    box-shadow:0 22px 54px rgba(0,0,0,.24);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+}
+.module-node.is-foundation{
+    max-width:560px;
+    margin:0 auto;
+    min-height:0;
+    background:linear-gradient(135deg, rgba(101,139,255,.18), rgba(255,255,255,.06));
+    border-color:rgba(143,170,255,.38);
+}
+.module-node.is-core{
+    min-height:250px;
+    border-color:rgba(141,244,232,.35);
+}
+.module-node.is-service{
+    border-color:rgba(255,84,185,.36);
+    background:
+        radial-gradient(360px 170px at 90% 0%, rgba(255,84,185,.20), transparent 64%),
+        linear-gradient(180deg, rgba(255,255,255,.105), rgba(255,255,255,.045));
+}
+.module-node.is-coming-soon{
+    background:#f1f3f4 !important;
+    border-color:#d7dce1 !important;
+    box-shadow:none !important;
+    filter:grayscale(.35);
+    opacity:1;
+    color:#111827 !important;
+}
+.module-node.is-coming-soon h3,
+.module-node.is-coming-soon p,
+.module-node.is-coming-soon .module-price{
+    color:#111827 !important;
+}
+.module-node.is-coming-soon .module-node-badge,
+.coming-soon-line span{
+    background:#ffffff;
+    color:#111827;
+    border:1px solid #cfd6dd;
+}
+.coming-soon-line{
+    opacity:1;
+    color:#111827;
+}.module-node.is-store{
+    border-color:rgba(86,217,112,.40);
+    background:
+        radial-gradient(360px 170px at 90% 0%, rgba(86,217,112,.20), transparent 64%),
+        linear-gradient(180deg, rgba(255,255,255,.105), rgba(255,255,255,.045));
+}
+.module-node.is-public{
+    max-width:760px;
+    margin:0 auto;
+    min-height:0;
+    background:linear-gradient(135deg, rgba(38,166,154,.20), rgba(255,255,255,.06));
+    border-color:rgba(141,244,232,.30);
+}
+.module-node.is-addon{
+    min-height:190px;
+}
+.module-node.is-addon:nth-child(1){
+    border-color:rgba(143,170,255,.32);
+}
+.module-node.is-addon:nth-child(2){
+    border-color:rgba(255,84,185,.34);
+}
+.module-node.is-addon:nth-child(3){
+    border-color:rgba(86,217,112,.34);
+}
+.module-node.is-addon:nth-child(4){
+    border-color:rgba(217,226,236,.34);
+}
+.module-node.is-marketplace{
+    border-color:rgba(236,72,153,.48);
+    background:
+        radial-gradient(280px 160px at 90% 0%, rgba(236,72,153,.20), transparent 62%),
+        linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.035));
+}
+.module-price{
+    display:inline-flex;
+    width:max-content;
+    align-items:center;
+    gap:.4rem;
+    margin-top:auto;
+    color:#f7fffd;
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.16);
+    border-radius:999px;
+    padding:.42rem .65rem;
+    font-weight:850;
+    font-size:.88rem;
+}
+.module-node-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:.8rem;
+}
+.module-node-icon{
+    width:48px;
+    height:48px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#061615;
+    background:linear-gradient(135deg,#8df4e8,#26a69a);
+    box-shadow:0 16px 34px rgba(38,166,154,.25);
+}
+.module-node-badge{
+    color:#dffbf7;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.16);
+    border-radius:999px;
+    padding:.38rem .62rem;
+    font-size:.72rem;
+    font-weight:850;
+    text-transform:uppercase;
+}
+.module-node h3{
+    color:#fff;
+    font-weight:850;
+    font-size:1.34rem;
+    margin:0;
+}
+.module-node p{
+    color:#d8e8e6;
+    line-height:1.58;
+    margin:0;
+}
+.module-node .popup-btn{
+    width:max-content;
+    margin-top:auto;
+    border-radius:8px;
+    padding:.72rem 1rem;
+}
+.module-connector{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#8df4e8;
+    min-width:72px;
+}
+.module-connector::before{
+    content:"";
+    width:54px;
+    height:2px;
+    background:linear-gradient(90deg, transparent, rgba(141,244,232,.65), transparent);
+}
+.module-addon-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:1rem;
+}
+.module-modal-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.65rem;
+    margin-top:1rem;
+}
+.module-modal-actions .btn{
+    border-radius:8px;
+}
+.module-modal-disabled{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:46px;
+    padding:.75rem 1.1rem;
+    border-radius:8px;
+    border:1px solid #cbd5e1;
+    background:#f1f5f9;
+    color:#475569;
+    font-weight:800;
+    cursor:not-allowed;
+    box-shadow:none;
+}
+
+/* PARALLAX / AI */
+.ai-hero{
+    position:relative;
+    min-height:72vh;
+    background:
+      linear-gradient(135deg, rgba(8,19,18,.88), rgba(13,25,24,.84)),
+      linear-gradient(135deg, rgba(8,19,18,.92), rgba(8,117,104,.74)) no-repeat center center fixed;
+    background-size:cover;
+    color:#fff;
+    text-align:center;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+.ai-box{
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:20px;
+    padding:1.2rem;
+    height:100%;
+}
+.ai-box i{
+    color:#63e7d9;
+    font-size:1.5rem;
+    margin-bottom:.75rem;
+}
+.ai-box p{
+    color:#dbe7e7;
+    margin:0;
+    line-height:1.65;
+}
+
+/* TESTIMONIALS */
+.testimonial-card{
+    background:#fff;
+    border:none;
+    border-radius:18px;
+    box-shadow:0 12px 34px rgba(15,23,42,.06);
+}
+.testimonial-card .card-body{
+    padding:1.7rem;
+}
+.testimonial-card p{
+    color:#374151;
+    line-height:1.7;
+}
+
+/* FINAL CTA */
+.final-cta{
+    background:linear-gradient(135deg, #0d1918, #091514);
+    color:#fff;
+    border-radius:24px;
+    padding:3rem 1.5rem;
+    box-shadow:0 20px 50px rgba(0,0,0,.15);
+}
+.final-cta p{
+    max-width:820px;
+    margin:0 auto 1.6rem;
+    color:#d6e3e3;
+    font-size:1.08rem;
+    line-height:1.75;
+}
+
+/* MODALS */
+.modal{
+    display:none;
+    position:fixed;
+    z-index:9999;
+    top:0; left:0; width:100%; height:100%;
+    background:rgba(0,0,0,0.62);
+}
+.modal-content{
+    background:#fff;
+    padding:2rem;
+    border-radius:18px;
+    max-width:560px;
+    margin:8vh auto;
+    position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.20);
+}
+.modal-content h3{
+    font-weight:800;
+    margin-bottom:.8rem;
+}
+.modal-content p, .modal-content li{
+    color:#4b5563;
+    line-height:1.8;
+}
+.close-modal{
+    position:absolute;
+    top:12px;
+    right:16px;
+    cursor:pointer;
+    font-size:1.3rem;
+}
+
+/* SIGNUP PITCH MODAL */
+#signupPitchModal{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:10000;
+    background:rgba(0,0,0,.7);
+    backdrop-filter:blur(3px);
+}
+#signupPitchModal .spm-dialog{
+    width:min(560px,92vw);
+    margin:8vh auto;
+    border-radius:20px;
+    overflow:hidden;
+    background:#0d1918;
+    color:#eaf5f3;
+    box-shadow:0 30px 120px rgba(0,0,0,.45);
+    position:relative;
+}
+.spm-top{
+    padding:24px 22px 16px;
+    background: radial-gradient(1200px 420px at -20% -10%, #1b3b36 0%, #0d1918 60%);
+    border-bottom:1px solid rgba(255,255,255,.06);
+}
+.spm-eyebrow{
+    font-size:.9rem;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:#88e0d1;
+    font-weight:800;
+}
+.spm-title{
+    margin:.3rem 0 0;
+    font-weight:900;
+    line-height:1.1;
+    font-size: clamp(1.8rem, 4.6vw, 2.6rem);
+    color:#ffffff;
+    text-shadow:0 2px 14px rgba(0,0,0,.35);
+}
+.spm-sub{
+    margin:.4rem 0 0;
+    opacity:.9;
+    font-size:1.05rem;
+}
+.spm-body{
+    padding:18px 22px 6px;
+}
+.spm-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.5rem;
+    margin:.25rem 0 .75rem;
+}
+.spm-chip{
+    background:#112422;
+    color:#c7f3eb;
+    border:1px solid rgba(120,255,230,.25);
+    padding:.45rem .7rem;
+    border-radius:999px;
+    font-weight:800;
+    font-size:.95rem;
+}
+.spm-list{
+    display:grid;
+    gap:.55rem;
+    margin:.2rem 0 .6rem;
+}
+.spm-list .rowy{
+    display:flex;
+    align-items:center;
+    gap:.6rem;
+}
+.spm-ic{
+    width:26px;
+    height:26px;
+    border-radius:7px;
+    background:#1a3a35;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.95rem;
+}
+.spm-txt{
+    font-size:1.02rem;
+}
+.spm-social{
+    display:flex;
+    align-items:center;
+    gap:.4rem;
+    font-size:.95rem;
+    opacity:.9;
+}
+.spm-dot{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#26a69a;
+    display:inline-block;
+    margin:0 .25rem;
+}
+.spm-actions{
+    padding:12px 22px 22px;
+    display:flex;
+    gap:.6rem;
+    flex-wrap:wrap;
+    align-items:center;
+}
+.spm-cta{
+    flex:0 0 auto;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:.55rem;
+    background:linear-gradient(135deg,#26a69a,#19b9a8);
+    color:#041312 !important;
+    font-weight:900;
+    border:none;
+    border-radius:14px;
+    padding:.9rem 1.2rem;
+    text-decoration:none;
+    letter-spacing:.2px;
+    box-shadow:0 12px 28px rgba(38,166,154,.45);
+    transition:transform .08s ease;
+    cursor:pointer;
+}
+.spm-cta:hover{
+    transform:translateY(-1px);
+}
+.spm-ghost{
+    flex:0 0 auto;
+    background:transparent;
+    color:#cfeee9;
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:12px;
+    padding:.9rem 1rem;
+    font-weight:700;
+}
+.spm-close{
+    position:absolute;
+    top:10px;
+    right:12px;
+    border:none;
+    background:transparent;
+    color:#cfeee9;
+    font-size:1.35rem;
+    cursor:pointer;
+    opacity:.9;
+}
+
+.public-currency-switcher{
+    position:fixed;
+    top:1rem;
+    left:1rem;
+    z-index:1054;
+    font-family:Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.public-currency-form{
+    display:flex;
+    align-items:center;
+    gap:.45rem;
+    min-height:2.6rem;
+    padding:.42rem .5rem .42rem .75rem;
+    border:1px solid rgba(255,255,255,.22);
+    border-radius:999px;
+    background:rgba(8,19,18,.82);
+    color:#fff;
+    box-shadow:0 14px 34px rgba(0,0,0,.22);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+}
+.public-currency-form i{
+    color:#8df4e8;
+}
+.public-currency-select{
+    min-width:5.5rem;
+    border:0;
+    border-radius:999px;
+    background:rgba(255,255,255,.12);
+    color:#fff;
+    font-weight:850;
+    padding:.42rem .7rem;
+    outline:0;
+}
+.public-currency-select option{
+    color:#0f172a;
+}
+.public-currency-note{
+    position:absolute;
+    top:calc(100% + .45rem);
+    left:0;
+    min-width:13rem;
+    padding:.55rem .7rem;
+    border-radius:12px;
+    background:rgba(8,19,18,.92);
+    color:#d7e6e4;
+    font-size:.75rem;
+    font-weight:700;
+    box-shadow:0 14px 34px rgba(0,0,0,.2);
+    display:none;
+}
+.public-currency-switcher:hover .public-currency-note{
+    display:block;
+}
+
+/* MOBILE */
+@media (max-width: 991px){
+    .compare-row{
+        font-size:.95rem;
+    }
+    .plan-model-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+    .module-path-row,
+    .module-addon-grid{
+        grid-template-columns:1fr;
+    }
+    .module-connector{
+        min-height:34px;
+    }
+    .module-connector::before{
+        width:2px;
+        height:28px;
+        background:linear-gradient(180deg, transparent, rgba(141,244,232,.65), transparent);
+    }
+    .tool-sprawl-header,
+    .tool-flow-grid{
+        grid-template-columns:1fr;
+    }
+    .tool-bridge{
+        min-width:0;
+        flex-direction:row;
+        justify-content:center;
+    }
+    .tool-bridge-line{
+        width:80px;
+        height:2px;
+        min-height:0;
+        flex:0 1 80px;
+        background:linear-gradient(90deg, transparent, rgba(38,166,154,.45), transparent);
+    }
+    .funnel-link-card{
+        min-height:320px;
+    }
+    .pricing-wrap{
+        padding:1.35rem;
+    }
+}
+
+@media (max-width: 768px){
+    html,
+    body{
+        width:100%;
+        max-width:100vw;
+        min-width:0;
+        overflow-x:hidden;
+    }
+    @supports (overflow-x: clip){
+        html,
+        body{
+            overflow-x:clip;
+        }
+    }
+    .public-currency-switcher{
+        top:.75rem;
+        left:.75rem;
+        max-width:calc(50vw - .9rem);
+    }
+    .public-currency-form{
+        min-height:2.35rem;
+        padding:.32rem .42rem .32rem .58rem;
+        max-width:100%;
+    }
+    .public-currency-select{
+        min-width:4.75rem;
+        max-width:100%;
+        padding:.36rem .5rem;
+        font-size:.85rem;
+    }
+    .public-currency-note{
+        display:none !important;
+    }
+    .section{
+        padding:4rem 1rem;
+        width:100%;
+        max-width:100vw;
+        overflow-x:hidden;
+    }
+    .hero-video{
+        min-height:auto;
+        padding-top:6.5rem;
+        padding-bottom:5rem;
+        align-items:flex-start;
+        width:100%;
+        max-width:100vw;
+        overflow:hidden;
+        background-position:center top;
+    }
+    .hero-content{
+        width:100%;
+        max-width:100vw;
+        padding:.5rem 1rem 2rem;
+        overflow:hidden;
+    }
+    .hero-video h1{
+        font-size:2.35rem;
+        line-height:1.08;
+        width:100%;
+        max-width:calc(100vw - 2rem);
+        margin-left:auto;
+        margin-right:auto;
+    }
+    .hero-lead{
+        font-size:1.03rem;
+        max-width:calc(100vw - 2rem);
+    }
+    .venue-title{
+        font-size:1.85rem;
+    }
+    .tool-sprawl-shell{
+        padding:1.1rem;
+    }
+    .tool-sprawl-title{
+        font-size:2rem;
+    }
+    .tool-cloud{
+        min-height:310px;
+    }
+    .inside-proof,
+    .module-path-section,
+    .funnel-section,
+    .pricing-section,
+    .affiliate-section,
+    .workspace-preview-modal,
+    .workspace-preview-shell,
+    .workspace-preview-stage,
+    .workspace-preview-slide,
+    .workspace-preview-slide img{
+        max-width:100vw;
+        overflow-x:hidden;
+    }
+    img,
+    video,
+    svg{
+        max-width:100%;
+    }
+    .tool-flow-panel{
+        padding:1rem;
+    }
+    .funnel-link-card{
+        min-height:360px;
+    }
+    .funnel-card-copy{
+        margin-top:5.4rem;
+    }
+    .funnel-link-card h3{
+        font-size:1.22rem;
+    }
+    .funnel-link-card p{
+        font-size:.96rem;
+    }
+    .funnel-chip{
+        font-size:.74rem;
+    }
+    .pricing-wrap{
+        padding:1rem;
+    }
+    .pricing-card .card-body{
+        padding:1.2rem;
+    }
+    .pricing-popular{
+        position:static;
+        width:max-content;
+        margin-bottom:.75rem;
+    }
+    .plan-model-grid{
+        grid-template-columns:1fr;
+    }
+    .plan-model-card{
+        min-height:0;
+    }
+    .module-path-shell{
+        padding:1rem;
+    }
+    .module-node{
+        min-height:0;
+    }
+    .compare-wrap{
+        padding:1.2rem .85rem;
+    }
+    .compare-grid{
+        overflow:auto;
+    }
+    .compare-row{
+        min-width:720px;
+    }
+    .modal-content{
+        margin:6vh 14px;
+        max-width:none;
+    }
+}
+
+@media (max-width:480px){
+    .spm-actions{
+        flex-direction:column;
+        align-items:stretch;
+    }
+    .spm-cta,
+    .spm-ghost{
+        width:100%;
+        justify-content:center;
+    }
+}
+
+.brand-highlight {
+    color: #0FAF9A;
+    font-weight: 700;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".popup-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            const modalId = button.getAttribute("data-modal");
+            if (modalId) document.getElementById(modalId).style.display = "block";
+        });
+    });
+
+    document.querySelectorAll(".close-modal").forEach(btn => {
+        btn.addEventListener("click", () => {
+            btn.closest(".modal").style.display = "none";
+        });
+    });
+
+    document.querySelectorAll(".modal").forEach(modal => {
+        modal.addEventListener("click", function(e){
+            if (e.target === modal) modal.style.display = "none";
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% block body %}
+<main>
+
+<div class="public-currency-switcher" aria-label="Public pricing currency">
+    <form class="public-currency-form" method="get" action="">
+        <i class="fa-solid fa-coins" aria-hidden="true"></i>
+        <select class="public-currency-select" name="currency" onchange="this.form.submit()" aria-label="Currency">
+            {% for currency in supportedCurrencies|default(['USD']) %}
+                <option value="{{ currency }}" {% if selectedCurrency|default('USD') == currency %}selected{% endif %}>{{ currency }}</option>
+            {% endfor %}
+        </select>
+    </form>
+    <div class="public-currency-note">
+        Prices are shown in {{ selectedCurrency|default('USD') }}{% if pricingCountryCode|default('') %} for {{ pricingCountryCode }}{% endif %}.
+    </div>
+</div>
+
+<section class="hero-video">
+    <div class="hero-content">
+        <img src="{{ asset_for('assets/images/planner-hub-logo-positive-300.png') }}" width="240" height="117" alt="Ophyra App Logo" fetchpriority="high" decoding="async">
+
+        <h1>
+            <span class="hero-title-main">{{ trans('public_home.hero_title_before') }}</span>
+            <span class="hero-title-tail">{{ trans('public_home.hero_title_after') }}</span>
+        </h1>
+
+        <p class="hero-lead">
+            {{ trans('public_home.hero_lead') }}
+        </p>
+
+        <div class="hero-chip-row">
+            <span class="hero-chip"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>{{ trans('public_home.no_credit_card_chip') }}</span>
+        </div>
+
+        <div class="hero-cta-row">
+            <a href="{{ path('signup') }}" class="btn btn-main">
+                {{ trans('public_home.see_how_it_works') }}
+            </a>
+
+            <a href="{{ path('login') }}" class="btn btn-outline-secondary">
+                {{ trans('public_home.login_cta') }}
+            </a>
+        </div>
+
+        <p class="hero-micro">
+            {{ trans('public_home.hero_micro') }}
+        </p>
+
+        <div class="row g-3 justify-content-center hero-points">
+            <div class="col-md-4 col-12">
+                <div class="hero-point-card">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <strong>{{ trans('public_home.operational_core') }}</strong>
+                    <span>{{ trans('public_home.operational_core_desc') }}</span>
+                </div>
+            </div>
+            <div class="col-md-4 col-12">
+                <div class="hero-point-card">
+                    <i class="fa-solid fa-robot"></i>
+                    <strong>{{ trans('public_home.less_disconnected_work') }}</strong>
+                    <span>{{ trans('public_home.less_disconnected_work_desc') }}</span>
+                </div>
+            </div>
+            <div class="col-md-4 col-12">
+                <div class="hero-point-card">
+                    <i class="fa-solid fa-truck-fast"></i>
+                    <strong>{{ trans('public_home.grow_by_modules') }}</strong>
+                    <span>{{ trans('public_home.grow_by_modules_desc') }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <video class="hero-video-bg" autoplay muted loop playsinline preload="none" poster="{{ asset_for('assets/images/banner-planner-hub.png') }}" aria-hidden="true">
+        <source src="{{ asset_for('assets/video/intro.mp4') }}" type="video/mp4">
+    </video>
+    <div class="hero-video-overlay"></div>
+</section>
+<!--
+<section class="section">
+    <div class="container">
+        <h2 class="venue-title text-center">
+            <span class="highlight">{{ trans('public_home.leak_money_title') }}</span>
+        </h2>
+        <p class="section-subtitle text-center">
+            {{ trans('public_home.leak_money_text') }}
+        </p>
+
+       <!-- <div class="row justify-content-center mt-4">
+            <div class="col-12 col-md-4 mb-4">
+                <div class="benefit-card">
+                    <img src="{{ asset_for('assets/images/icons_website/icon_1.png') }}" alt="Marketplace" class="mb-4" width="120" height="120" loading="lazy" decoding="async" style="height: 120px; width:auto;">
+                    <h3>Marketplace & Visibility</h3>
+                    <p>Create a stronger public presence, showcase your business, and help the right clients find you faster.</p>
+                    <a class="btn btn-main" href="{{ path('search/venue/main') }}">
+                        <i class="fa-solid fa-magnifying-glass me-2" aria-hidden="true"></i>Explore Listings
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4 mb-4">
+                <div class="benefit-card">
+                    <img src="{{ asset_for('assets/images/icons_website/icon_2.png') }}" alt="Experts" class="mb-4" width="120" height="120" loading="lazy" decoding="async" style="height: 120px; width:auto;">
+                    <h3>Find Services by Category</h3>
+                    <p>Browse service providers, collaborators and business categories organized for real-world operations.</p>
+                    <a class="btn btn-main" href="{{ path('search/vendors/main') }}">
+                        <i class="fa-solid fa-magnifying-glass me-2" aria-hidden="true"></i>Find an Expert
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4 mb-4">
+                <div class="benefit-card">
+                    <img src="{{ asset_for('assets/images/icons_website/icon_6.png') }}" alt="Resources" class="mb-4" width="120" height="120" loading="lazy" decoding="async" style="height: 120px; width:auto;">
+                    <h3>Community & Resources</h3>
+                    <p>Connect with other professionals, ideas, sessions and conversations that help you grow with less isolation.</p>
+                    <a class="btn btn-main" href="{{ path('forum') }}">
+                        <i class="fa-solid fa-comments me-2" aria-hidden="true"></i>Visit Community
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div> -->
+</section>
+
+
+
+  
+<section class="section dark-band">
+    <div class="container">
+        <h2 class="venue-title text-center">
+            {{ trans('public_home.core_section_title') }} <span class="highlight">{{ trans('public_home.core_section_highlight') }}</span>.
+        </h2>
+        <p class="section-subtitle text-center">
+            {{ trans('public_home.core_section_text') }}
+        </p>
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-4">
+                <div class="dark-feature-card">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <h3>{{ trans('public_home.crm_clients') }}</h3>
+                    <p>{{ trans('public_home.crm_clients_desc') }}</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="dark-feature-card">
+                    <i class="fa-solid fa-file-signature"></i>
+                    <h3>{{ trans('public_home.orders_contracts') }}</h3>
+                    <p>{{ trans('public_home.orders_contracts_desc') }}</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="dark-feature-card">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                    <h3>{{ trans('public_home.team_chat_payroll') }}</h3>
+                    <p>{{ trans('public_home.team_chat_payroll_desc') }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="{{ path('signup') }}" class="btn btn-main btn-lg">
+                {{ trans('public_home.build_operating_base') }}
+            </a>
+        </div>
+
+        <article class="inside-proof" aria-label="Ophyra dashboard preview">
+            <div class="inside-proof-copy">
+                <div>
+                    <h3>{{ trans('public_home.inside_proof_title') }}</h3>
+                </div>
+                <button class="inside-proof-pill" type="button" data-workspace-preview-open>
+                    <i class="fa-solid fa-chart-line"></i> {{ trans('public_home.inside_proof_cta') }}
+                </button>
+            </div>
+            <img src="{{ asset_for('assets/public/ophyra/screens/dashboard-view.png') }}" alt="Ophyra business command center dashboard with active workspaces and business activity" loading="lazy" decoding="async" width="1500" height="860">
+        </article>
+
+        <div class="workspace-preview-modal" data-workspace-preview-modal aria-hidden="true">
+            <div class="workspace-preview-shell" role="dialog" aria-modal="true" aria-label="{{ trans('public_home.inside_proof_modal_title') }}">
+                <div class="workspace-preview-head">
+                    <h3>{{ trans('public_home.inside_proof_modal_title') }}</h3>
+                    <button class="workspace-preview-close" type="button" data-workspace-preview-close aria-label="{{ trans('public_home.inside_proof_modal_close') }}">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="workspace-preview-stage">
+                    {% for previewImage in [
+                        'dashboard-view.png',
+                        'dashboard-view-2.png',
+                        'dashboard-view-3.png',
+                        'dashboard-view-4.png',
+                        'dashboard-view-5.png',
+                        'dashboard-view-6.png'
+                    ] %}
+                        <figure class="workspace-preview-slide {{ loop.first ? 'is-active' : '' }}" data-workspace-preview-slide>
+                            <img src="{{ asset_for('assets/public/ophyra/screens/' ~ previewImage) }}" alt="Ophyra dashboard workspace preview {{ loop.index }}" loading="lazy" decoding="async" width="1500" height="860">
+                        </figure>
+                    {% endfor %}
+                </div>
+                <div class="workspace-preview-controls">
+                    <button class="workspace-preview-nav" type="button" data-workspace-preview-prev>
+                        <i class="fa-solid fa-arrow-left"></i> {{ trans('public_home.inside_proof_modal_prev') }}
+                    </button>
+                    <button class="workspace-preview-nav" type="button" data-workspace-preview-next>
+                        {{ trans('public_home.inside_proof_modal_next') }} <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section> 
+ 
+<section class="section">
+    <div class="container">
+        <h2 class="venue-title text-center">
+            {{ trans('public_home.add_modules_title') }} <span class="highlight">{{ trans('public_home.add_modules_highlight') }}</span>.
+        </h2>
+        <p class="section-subtitle text-center">
+            {{ trans('public_home.add_modules_text') }}
+        </p>
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-4">
+                <div class="benefit-card text-start">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    <h3>{{ trans('public_home.start_clean') }}</h3>
+                    <p>{{ trans('public_home.start_clean_desc') }}</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="benefit-card text-start">
+                    <i class="fa-solid fa-coins"></i>
+                    <h3>{{ trans('public_home.activate_by_need') }}</h3>
+                    <p>{{ trans('public_home.activate_by_need_desc') }}</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="benefit-card text-start">
+                    <i class="fa-solid fa-route"></i>
+                    <h3>{{ trans('public_home.billing_rhythm') }}</h3>
+                    <p>{{ trans('public_home.billing_rhythm_desc') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-alt" id="ophyra-modules">
+    <div class="container">
+        <h2 class="venue-title text-center">
+            {{ trans('public_home.plan_model_title') }} <span class="highlight">{{ trans('public_home.plan_model_highlight') }}</span>.
+        </h2>
+        <p class="section-subtitle text-center">
+            {{ trans('public_home.plan_model_text') }}
+        </p>
+
+        <div class="plan-model-grid">
+            <div class="plan-model-card">
+                <div class="plan-step-number">1</div>
+                <h3>{{ trans('public_home.step_base_title') }}</h3>
+                <p>{{ trans('public_home.step_base_text') }}</p>
+            </div>
+            <div class="plan-model-card">
+                <div class="plan-step-number">2</div>
+                <h3>{{ trans('public_home.step_core_title') }}</h3>
+                <p>{{ trans('public_home.step_core_text') }}</p>
+            </div>
+            <div class="plan-model-card">
+                <div class="plan-step-number">3</div>
+                <h3>{{ trans('public_home.step_combine_title') }}</h3>
+                <p>{{ trans('public_home.step_combine_text') }}</p>
+            </div>
+            <div class="plan-model-card">
+                <div class="plan-step-number">4</div>
+                <h3>{{ trans('public_home.step_add_title') }}</h3>
+                <p>{{ trans('public_home.step_add_text') }}</p>
+            </div>
+            <div class="plan-model-card">
+                <div class="plan-step-number">5</div>
+                <h3>{{ trans('public_home.step_public_title') }}</h3>
+                <p>{{ trans('public_home.step_public_text') }}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="ophyra-industries">
+    <div class="container">
+        {% set industryCardMeta = {
+            'project-based-businesses': {
+                'icon': 'fa-calendar-check',
+                'chips': ['Projects', 'Clients', 'Execution']
+            },
+            'service-businesses': {
+                'icon': 'fa-screwdriver-wrench',
+                'chips': ['Jobs', 'Customers', 'Follow-through']
+            },
+            'retail-online-stores': {
+                'icon': 'fa-store',
+                'chips': ['Products', 'Orders', 'Fulfillment']
+            },
+            'logistics-delivery': {
+                'icon': 'fa-route',
+                'chips': ['Fulfillment', 'Inventory', 'Delivery']
+            },
+            'consultants-agencies': {
+                'icon': 'fa-briefcase',
+                'chips': ['Accounts', 'Delivery', 'Team']
+            },
+            'venues-hospitality': {
+                'icon': 'fa-building-user',
+                'chips': ['Venue', 'Staff', 'Inventory']
+            }
+        } %}
+        <h2 class="venue-title text-center">
+            {{ trans('public_home.business_type_title') }} <span class="highlight">{{ trans('public_home.business_type_highlight') }}</span>
+        </h2>
+        <p class="section-subtitle text-center">
+            {{ trans('public_home.business_type_subtitle') }}
+        </p>
+
+        <div class="row g-4 funnel-grid">
+            {% for landing in industryLandingPages|default([]) %}
+                {% set meta = industryCardMeta[landing.slug]|default({'icon': 'fa-briefcase', 'chips': ['Clients', 'Orders', 'Team']}) %}
+                {% set chips = landing.card_chips|default(meta.chips) %}
+                <div class="col-lg-4 col-md-6">
+                    <a class="funnel-link-card" href="{{ path(landing.route) }}">
+                        <div class="funnel-card-media">
+                            <img src="{{ asset_for(landing.hero_image) }}" alt="{{ landing.hero_alt|default(landing.label) }}" width="420" height="280" loading="lazy" decoding="async">
+                        </div>
+                        <div class="funnel-card-body">
+                            <div class="funnel-card-top">
+                                <span class="funnel-icon"><i class="fa-solid {{ meta.icon }}"></i></span>
+                                <span class="funnel-badge"><i class="fa-solid fa-compass"></i> {{ trans('public_home.industry') }}</span>
+                            </div>
+                            <div class="funnel-card-copy">
+                                <h3>{{ landing.label }}</h3>
+                                <p>{{ landing.description }}</p>
+                                <div class="funnel-card-meta">
+                                    {% for chip in chips %}
+                                        <span class="funnel-chip"><i class="fa-solid fa-check"></i>{{ chip }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <strong class="funnel-cta">
+                                <span>{{ trans('public_home.see_how_it_fits') }}</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </strong>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section module-path-section" id="module-path">
+    <div class="container">
+        <div class="module-path-shell">
+            <h2 class="venue-title text-center">
+                {{ trans('public_home.module_path_title') }} <span class="highlight">{{ trans('public_home.module_path_highlight') }}</span>
+            </h2>
+            <p class="section-subtitle text-center">
+                {{ trans('public_home.module_path_subtitle') }}
+            </p>
+
+            <div class="module-path-map">
+                <button class="module-node is-foundation popup-btn" type="button" data-modal="moduleBaseModal">
+                    <div class="module-node-top">
+                        <span class="module-node-icon"><i class="fa-solid fa-seedling"></i></span>
+                        <span class="module-node-badge">{{ trans('public_home.foundation') }}</span>
+                    </div>
+                    <h3>{{ trans('public_home.ophyra_base_profile') }}</h3>
+                    <p>{{ trans('public_home.ophyra_base_profile_desc') }}</p>
+                    <span class="module-price">{{ ophyraPricing.modules.base_profile.monthly_label }}</span>
+                </button>
+
+                <div class="module-path-row">
+                    <button class="module-node is-core is-service popup-btn" type="button" data-modal="serviceOperationsModal">
+                        <div class="module-node-top">
+                            <span class="module-node-icon"><i class="fa-solid fa-diagram-project"></i></span>
+                            <span class="module-node-badge">{{ trans('public_home.core_module') }}</span>
+                        </div>
+                        <h3>{{ trans('public_home.service_operations') }}</h3>
+                        <p>{{ trans('public_home.service_operations_desc') }}</p>
+                        <span class="module-price">{{ ophyraPricing.modules.service_operations.monthly_label }}</span>
+                    </button>
+
+                    <span class="module-connector" aria-hidden="true"></span>
+
+                    <button class="module-node is-core is-store is-coming-soon popup-btn" type="button" data-modal="storeLogisticsModal">
+                        <div class="module-node-top">
+                            <span class="module-node-icon"><i class="fa-solid fa-truck-fast"></i></span>
+                            <span class="module-node-badge">{{ trans('public_home.coming_soon') }}</span>
+                        </div>
+                        <h3>{{ trans('public_home.store_logistics') }}</h3>
+                        <p>{{ trans('public_home.store_logistics_desc') }}</p>
+                        <span class="module-price">{{ ophyraPricing.modules.store_logistics.monthly_label }}</span>
+                    </button>
+                </div>
+
+                <div class="module-addon-grid">
+                    <button class="module-node is-addon popup-btn" type="button" data-modal="inventoryModuleModal">
+                        <div class="module-node-top">
+                            <span class="module-node-icon"><i class="fa-solid fa-boxes-stacked"></i></span>
+                            <span class="module-node-badge">{{ trans('public_home.add_on') }}</span>
+                        </div>
+                        <h3>{{ trans('public_home.advanced_storage') }}</h3>
+                        <p>{{ trans('public_home.advanced_storage_desc') }}</p>
+                        <span class="module-price">+{{ ophyraPricing.modules.advanced_storage_qr_inventory.monthly_label }}</span>
+                    </button>
+                    <button class="module-node is-addon popup-btn" type="button" data-modal="aiAdvisorModal">
+                        <div class="module-node-top">
+                            <span class="module-node-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                            <span class="module-node-badge">{{ trans('public_home.add_on') }}</span>
+                        </div>
+                        <h3>{{ trans('public_home.ai_advisor') }}</h3>
+                        <p>{{ trans('public_home.ai_advisor_desc') }}</p>
+                        <span class="module-price">+{{ ophyraPricing.modules.ai_advisor.monthly_label }}</span>
+                    </button>
+                    <button class="module-node is-addon popup-btn" type="button" data-modal="ticketingModuleModal">
+                        <div class="module-node-top">
+                            <span class="module-node-icon"><i class="fa-solid fa-ticket"></i></span>
+                            <span class="module-node-badge">{{ trans('public_home.add_on') }}</span>
+                        </div>
+                        <h3>{{ trans('public_home.ticket_sales_rsvp') }}</h3>
+                        <p>{{ trans('public_home.ticket_sales_rsvp_desc') }}</p>
+                        <span class="module-price">+{{ ophyraPricing.modules.ticket_sales_rsvp.monthly_label }}</span>
+                    </button>
+                    <button class="module-node is-addon is-marketplace is-coming-soon popup-btn" type="button" data-modal="marketplaceConnectorsModal">
+                        <div class="module-node-top">
+                            <span class="module-node-icon"><i class="fa-solid fa-plug-circle-bolt"></i></span>
+                            <span class="module-node-badge">{{ trans('public_home.coming_soon') }}</span>
+                        </div>
+                        <h3>{{ trans('public_home.marketplace_connectors') }}</h3>
+                        <p>{{ trans('public_home.marketplace_connectors_desc') }}</p>
+                        <span class="module-price">{{ trans('public_home.coming_soon') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% set moduleModals = [
+    {
+        id: 'moduleBaseModal',
+        title: trans('public_home.ophyra_base_profile'),
+        badge: trans('public_home.foundation'),
+        price: ophyraPricing.modules.base_profile.monthly_label,
+        description: trans('public_home.ophyra_base_profile_desc'),
+        features: ['Basic public business profile', 'Limited starter workspace', 'Default signup path for business accounts', 'Paid modules remain optional'],
+        cta: trans('public_home.start_free'),
+        route: 'signup',
+        related: null
+    },
+    {
+        id: 'serviceOperationsModal',
+        title: trans('public_home.service_operations'),
+        badge: trans('public_home.core_module'),
+        price: ophyraPricing.modules.service_operations.monthly_label,
+        description: trans('public_home.service_operations_desc'),
+        features: ['CRM, clients and service orders', 'Contracts and client portal workflows', 'Team, employee hours and payroll basics', 'Internal and client/admin communication', 'Reports included'],
+        cta: trans('public_home.build_operating_base'),
+        route: 'signup',
+        related: 'modules/orders-operations'
+    },
+    {
+        id: 'storeLogisticsModal',
+        title: trans('public_home.store_logistics'),
+        badge: trans('public_home.coming_soon'),
+        price: trans('public_home.coming_soon'),
+        description: trans('public_home.store_logistics_desc'),
+        features: ['Online store, products and customer orders', 'Fulfillment, delivery status and tracking', 'Basic inventory included when needed', 'Team, employee hours and payroll basics', 'Reports included'],
+        cta: trans('public_home.coming_soon'),
+        route: null,
+        related: 'modules/store-delivery-tracking'
+    },
+    {
+        id: 'inventoryModuleModal',
+        title: trans('public_home.advanced_storage'),
+        badge: trans('public_home.optional_addons'),
+        price: '+' ~ ophyraPricing.modules.advanced_storage_qr_inventory.monthly_label,
+        description: trans('public_home.advanced_storage_desc'),
+        features: ['Containers and physical items', 'QR labels and storage locations', 'Equipment and rental tracking', 'Advanced inventory operations'],
+        cta: trans('public_home.start_free'),
+        route: 'signup',
+        related: 'modules/inventory-storage'
+    },
+    {
+        id: 'aiAdvisorModal',
+        title: trans('public_home.ai_advisor'),
+        badge: trans('public_home.optional_addons'),
+        price: '+' ~ ophyraPricing.modules.ai_advisor.monthly_label,
+        description: trans('public_home.ai_advisor_desc'),
+        features: ['Operational summaries', 'Recommendation support', 'Content and idea generation', 'Decision guidance'],
+        cta: trans('public_home.start_free'),
+        route: 'signup',
+        related: null
+    },
+    {
+        id: 'ticketingModuleModal',
+        title: trans('public_home.ticket_sales_rsvp'),
+        badge: trans('public_home.optional_addons'),
+        price: '+' ~ ophyraPricing.modules.ticket_sales_rsvp.monthly_label ~ ', ' ~ trans('public_home.no_ticket_fee'),
+        description: trans('public_home.ticket_sales_rsvp_desc'),
+        features: ['Ticket sales and RSVP', 'Registration workflows', 'Attendance and event lists', 'No Ophyra ticket fee'],
+        cta: trans('public_home.start_free'),
+        route: 'signup',
+        related: null
+    },
+    {
+        id: 'marketplaceConnectorsModal',
+        title: trans('public_home.marketplace_connectors'),
+        badge: trans('public_home.coming_soon'),
+        price: trans('public_home.coming_soon'),
+        description: trans('public_home.marketplace_connectors_desc'),
+        features: ['Mercado Libre connector', 'TikTok Business / Shop connector', 'Shopify connector', 'Manual sync records', 'External status mapping'],
+        cta: trans('public_home.coming_soon'),
+        route: null,
+        related: 'modules/marketplace-connectors'
+    }
+] %}
+
+{% for module in moduleModals %}
+    <div class="modal" id="{{ module.id }}">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <span class="badge bg-success mb-3" style="width:max-content;">{{ module.badge }}</span>
+            <h3>{{ module.title }}</h3>
+            <p><strong>{{ module.price }}</strong></p>
+            <p>{{ module.description }}</p>
+            <h3>{{ trans('public_home.what_it_unlocks') }}</h3>
+            <ul>
+                {% for feature in module.features %}
+                    <li>{{ feature }}</li>
+                {% endfor %}
+            </ul>
+            <div class="module-modal-actions">
+                {% if module.route %}
+                    <a href="{{ path(module.route) }}" class="btn btn-main">{{ module.cta }}</a>
+                {% else %}
+                    <span class="module-modal-disabled" aria-disabled="true">{{ module.cta }}</span>
+                {% endif %}
+                {% if module.related %}
+                    <a href="{{ path(module.related) }}" class="btn btn-outline-dark">{{ trans('public_home.more_info') }}</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endfor %}
+<!--
+<div class="modal" id="modalTeam">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3>{{ trans('public_home.advanced_storage') }}</h3>
+        <p>{{ trans('public_home.advanced_storage_desc') }}</p>
+        <ul>
+            <li>{{ trans('public_home.advanced_storage_desc') }}</li>
+        </ul>
+        <h3>{{ trans('public_home.centralize_storage') }}</h3>
+        <a href="{{ path('signup') }}" class="btn btn-main mt-3">{{ trans('public_home.start_free') }}</a>
+    </div>
+</div>
+
+<div class="modal" id="modalClient">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3>{{ trans('public_home.store_logistics') }}</h3>
+        <p>{{ trans('public_home.store_logistics_desc') }}</p>
+        <ul>
+            <li>{{ trans('public_home.store_logistics_desc') }}</li>
+        </ul>
+        <h3>{{ trans('public_home.centralize_store') }}</h3>
+        <a href="{{ path('signup') }}" class="btn btn-main mt-3">{{ trans('public_home.start_free') }}</a>
+    </div>
+</div>
+
+<div class="modal" id="modalInventory">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3>{{ trans('public_home.ai_advisor') }} + {{ trans('public_home.ticket_sales_rsvp') }}</h3>
+        <p>{{ trans('public_home.ai_advisor_desc') }} {{ trans('public_home.ticket_sales_rsvp_desc') }}</p>
+        <ul>
+            <li>{{ trans('public_home.ai_advisor_desc') }}</li>
+            <li>{{ trans('public_home.ticket_sales_rsvp_desc') }}</li>
+        </ul>
+        <h3>{{ trans('public_home.centralize_ai') }}</h3>
+        <a href="{{ path('signup') }}" class="btn btn-main mt-3">{{ trans('public_home.learn_more') }}<span class="visually-hidden"> about AI Advisor</span></a>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div class="compare-wrap">
+            <h3 class="compare-title">{{ trans('public_home.built_for_move_title') }}</h3>
+            <p class="compare-sub">
+                {{ trans('public_home.built_for_move_text') }}
+            </p>
+
+            <div class="compare-grid">
+                <div class="compare-row compare-head">
+                    <div class="compare-cell label"></div>
+                    <div class="compare-cell">{{ trans('public_home.good_fit') }}</div>
+                    <div class="compare-cell">{{ trans('public_home.why_it_matters') }}</div>
+                </div>
+
+                <div class="compare-row">
+                    <div class="compare-cell label">{{ trans('public_home.service_businesses') }}</div>
+                    <div class="compare-cell ok"><i class="fa-solid fa-check" aria-hidden="true"></i><span class="visually-hidden">{{ trans('public_home.good_fit') }}</span></div>
+                    <div class="compare-cell meh">{{ trans('public_home.service_businesses_reason') }}</div>
+                </div>
+
+                <div class="compare-row">
+                    <div class="compare-cell label">{{ trans('public_home.local_stores') }}</div>
+                    <div class="compare-cell meh">{{ trans('public_home.coming_soon') }}</div>
+                    <div class="compare-cell meh">{{ trans('public_home.local_stores_reason') }}</div>
+                </div>
+
+                <div class="compare-row">
+                    <div class="compare-cell label">{{ trans('public_home.wholesale_distribution') }}</div>
+                    <div class="compare-cell meh">{{ trans('public_home.coming_soon') }}</div>
+                    <div class="compare-cell meh">{{ trans('public_home.wholesale_reason') }}</div>
+                </div>
+
+                <div class="compare-row">
+                    <div class="compare-cell label">{{ trans('public_home.shipping_delivery_operations') }}</div>
+                    <div class="compare-cell meh">{{ trans('public_home.coming_soon') }}</div>
+                    <div class="compare-cell meh">{{ trans('public_home.shipping_reason') }}</div>
+                </div>
+
+                <div class="compare-row">
+                    <div class="compare-cell label">{{ trans('public_home.event_operations') }}</div>
+                    <div class="compare-cell ok"><i class="fa-solid fa-check" aria-hidden="true"></i><span class="visually-hidden">{{ trans('public_home.good_fit') }}</span></div>
+                    <div class="compare-cell meh">{{ trans('public_home.event_reason') }}</div>
+                </div>
+
+                <div class="compare-row">
+                    <div class="compare-cell label">{{ trans('public_home.agencies_studios_product_teams') }}</div>
+                    <div class="compare-cell ok"><i class="fa-solid fa-check" aria-hidden="true"></i><span class="visually-hidden">{{ trans('public_home.good_fit') }}</span></div>
+                    <div class="compare-cell meh">{{ trans('public_home.agency_reason') }}</div>
+                </div>
+            </div>
+
+            <p class="mt-3 text-center" style="color:#cbd5e1; font-size:.92rem;">
+                If your business depends on people, orders, clients, stock, delivery, contracts or execution, Ophyra gives you a modular operating base instead of another disconnected app.
+            </p>
+        </div>
+    </div>
+</section>
+-->
+<section class="section text-center pricing-section" id="pricing">
+    <div class="container">
+        <div class="pricing-wrap">
+            <h2 class="venue-title text-center">
+                {{ trans('public_home.pricing_title') }} <span class="highlight">{{ trans('public_home.pricing_highlight') }}</span>
+            </h2>
+
+            <p class="section-subtitle" style="margin-bottom:2rem;">
+                {{ trans('public_home.pricing_subtitle') }}
+            </p>
+
+            <div class="row mt-4 justify-content-center">
+                <div class="col-md-4 mb-3">
+                    <div class="pricing-card h-100">
+                        <div class="card-body">
+                            <div class="pricing-orb"><i class="fa-solid fa-seedling"></i></div>
+                            <span class="badge bg-secondary mb-2">{{ trans('public_home.level_1') }}</span>
+                            <h3 class="mb-2">{{ trans('public_home.base_profile') }}</h3>
+                            <p class="mb-1 pricing-kicker">{{ trans('public_home.free_profile_workspace') }}</p>
+
+                            <div class="mt-3">
+                                <div class="price-big">
+                                    $0<span style="font-size:.95rem; font-weight:500;"> {{ trans('public_home.to_start') }}</span>
+                                </div>
+                            </div>
+
+                            <ul class="text-start mt-3">
+                                <li><i class="fa-solid fa-circle-check"></i><span>{{ trans('public_home.basic_public_profile') }}</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i><span>{{ trans('public_home.limited_workspace_clean') }}</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i><span>{{ trans('public_home.default_level2_signup') }}</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i><span>{{ trans('public_home.paid_modules_locked') }}</span></li>
+                            </ul>
+
+                            <a href="{{ path('signup') }}" class="btn btn-main mt-auto">
+                                {{ trans('public_home.start_free') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <div class="pricing-card featured h-100">
+                        <div class="card-body">
+                            <span class="pricing-popular"><i class="fa-solid fa-star"></i> {{ trans('public_home.main_choice') }}</span>
+                            <div class="pricing-orb"><i class="fa-solid fa-puzzle-piece"></i></div>
+                            <span class="badge bg-success mb-2">{{ trans('public_home.level_2') }}</span>
+                            <h3 class="mb-2">{{ trans('public_home.operating_cores') }}</h3>
+                            <p class="mb-1 pricing-kicker">{{ trans('public_home.choose_main_system') }}</p>
+
+                            <div class="mt-3">
+                                <div class="price-big">
+                                    {{ ophyraPricing.modules.service_operations.label }}<span style="font-size:.95rem; font-weight:500;">/{{ trans('dashboard_home.month') }}</span>
+                                </div>
+                                <p class="pricing-note mb-0">
+                                    {{ trans('public_home.activate_core_modules') }}
+                                </p>
+                            </div>
+
+                            <ul class="text-start mt-3">
+                                <li><i class="fa-solid fa-circle-check"></i><span>{{ trans('dashboard_home.service_operations') }}: {{ ophyraPricing.modules.service_operations.monthly_label }}</span></li>
+                                <li class="coming-soon-line"><i class="fa-solid fa-clock"></i><span>{{ trans('public_home.store_logistics') }}: {{ trans('public_home.coming_soon') }}</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i><span>{{ trans('public_home.reports_included') }}</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i><span>{{ trans('public_home.activate_both_cores') }}</span></li>
+                            </ul>
+
+                            <a href="{{ path('signup') }}" class="btn btn-main mt-auto">
+                                {{ trans('public_home.choose_your_core') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <div class="pricing-card h-100">
+                        <div class="card-body">
+                            <div class="pricing-orb"><i class="fa-solid fa-rotate"></i></div>
+                            <span class="badge bg-primary mb-2">{{ trans('public_home.level_3') }}</span>
+                            <h3 class="mb-2">{{ trans('public_home.optional_addons') }}</h3>
+                            <p class="mb-1 pricing-kicker">{{ trans('public_home.add_when_useful') }}</p>
+
+                            <div class="mt-3">
+                                <div class="price-big">
+                                    {{ trans('public_home.from') }} {{ ophyraPricing.modules.ai_advisor.label }}<span style="font-size:.95rem; font-weight:500;">/{{ trans('dashboard_home.month') }}</span>
+                                </div>
+                                <p class="pricing-note mb-0">
+                                    {{ trans('public_home.specialized_modules_monthly') }}
+                                </p>
+                            </div>
+
+                            <ul class="text-start mt-3">
+                                <li><i class="fa-solid fa-circle-check"></i><span>{{ trans('public_home.advanced_storage') }}: +{{ ophyraPricing.modules.advanced_storage_qr_inventory.monthly_label }}</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i><span>{{ trans('public_home.ai_advisor') }}: +{{ ophyraPricing.modules.ai_advisor.monthly_label }}</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i><span>{{ trans('public_home.ticket_sales_rsvp') }}: +{{ ophyraPricing.modules.ticket_sales_rsvp.monthly_label }}, {{ trans('public_home.no_ticket_fee') }}</span></li>
+                                <li><i class="fa-solid fa-circle-check"></i><span>{{ trans('public_home.marketplace_connectors') }}: +{{ ophyraPricing.modules.marketplace_connectors.monthly_label }}</span></li>
+                            </ul>
+
+                            <a href="{{ path('signup') }}" class="btn btn-main mt-auto">
+                                {{ trans('public_home.build_one_module') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="mt-3 pricing-footnote" style="font-size:.95rem;">
+                {{ trans('public_home.base_profile_stays_free') }}
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="section ai-hero">
+    <div class="container position-relative">
+        <h2 class="mb-3" style="font-size:clamp(2rem,4vw,3.2rem); font-weight:800; line-height:1.15;">
+            {{ trans('public_home.affiliate_title') }} <span style="color:#63e7d9;">{{ trans('public_home.affiliate_highlight') }}</span>.
+        </h2>
+
+        <p class="lead mb-4" style="color:#e5e7eb; max-width:760px; margin:0 auto;">
+            {{ trans('public_home.affiliate_text') }}
+        </p>
+
+        <div class="row justify-content-center mb-5">
+            <div class="col-md-3 col-10 mb-3">
+                <div class="ai-box">
+                    <i class="fa-solid fa-repeat"></i>
+                    <p>{{ trans('public_home.refer_operators') }}</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-10 mb-3">
+                <div class="ai-box">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <p>{{ trans('public_home.tracked_links') }}</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-10 mb-3">
+                <div class="ai-box">
+                    <i class="fa-solid fa-handshake"></i>
+                    <p>{{ trans('public_home.commission_admin') }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <span class="badge rounded-pill" style="font-size:1rem; background:#26a69a; color:#0b1f1e; padding:.6rem 1rem; font-weight:700; margin-right:.4rem;">
+                {{ trans('public_home.partner_path') }}
+            </span>
+            <span class="badge rounded-pill" style="font-size:1rem; background:#111827; color:#e5e7eb; border:1px solid rgba(255,255,255,.2); padding:.6rem 1rem; font-weight:600; margin-right:.4rem;">
+                {{ trans('public_home.custom_links_assets') }}
+            </span>
+            <span class="badge rounded-pill" style="font-size:1rem; background:#111827; color:#e5e7eb; border:1px solid rgba(255,255,255,.2); padding:.6rem 1rem; font-weight:600;">
+                {{ trans('public_home.admin_configured_commissions') }}
+            </span>
+        </div>
+
+        <p class="mb-4" style="color:#cbd5e1;">
+            {{ trans('public_home.referral_growth_text') }}
+        </p>
+
+        <a href="{{ path('affiliates') }}" class="btn btn-main btn-lg">
+            {{ trans('public_home.learn_more_join') }}
+        </a>
+    </div>
+</section>
+
+<section class="section tool-sprawl-section">
+    <div class="container">
+        <div class="tool-sprawl-shell">
+            <div class="tool-sprawl-header">
+                <div>
+                    <div class="tool-alert-mark">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <h2 class="tool-sprawl-title">
+                        {{ trans('public_home.tool_sprawl_title') }} <span class="highlight">{{ trans('public_home.tool_sprawl_highlight') }}</span>
+                    </h2>
+                    <p class="tool-sprawl-lead">
+                        {{ trans('public_home.tool_sprawl_lead') }}
+                    </p>
+                </div>
+
+                <div class="tool-cloud" aria-label="Disconnected operations tools">
+                    <div class="tool-cloud-label">{{ trans('public_home.scattered_work_label') }}</div>
+                    <div class="tool-chip-field">
+                        <span class="tool-chip"><i class="fa-solid fa-comments"></i> {{ trans('public_home.chat_threads') }}</span>
+                        <span class="tool-chip"><i class="fa-solid fa-table-cells"></i> {{ trans('public_home.spreadsheets') }}</span>
+                        <span class="tool-chip"><i class="fa-solid fa-list-check"></i> {{ trans('public_home.task_boards') }}</span>
+                        <span class="tool-chip"><i class="fa-solid fa-envelope"></i> {{ trans('public_home.inboxes') }}</span>
+                        <span class="tool-chip"><i class="fa-solid fa-calendar-days"></i> {{ trans('public_home.calendars') }}</span>
+                        <span class="tool-chip"><i class="fa-solid fa-folder-open"></i> {{ trans('public_home.shared_drives') }}</span>
+                    </div>
+                    <div class="tool-cloud-base">
+                        <div>
+                            <strong>Ophyra</strong><br>
+                            <span>{{ trans('public_home.one_operating_base') }}</span>
+                        </div>
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-flow-grid">
+                <div class="tool-flow-panel">
+                    <h3><i class="fa-solid fa-link-slash"></i> {{ trans('public_home.where_operations_leak') }}</h3>
+                    <div class="tool-flow-list">
+                        <div class="tool-flow-item is-bad">
+                            <span class="mark"><i class="fa-solid fa-xmark"></i></span>
+                            <span>{{ trans('public_home.leak_leads') }}</span>
+                        </div>
+                        <div class="tool-flow-item is-bad">
+                            <span class="mark"><i class="fa-solid fa-xmark"></i></span>
+                            <span>{{ trans('public_home.leak_orders') }}</span>
+                        </div>
+                        <div class="tool-flow-item is-bad">
+                            <span class="mark"><i class="fa-solid fa-xmark"></i></span>
+                            <span>{{ trans('public_home.leak_team') }}</span>
+                        </div>
+                        <div class="tool-flow-item is-bad">
+                            <span class="mark"><i class="fa-solid fa-xmark"></i></span>
+                            <span>{{ trans('public_home.leak_contracts') }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-bridge" aria-hidden="true">
+                    <span class="tool-bridge-line"></span>
+                    <span class="tool-bridge-icon"><i class="fa-solid fa-arrow-right"></i></span>
+                    <span>{{ trans('public_home.organize') }}</span>
+                    <span class="tool-bridge-line"></span>
+                </div>
+
+                <div class="tool-flow-panel is-good">
+                    <h3><i class="fa-solid fa-layer-group"></i> {{ trans('public_home.what_ophyra_centralizes') }}</h3>
+                    <div class="tool-flow-list">
+                        <div class="tool-flow-item is-good">
+                            <span class="mark"><i class="fa-solid fa-check"></i></span>
+                            <span>{{ trans('public_home.centralize_core') }}</span>
+                        </div>
+                        <div class="tool-flow-item is-good">
+                            <span class="mark"><i class="fa-solid fa-check"></i></span>
+            <span>{{ trans('public_home.centralize_storage') }}</span>
+                        </div>
+                        <div class="tool-flow-item is-good">
+                            <span class="mark"><i class="fa-solid fa-check"></i></span>
+                            <span>{{ trans('public_home.centralize_store') }}</span>
+                        </div>
+                        <div class="tool-flow-item is-good">
+                            <span class="mark"><i class="fa-solid fa-check"></i></span>
+                            <span>{{ trans('public_home.centralize_ai') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="tool-sprawl-note">
+                {{ trans('public_home.tool_sprawl_note') }}
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="section d-none" style="background:#fff9f2;">
+    <div class="container text-center">
+        <h2 class="venue-title">
+            <i class="fas fa-exclamation-triangle text-warning"></i>
+            Stop running operations from disconnected tools.
+        </h2>
+
+        <div class="mt-4" style="max-width: 860px; margin: auto; font-size: 1.08rem; line-height: 1.8;">
+            <p><strong>Ophyra gives your business a modular operating base for clients, team, orders, contracts and daily execution.</strong> Then you can add inventory, AI, event tools and marketplace connectors when the operation is ready.</p>
+
+            <p><strong>Common pain points include:</strong></p>
+            <ul class="text-start d-inline-block">
+                <li><i class="fa-solid fa-xmark text-danger me-2" aria-hidden="true"></i>Leads living in messages with no clean follow-up</li>
+                <li><i class="fa-solid fa-xmark text-danger me-2" aria-hidden="true"></i>Orders, approvals or operational updates tracked by hand</li>
+                <li><i class="fa-solid fa-xmark text-danger me-2" aria-hidden="true"></i>Team responsibilities repeated across disconnected chats</li>
+                <li><i class="fa-solid fa-xmark text-danger me-2" aria-hidden="true"></i>Contracts, approvals or files buried across inboxes</li>
+                <li><i class="fa-solid fa-xmark text-danger me-2" aria-hidden="true"></i>Inventory, files or execution visibility split from operations</li>
+            </ul>
+
+            <p class="mt-3"><strong>Ophyra helps you take back control:</strong></p>
+            <ul class="text-start d-inline-block">
+                <li><i class="fa-solid fa-check text-success me-2" aria-hidden="true"></i>Start with CRM, Clients, Team, Orders and Contracts</li>
+                <li><i class="fa-solid fa-check text-success me-2" aria-hidden="true"></i>Add Advanced Storage / QR Inventory when physical operations matter</li>
+                <li><i class="fa-solid fa-check text-success me-2" aria-hidden="true"></i>Keep Store + Logistics on the roadmap while service workflows stay focused</li>
+                <li><i class="fa-solid fa-check text-success me-2" aria-hidden="true"></i>Add AI Advisor or Ticket Sales + RSVP only when needed</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="section section-alt text-center">
+    <div class="container">
+        <h2 class="venue-title text-center">
+            {{ trans('public_home.early_users_title') }} <span class="highlight">{{ trans('public_home.early_users_highlight') }}</span>
+        </h2>
+
+        <div class="row justify-content-center mt-4">
+            <div class="col-md-4 mb-3">
+                <div class="card testimonial-card h-100">
+                    <div class="card-body">
+                        <p class="mb-3">{{ trans('public_home.testimonial_1') }}</p>
+                        <div class="fw-bold">Carolina R.</div>
+                        <div class="text-muted small">{{ trans('public_home.business_owner_fl') }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card testimonial-card h-100">
+                    <div class="card-body">
+                        <p class="mb-3">{{ trans('public_home.testimonial_2') }}</p>
+                        <div class="fw-bold">Marco G.</div>
+                        <div class="text-muted small">{{ trans('public_home.service_operator_tx') }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card testimonial-card h-100">
+                    <div class="card-body">
+                        <p class="mb-3">{{ trans('public_home.testimonial_3') }}</p>
+                        <div class="fw-bold">Jasmine T.</div>
+                        <div class="text-muted small">{{ trans('public_home.operations_team_ny') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section text-center">
+    <div class="container">
+        <div class="final-cta">
+            <h2 class="venue-title" style="color:#fff;">
+                {{ trans('public_home.final_cta_title') }}
+            </h2>
+            <p>
+                {{ trans('public_home.final_cta_text') }}
+            </p>
+            <a href="{{ path('signup') }}" class="btn btn-main btn-lg">{{ trans('public_home.start_free') }}</a>
+        </div>
+    </div>
+</section>
+
+{% set is_logged = (user is defined and user) or (current_user is defined and current_user) %}
+{% if not is_logged %}
+<div id="signupPitchModal" role="dialog" aria-modal="true" aria-labelledby="spmTitle" aria-describedby="spmDesc">
+    <div class="spm-dialog">
+        <button class="spm-close" type="button" aria-label="Close">&times;</button>
+
+        <div class="spm-top">
+            <div class="spm-eyebrow">{{ trans('public_home.free_start') }}</div>
+            <h3 id="spmTitle" class="spm-title">{{ trans('public_home.signup_pitch_title') }}</h3>
+            <p id="spmDesc" class="spm-sub">{{ trans('public_home.signup_pitch_text') }}</p>
+        </div>
+
+        <div class="spm-body">
+            <div class="spm-chips">
+                <span class="spm-chip">{{ trans('public_home.zero_to_start') }}</span>
+                <span class="spm-chip">{{ trans('public_home.cancel_anytime') }}</span>
+                <span class="spm-chip">{{ trans('public_home.optional_addons_chip') }}</span>
+            </div>
+
+            <div class="spm-list">
+                <div class="rowy">
+                    <div class="spm-ic"><i class="fa-solid fa-check"></i></div>
+                    <div class="spm-txt"><strong>{{ trans('public_home.operational_core') }}:</strong> {{ trans('public_home.replace_scattered_tools') }}</div>
+                </div>
+                <div class="rowy">
+                    <div class="spm-ic"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="spm-txt">{{ trans('public_home.add_modules_when_needed') }}</div>
+                </div>
+                <div class="rowy">
+                    <div class="spm-ic"><i class="fa-solid fa-robot"></i></div>
+                    <div class="spm-txt">{{ trans('public_home.built_for_workflows') }}</div>
+                </div>
+            </div>
+
+            <div class="spm-social">
+                <span class="spm-dot"></span> {{ trans('public_home.free_workspace_paid_growth') }}
+            </div>
+        </div>
+
+        <div class="spm-actions">
+            <a href="{{ path('signup') }}" class="spm-cta">
+                <i class="fa-solid fa-bolt"></i> {{ trans('public_home.start_free') }}
+            </a>
+            <button class="spm-ghost" type="button" data-spm-dismiss>{{ trans('public_home.maybe_later') }}</button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+</main>
+
+<footer class="ophyra-public-footer">
+    <div class="container">
+        <div class="ophyra-public-footer-inner">
+            <p class="mb-0">
+                <strong>Ophyra App</strong>
+                <span>{{ trans('common.all_rights_reserved') }}</span>
+            </p>
+
+            <nav aria-label="Legal links">
+                <a href="{{ path('privacy-policy') }}">{{ trans('common.privacy') }}</a>
+                <a href="{{ path('terms_and_conditions') }}">{{ trans('common.terms') }}</a>
+            </nav>
+        </div>
+    </div>
+</footer>
+
+<style>
+    .ophyra-public-footer{
+        border-top:1px solid rgba(38,166,154,.18);
+        background:linear-gradient(90deg,#061a18 0%,#082521 52%,#061a18 100%);
+        color:rgba(255,255,255,.78);
+        padding:.85rem 0;
+    }
+    .ophyra-public-footer-inner{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:1rem;
+        min-height:34px;
+        font-size:.92rem;
+    }
+    .ophyra-public-footer strong{
+        color:#fff;
+        font-weight:850;
+        margin-right:.45rem;
+    }
+    .ophyra-public-footer span{
+        color:rgba(255,255,255,.62);
+    }
+    .ophyra-public-footer nav{
+        display:flex;
+        align-items:center;
+        gap:.45rem;
+        flex-wrap:wrap;
+        justify-content:flex-end;
+    }
+    .ophyra-public-footer nav a{
+        border:1px solid rgba(38,166,154,.22);
+        border-radius:999px;
+        color:#9df3e7;
+        font-weight:800;
+        padding:.42rem .78rem;
+        text-decoration:none;
+        transition:background .18s ease, border-color .18s ease, color .18s ease;
+    }
+    .ophyra-public-footer nav a:hover{
+        background:rgba(38,166,154,.12);
+        border-color:rgba(157,243,231,.44);
+        color:#fff;
+    }
+    @media (max-width: 640px){
+        .ophyra-public-footer-inner{
+            flex-direction:column;
+            text-align:center;
+        }
+        .ophyra-public-footer nav{
+            justify-content:center;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var modal = document.getElementById('signupPitchModal');
+    if (!modal) return;
+
+    const KEY_FLAG = 'ph_signup_pitch_dismissed_at';
+    const DISMISS_HOURS = 72;
+
+    try {
+        const ts = localStorage.getItem(KEY_FLAG);
+        if (ts) {
+            const hours = (Date.now() - parseInt(ts,10)) / (1000*60*60);
+            if (hours < DISMISS_HOURS) return;
+        }
+    } catch(e){}
+
+    const href = location.pathname.toLowerCase();
+    if (href.includes('login') || href.includes('signup')) return;
+
+    setTimeout(function(){ modal.style.display = 'block'; }, 4200);
+
+    const closeBtn = modal.querySelector('.spm-close');
+    const ghostBtn = modal.querySelector('[data-spm-dismiss]');
+
+    function dismiss() {
+        modal.style.display = 'none';
+        try { localStorage.setItem(KEY_FLAG, Date.now().toString()); } catch(e){}
+    }
+
+    closeBtn && closeBtn.addEventListener('click', dismiss);
+    ghostBtn && ghostBtn.addEventListener('click', dismiss);
+
+    modal.addEventListener('click', function(e){
+        if (e.target === modal) dismiss();
+    });
+
+    document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape') dismiss();
+    });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.querySelector('[data-workspace-preview-modal]');
+    const openBtn = document.querySelector('[data-workspace-preview-open]');
+    if (!modal || !openBtn) return;
+
+    const closeBtn = modal.querySelector('[data-workspace-preview-close]');
+    const slides = Array.from(modal.querySelectorAll('[data-workspace-preview-slide]'));
+    const prevBtn = modal.querySelector('[data-workspace-preview-prev]');
+    const nextBtn = modal.querySelector('[data-workspace-preview-next]');
+    let activeIndex = 0;
+
+    function renderSlide() {
+        slides.forEach(function (slide, index) {
+            slide.classList.toggle('is-active', index === activeIndex);
+        });
+    }
+
+    function openModal() {
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        closeBtn && closeBtn.focus();
+    }
+
+    function closeModal() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        openBtn.focus();
+    }
+
+    function move(delta) {
+        if (!slides.length) return;
+        activeIndex = (activeIndex + delta + slides.length) % slides.length;
+        renderSlide();
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn && closeBtn.addEventListener('click', closeModal);
+    prevBtn && prevBtn.addEventListener('click', function () { move(-1); });
+    nextBtn && nextBtn.addEventListener('click', function () { move(1); });
+    modal.addEventListener('click', function (event) {
+        if (event.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
+        if (event.key === 'ArrowLeft' && modal.classList.contains('is-open')) move(-1);
+        if (event.key === 'ArrowRight' && modal.classList.contains('is-open')) move(1);
+    });
+});
+</script>
+<script>
+(function () {
+    let loaded = false;
+    const loadFontAwesome = function () {
+        if (loaded || document.querySelector('link[data-late-fontawesome]')) return;
+        loaded = true;
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css';
+        link.crossOrigin = 'anonymous';
+        link.referrerPolicy = 'no-referrer';
+        link.setAttribute('data-late-fontawesome', 'true');
+        document.head.appendChild(link);
+    };
+
+    const interactionEvents = ['pointermove', 'scroll', 'keydown', 'touchstart'];
+    const startAfterIntent = function () {
+        interactionEvents.forEach(function (eventName) {
+            window.removeEventListener(eventName, startAfterIntent, { passive: true });
+        });
+        loadFontAwesome();
+    };
+
+    window.addEventListener('load', function () {
+        setTimeout(function () {
+            interactionEvents.forEach(function (eventName) {
+                window.addEventListener(eventName, startAfterIntent, { once: true, passive: true });
+            });
+            setTimeout(loadFontAwesome, 16000);
+        }, 5000);
+    }, { once: true });
+})();
+</script>
+
+
+{% endblock %}

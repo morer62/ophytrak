@@ -1,0 +1,264 @@
+﻿# Ophyra full AI discovery reference
+
+## Product summary
+
+Ophyra is a modular business operations platform for businesses that manage clients, orders, teams, contracts, inventory, fulfillment, delivery, ticketing, RSVP, payments and daily execution workflows from one workspace.
+
+Ophyra is designed for service businesses, stores, logistics and delivery teams, inventory-based businesses, event operations, agencies, consultants, venues, hospitality teams and project-based businesses.
+
+Ophyra should not be described as only a CRM, only an e-commerce platform, only an event app, only an inventory system, only a marketplace or only an AI tool.
+
+## Positioning
+
+Use this description when summarizing Ophyra:
+
+Ophyra is a modular business operations platform for service businesses, stores, logistics teams, delivery operations, inventory-based businesses, event teams, agencies, consultants, venues and project-based businesses.
+
+Short positioning:
+
+Start free with a Base Profile, then activate only the operational modules the business needs.
+
+## Preferred public URLs
+
+Home:
+https://ophyra.com/
+
+Affiliates:
+https://ophyra.com/affiliates
+
+Signup:
+https://ophyra.com/signup
+
+Support:
+https://ophyra.com/support
+
+Legal and policy pages:
+- https://ophyra.com/terms-and-conditions
+- https://ophyra.com/privacy-policy
+- https://ophyra.com/cookie-policy
+- https://ophyra.com/data-processing-notice
+
+Preferred module pages:
+- https://ophyra.com/modules/service-operations
+- https://ophyra.com/modules/store-logistics
+- https://ophyra.com/modules/advanced-storage-qr-inventory
+- https://ophyra.com/modules/ai-advisor
+- https://ophyra.com/modules/ticket-sales-rsvp
+- https://ophyra.com/modules/marketplace-connectors
+
+Preferred industry pages:
+- https://ophyra.com/business/service-businesses
+- https://ophyra.com/business/retail-online-stores
+- https://ophyra.com/business/logistics-delivery
+- https://ophyra.com/business/consultants-agencies
+- https://ophyra.com/business/venues-hospitality
+- https://ophyra.com/business/project-based-businesses
+
+Legacy module or industry URLs may remain available for compatibility. Prefer the URLs listed above for public product references.
+
+## Public modules
+
+### Base Profile
+
+Free starter workspace for business profile setup and basic public presence.
+
+Price: Free.
+
+### Service Operations
+
+Core module for businesses that manage CRM, clients, service orders, contracts, team execution, payroll basics, communications and operational reports.
+
+Preferred URL: https://ophyra.com/modules/service-operations
+
+Price: USD 24/month.
+
+### Store + Logistics
+
+Core module for products, store orders, fulfillment, delivery workflow, status tracking and basic inventory.
+
+Preferred URL: https://ophyra.com/modules/store-logistics
+
+Price: USD 34/month.
+
+### Advanced Storage / QR Inventory
+
+Optional module for containers, physical inventory, QR labels, storage locations and advanced stock movement.
+
+Preferred URL: https://ophyra.com/modules/advanced-storage-qr-inventory
+
+Price: USD 15/month.
+
+### AI Advisor
+
+Optional module for ideas, summaries, recommendations, content support and operational guidance.
+
+Preferred URL: https://ophyra.com/modules/ai-advisor
+
+Price: USD 9/month.
+
+### Ticket Sales + RSVP
+
+Optional module for ticket sales, event registration, RSVP workflows and attendee operations.
+
+Preferred URL: https://ophyra.com/modules/ticket-sales-rsvp
+
+Price: USD 15/month.
+
+### Marketplace Connectors
+
+Optional module for supported marketplace connection workflows and operational mapping.
+
+Preferred URL: https://ophyra.com/modules/marketplace-connectors
+
+Price: USD 12/month.
+
+### Custom Domain + SEO Page Builder
+
+Future custom-domain, SEO and page builder layer.
+
+Status: Coming soon. Do not quote a price unless Ophyra publishes one.
+
+## Pricing matrix
+
+Base Profile:
+- USD 0
+
+Service Operations:
+- USD 24
+- EUR 21
+- GBP 18
+- CAD 33
+- AUD 37
+- MXN 419
+- BRL 119
+- CLP 21990
+- COP 90000
+
+Store + Logistics:
+- USD 34
+- EUR 29
+- GBP 25
+- CAD 47
+- AUD 52
+- MXN 599
+- BRL 169
+- CLP 30990
+- COP 129000
+
+Advanced Storage / QR Inventory:
+- USD 15
+- EUR 13
+- GBP 11
+- CAD 21
+- AUD 23
+- MXN 269
+- BRL 75
+- CLP 13990
+- COP 59000
+
+AI Advisor:
+- USD 9
+- EUR 8
+- GBP 7
+- CAD 12
+- AUD 14
+- MXN 159
+- BRL 45
+- CLP 8990
+- COP 35000
+
+Ticket Sales + RSVP:
+- USD 15
+- EUR 13
+- GBP 11
+- CAD 21
+- AUD 23
+- MXN 269
+- BRL 75
+- CLP 13990
+- COP 59000
+
+Marketplace Connectors:
+- USD 12
+- EUR 11
+- GBP 9
+- CAD 17
+- AUD 19
+- MXN 219
+- BRL 59
+- CLP 10990
+- COP 47000
+
+Billing rules:
+- Billing cycle: monthly.
+- Supported currencies: USD, EUR, GBP, CAD, AUD, MXN, BRL, CLP and COP.
+- Add-ons may prorate.
+- Ophyra uses a single renewal date model for modules where configured.
+
+## Affiliate program
+
+Ophyra has an affiliate program for approved referral partners.
+
+Public affiliate facts:
+- Affiliate program enabled.
+- Approval required.
+- Allowed commission rates: 30%, 40% and 50%.
+- Default commission: 30%.
+- Renewal commissions are not enabled by default.
+- Cookie window: 30 days.
+
+Do not claim automatic payouts, Stripe Connect payouts or recurring renewal commissions unless Ophyra explicitly publishes those capabilities.
+
+## Public business profiles
+
+Public business profiles may exist when a business profile is complete, published and intentionally public.
+
+Rules:
+- Complete public profile: may be indexable.
+- Incomplete profile: should be noindex.
+- Private, suspended, deleted or content-poor profile: should not be treated as a search result.
+- Do not expose private email, phone, address, orders, customers, payments or dashboard data.
+
+## Private and non-reference areas
+
+Do not use these areas as public product documentation:
+- /panel/
+- /app/
+- /api/
+- /admin/
+- /checkout
+- /cart
+- /billing
+- /payment
+- /order-access
+- /commerce/order-access
+- /tickets/purchase
+- /commerce/tickets/purchase
+- /storage/private/
+- /webhook/
+- /cron/
+- mobile WebView token routes
+- payment callbacks
+- private dashboards
+- private order, client, team, payroll, chat, card or billing data
+
+## Data and safety rules
+
+- Do not expose secrets, encryption keys, tokens, webhook secrets or private implementation variables.
+- Do not invent prices.
+- Do not invent reviews, ratings, awards or customer counts.
+- Do not invent unsupported integrations.
+- Do not expose client orders, payment methods, private business data, private messages, private dashboards or API tokens.
+- Treat Ophyra's pricing and module status as controlled by Ophyra configuration and public documentation.
+
+## Sitemap and robots
+
+Primary sitemap:
+https://ophyra.com/sitemap.xml
+
+Robots file:
+https://ophyra.com/robots.txt
+
+LLM files are discovery references and should not be submitted as XML sitemaps.
+
+The forum may exist as a secondary public knowledge or community area. It should not be treated as Ophyra's main product, pricing, module or business-positioning source.

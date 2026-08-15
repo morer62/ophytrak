@@ -1,0 +1,226 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+
+<style>
+.fixed-textarea {
+  min-height: 160px;
+  max-height: 400px;
+  resize: none;
+  overflow-y: auto; 
+  line-height: 2;
+  font-size: 13px;
+}
+</style>
+
+<h1 class="h3 mb-4">📝 {{ trans('planner_hub.service_notes_for_order') }} VNV-341{{ order_id }}</h1>
+ 
+ {# Back según convención al listado de órdenes #}
+  <a href="{{ path('panel/planner-hub/management/orders/orders/team_comunication') }}?id={{ order_id }}" class="btn btn-outline-secondary mb-3">  
+    ← {{ trans('planner_hub.back_to_team_area') }}
+  </a>
+
+  <button type="button" class="btn btn-outline-primary mb-3 d-block" data-bs-toggle="modal" data-bs-target="#bulkTimesModal">
+    ⏱️ {{ trans('planner_hub.set_times_all_services') }}
+  </button>
+
+<form method="post">
+  <input type="hidden" name="order_id" value="{{ order_id }}">
+
+  <div class="modal fade" id="bulkTimesModal" tabindex="-1" aria-labelledby="bulkTimesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="bulkTimesModalLabel">{{ trans('planner_hub.bulk_times_modal_title') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small mb-3">{{ trans('planner_hub.bulk_times_modal_hint') }}</p>
+          <div class="mb-3">
+            <label class="form-label">🛠️ {{ trans('planner_hub.install_time') }}</label>
+            <input type="time" class="form-control" id="bulk-install-time">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">🎬 {{ trans('planner_hub.execution_time') }}</label>
+            <input type="time" class="form-control" id="bulk-execution-time">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">📦 {{ trans('planner_hub.breakdown_time') }}</label>
+            <input type="time" class="form-control" id="bulk-breakdown-time">
+          </div>
+          <div class="mb-0">
+            <label class="form-label">{{ trans('planner_hub.start_time') }}</label>
+            <input type="time" class="form-control" id="bulk-start-time">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans('planner_hub.agent_close') }}</button>
+          <button type="button" class="btn btn-primary" id="bulkTimesApplyBtn">{{ trans('planner_hub.apply_to_all_services') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0">📋 {{ trans('planner_hub.main_order') }} #{{ order_id }} - {{ trans('planner_hub.service_notes') }}</h4>
+    </div>
+    <div class="card-body">
+      {% for service in services %}
+        <div class="card mb-3">
+          <div class="card-header fw-bold bg-light">{{ service.name }}</div>
+          <div class="card-body">
+            <input type="hidden" name="assigned_id[{{ service.id_assigned }}]" value="{{ service.id_assigned }}">
+            <input type="hidden" name="note_source[{{ service.id_assigned }}]" value="main_order">
+            <div class="mb-3">
+              <label class="form-label">{{ trans('planner_hub.custom_notes_for_service') }}</label>
+              <textarea name="notes[{{ service.id_assigned }}]"
+                        class="form-control fixed-textarea"
+                        maxlength="1200"
+                        id="notes-{{ service.id_assigned }}">{{ service.notes }}</textarea>
+            </div>
+
+            <div class="row">
+              <div class="col-md-3 mb-2">
+                <label class="form-label">🛠️ {{ trans('planner_hub.install_time') }}</label>
+                <input type="time" name="install_time[{{ service.id_assigned }}]" value="{{ service.install_time }}" class="form-control js-service-time" data-field="install_time">
+              </div>
+              <div class="col-md-3 mb-2">
+                <label class="form-label">🎬 {{ trans('planner_hub.execution_time') }}</label>
+                <input type="time" name="execution_time[{{ service.id_assigned }}]" value="{{ service.execution_time }}" class="form-control js-service-time" data-field="execution_time">
+              </div>
+              <div class="col-md-3 mb-2">
+                <label class="form-label">📦 {{ trans('planner_hub.breakdown_time') }}</label>
+                <input type="time" name="breakdown_time[{{ service.id_assigned }}]" value="{{ service.breakdown_time }}" class="form-control js-service-time" data-field="breakdown_time">
+              </div>
+              <div class="col-md-3 mb-2">
+                <label class="form-label">{{ trans('planner_hub.start_time') }}</label>
+                <input type="time" name="start_time[{{ service.id_assigned }}]" value="{{ service.start_time }}" class="form-control js-service-time" data-field="start_time">
+              </div>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="manual[]" value="{{ service.id_assigned }}" id="manualCheck{{ service.id_assigned }}"
+                {% if service.has_manual_entry %}checked{% endif %}>
+              <label class="form-check-label" for="manualCheck{{ service.id_assigned }}">
+                🖊️ {{ trans('planner_hub.manual_entry_checkbox') }}
+              </label>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if suborderServices|length > 0 %}
+    {% for suborder in suborders %}
+      <div class="card mb-4">
+      <div class="card-header bg-info text-white">
+        <h4 class="mb-0">📦 {{ trans('planner_hub.sub_order') }} #{{ suborder.id }} - {{ trans('planner_hub.service_notes') }}</h4>
+      </div>
+        <div class="card-body">
+          {% for service in suborderServices %}
+            {% if service.suborder_id == suborder.id %}
+              <div class="card mb-3">
+                <div class="card-header fw-bold bg-light">{{ service.name }}</div>
+                <div class="card-body">
+                  <input type="hidden" name="assigned_id[{{ service.id_assigned }}]" value="{{ service.id_assigned }}">
+                  <input type="hidden" name="note_source[{{ service.id_assigned }}]" value="suborder">
+                  <input type="hidden" name="suborder_id[{{ service.id_assigned }}]" value="{{ suborder.id }}">
+                  <div class="mb-3">
+                    <label class="form-label">{{ trans('planner_hub.custom_notes_for_service') }}</label>
+                    <textarea name="notes[{{ service.id_assigned }}]"
+                              class="form-control fixed-textarea"
+                              maxlength="1200"
+                              id="notes-sub-{{ suborder.id }}-{{ service.id_assigned }}">{{ service.notes }}</textarea>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-3 mb-2">
+                      <label class="form-label">🛠️ {{ trans('planner_hub.install_time') }}</label>
+                      <input type="time" name="install_time[{{ service.id_assigned }}]" value="{{ service.install_time }}" class="form-control js-service-time" data-field="install_time">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                      <label class="form-label">🎬 {{ trans('planner_hub.execution_time') }}</label>
+                      <input type="time" name="execution_time[{{ service.id_assigned }}]" value="{{ service.execution_time }}" class="form-control js-service-time" data-field="execution_time">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                      <label class="form-label">📦 {{ trans('planner_hub.breakdown_time') }}</label>
+                      <input type="time" name="breakdown_time[{{ service.id_assigned }}]" value="{{ service.breakdown_time }}" class="form-control js-service-time" data-field="breakdown_time">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                      <label class="form-label">{{ trans('planner_hub.start_time') }}</label>
+                      <input type="time" name="start_time[{{ service.id_assigned }}]" value="{{ service.start_time }}" class="form-control js-service-time" data-field="start_time">
+                    </div>
+                  </div>
+
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="manual[]" value="{{ service.id_assigned }}" id="manualCheckSub{{ suborder.id }}-{{ service.id_assigned }}"
+                      {% if service.has_manual_entry %}checked{% endif %}>
+                    <label class="form-check-label" for="manualCheckSub{{ suborder.id }}-{{ service.id_assigned }}">
+                      🖊️ {{ trans('planner_hub.manual_entry_checkbox') }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <button class="btn btn-success">
+    <i data-feather="save"></i> {{ trans('planner_hub.save_comments') }}
+  </button>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('textarea[name^="notes["]').forEach(textarea => {
+    if (textarea.hasAttribute('data-payroll-notes')) {
+      return;
+    }
+    
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      const newHeight = this.scrollHeight;
+      const maxHeight = 400;
+      
+      if (newHeight <= maxHeight) {
+        this.style.height = newHeight + 'px';
+      } else {
+        this.style.height = maxHeight + 'px';
+      }
+    });
+  });
+
+  var applyBtn = document.getElementById('bulkTimesApplyBtn');
+  if (applyBtn) {
+    applyBtn.addEventListener('click', function () {
+      var map = {
+        install_time: document.getElementById('bulk-install-time').value,
+        execution_time: document.getElementById('bulk-execution-time').value,
+        breakdown_time: document.getElementById('bulk-breakdown-time').value,
+        start_time: document.getElementById('bulk-start-time').value
+      };
+      Object.keys(map).forEach(function (field) {
+        var val = map[field];
+        document.querySelectorAll('input.js-service-time[data-field="' + field + '"]').forEach(function (el) {
+          el.value = val;
+        });
+      });
+      var modalEl = document.getElementById('bulkTimesModal');
+      if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        var inst = bootstrap.Modal.getInstance(modalEl);
+        if (inst) {
+          inst.hide();
+        }
+      }
+    });
+  }
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,5 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% include 'panel/shared/store/import-orders-form.twig' with { back_url: path('panel/planner-hub/store/orders/home'), template_url: path('panel/planner-hub/store/orders/import') ~ '?template=1' } %}
+{% endblock %}

@@ -1,0 +1,35 @@
+const { test, expect } = require('@playwright/test');
+const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophyra';
+const proof = { name: 'delivery-proof.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64') };
+
+test.use({ viewport: { width: 390, height: 844 }, geolocation: { latitude: 25.7617, longitude: -80.1918 }, permissions: ['geolocation'] });
+test('delivery closes with local proof and preserves one submit', async ({ page }, testInfo) => {
+  test.setTimeout(90_000);
+  await page.addInitScript(() => { navigator.geolocation.watchPosition = () => 0; });
+  await page.goto(`${baseURL}/login`);
+  await page.locator('[name="email"]').fill('qa.delivery.20260716a@example.test');
+  await page.locator('[name="password"]').fill('OphyraQA!2026');
+  await page.locator('form').filter({ has: page.locator('[name="email"]') }).locator('button[type="submit"]').click();
+  await page.goto(`${baseURL}/panel/planner-hub/team/driver-mode`);
+  await page.locator('[data-driver-modal-target]').first().click();
+  const form = page.locator('.driver-task-form').filter({ has: page.locator('[name="action"][value="delivered"]') });
+  await expect(form).toBeVisible();
+  await form.locator('[name="delivery_proof"]').setInputFiles(proof);
+  await form.locator('[name="receiver_type"]').selectOption('BUYER');
+  await form.locator('[name="receiver_name"]').fill('QA Receiver');
+  await form.locator('[name="document_type"][value="ID"]').check();
+  await form.locator('[name="document_number"]').fill('QA-12345');
+  await form.locator('[name="notes"]').fill('Entrega QA completada con evidencia local.');
+  await form.locator('[name="location_lat"]').fill('25.7617');
+  await form.locator('[name="location_long"]').fill('-80.1918');
+  await form.locator('[name="location_accuracy"]').fill('10');
+  await form.locator('[name="location_permission_status"]').fill('granted');
+  await form.evaluate(node => { node.dataset.locationReady = '1'; });
+  const responsePromise = page.waitForResponse(response => response.url().includes('/panel/planner-hub/team/my-work') && response.request().method() === 'POST');
+  await form.evaluate(node => node.submit());
+  const response = await responsePromise;
+  expect(response.ok()).toBeTruthy();
+  console.log('DELIVERY_RESPONSE=' + await response.text());
+  await page.goto(`${baseURL}/panel/planner-hub/team/my-work`);
+  await expect(page.locator('body')).toContainText(/DELIVERED|Delivered|Entregado/i);
+});

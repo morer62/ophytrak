@@ -1,0 +1,117 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set avomeal = level1_dashboard.avomeal %}
+{% set operationQuery = 'operation=avomeal' %}
+<main class="container-fluid avomeal-core">
+  <style>
+    .avomeal-core { color:#0f172a; }
+    .avo-hero { border-radius:26px; padding:1.6rem; color:#fff; background:linear-gradient(145deg,#071411,#173323 55%,#0b1712); box-shadow:0 22px 56px rgba(15,23,42,.15); margin-bottom:1.25rem; }
+    .avo-kicker { color:#86efac; font-size:.78rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; margin-bottom:.35rem; }
+    .avo-hero h1 { color:#fff; font-weight:900; letter-spacing:0; margin:0 0 .45rem; }
+    .avo-hero p { color:rgba(255,255,255,.78); max-width:860px; margin:0; line-height:1.7; }
+    .avo-card { border:0; border-radius:20px; box-shadow:0 14px 36px rgba(15,23,42,.08); height:100%; }
+    .avo-label { color:#64748b; font-size:.78rem; text-transform:uppercase; font-weight:900; letter-spacing:.04em; }
+    .avo-value { color:#0f172a; font-size:1.75rem; font-weight:900; line-height:1.1; }
+    .avo-action { display:block; height:100%; color:#0f172a; text-decoration:none; padding:1rem; border:1px solid #dcfce7; border-radius:18px; background:#f0fdf4; }
+    .avo-action strong { display:block; font-weight:900; margin-bottom:.25rem; }
+    .avo-action span { color:#64748b; }
+  </style>
+
+  <section class="avo-hero">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
+      <div>
+        <div class="avo-kicker">{{ trans('dashboard_home.avomeal_store_operations') }}</div>
+        <h1>{{ trans('dashboard_home.avomeal_detail_title') }}</h1>
+        <p>{{ trans('dashboard_home.avomeal_detail_text') }}</p>
+      </div>
+      <a href="{{ path('panel/home?operation=avomeal') }}" class="btn btn-light fw-bold align-self-start">{{ trans('dashboard_home.set_avomeal_context') }}</a>
+    </div>
+  </section>
+
+  <section class="row g-3 mb-4">
+    {% set metrics = [
+      {'label':trans('dashboard_home.new_orders'),'value':avomeal.new_orders},
+      {'label':trans('dashboard_home.pending_fulfillment'),'value':avomeal.pending_fulfillment},
+      {'label':trans('dashboard_home.in_delivery'),'value':avomeal.delivery_pending},
+      {'label':trans('dashboard_home.monthly_store_sales'),'value':'$' ~ avomeal.monthly_sales|default(0)|number_format(0)},
+      {'label':trans('dashboard_home.active_products'),'value':avomeal.active_products},
+      {'label':trans('dashboard_home.inactive_products'),'value':avomeal.inactive_products},
+      {'label':trans('dashboard_home.store_customers'),'value':avomeal.customers},
+      {'label':trans('dashboard_home.abandoned_carts'),'value':avomeal.abandoned_carts},
+      {'label':trans('dashboard_home.team_members'),'value':avomeal.team_members},
+      {'label':trans('dashboard_home.pending_tasks'),'value':avomeal.pending_tasks}
+    ] %}
+    {% for metric in metrics %}
+      <div class="col-xl-3 col-md-6">
+        <div class="card avo-card">
+          <div class="card-body">
+            <div class="avo-label">{{ metric.label }}</div>
+            <div class="avo-value">{{ metric.value|default(0) }}</div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </section>
+
+  <section class="row g-4">
+    <div class="col-lg-7">
+      <div class="card avo-card">
+        <div class="card-body">
+          <h2 class="h4 fw-bold mb-3">{{ trans('dashboard_home.recent_store_orders') }}</h2>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead><tr><th>{{ trans('ui.id')|upper }}</th><th>{{ trans('dashboard_home.customer') }}</th><th>{{ trans('ui.total') }}</th><th>{{ trans('ui.payments') }}</th><th>{{ trans('ui.status') }}</th></tr></thead>
+              <tbody>
+                {% for order in avomeal.recent_orders %}
+                  <tr>
+                    <td>#{{ order.id }}</td>
+                    <td><strong>{{ order.guest_name|default(trans('dashboard_home.customer')) }}</strong><br><span class="text-muted small">{{ order.guest_email|default('-') }}</span></td>
+                    <td>${{ order.total|default(0)|number_format(2) }}</td>
+                    <td>{{ order.payment_status|default('-') }}</td>
+                    <td>{{ order.status|default('-') }}</td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="5" class="text-muted">{{ trans('dashboard_home.no_recent_avomeal_orders') }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card avo-card mb-3">
+        <div class="card-body">
+          <h2 class="h4 fw-bold mb-2">{{ trans('dashboard_home.avomeal_ai_insight') }}</h2>
+          {% if avomeal.ai_recommendation %}
+            <p class="text-muted mb-2">{{ avomeal.ai_recommendation.recommendation_text }}</p>
+            {% if avomeal.ai_recommendation.action_url %}
+              <a href="{{ path(avomeal.ai_recommendation.action_url) }}" class="btn btn-dark fw-bold">{{ avomeal.ai_recommendation.action_label|default(trans('dashboard_home.open')) }}</a>
+            {% endif %}
+          {% else %}
+            <p class="text-muted mb-0">{{ trans('dashboard_home.no_ai_recommendation_avomeal') }}</p>
+          {% endif %}
+        </div>
+      </div>
+      <div class="row g-2">
+        {% set actions = [
+          {'title':trans('dashboard_home.products_meals'),'body':trans('dashboard_home.products_meals_text'), 'url':'panel/planner-hub/store/products/home?' ~ operationQuery},
+          {'title':trans('dashboard_home.categories'),'body':trans('dashboard_home.categories_text'), 'url':'panel/planner-hub/store/categories/home?' ~ operationQuery},
+          {'title':trans('dashboard_home.store_orders'),'body':trans('dashboard_home.store_orders_text'), 'url':'panel/planner-hub/store/orders/home?' ~ operationQuery},
+          {'title':trans('ui.payments'),'body':trans('dashboard_home.store_payments_text'), 'url':'panel/planner-hub/store/payments/home?' ~ operationQuery},
+          {'title':trans('ui.team'),'body':'Manage Avomeal kitchen, delivery and operations team.', 'url':'panel/planner-hub/management/users?' ~ operationQuery},
+          {'title':'Avomeal Chat','body':'Message customers, assigned team members and admins from one operational inbox.', 'url':'panel/planner-hub/team/chat?' ~ operationQuery},
+          {'title':trans('ui.payroll'),'body':'Review Avomeal team hours and payroll.', 'url':'panel/planner-hub/management/payroll?' ~ operationQuery},
+          {'title':trans('dashboard_home.meal_plans'),'body':trans('dashboard_home.meal_plans_text'), 'url':'panel/planner-hub/store/subscriptions/home?' ~ operationQuery},
+          {'title':trans('dashboard_home.coupons'),'body':trans('dashboard_home.coupons_text'), 'url':'panel/planner-hub/store/coupons/home?' ~ operationQuery}
+        ] %}
+        {% for action in actions %}
+          <div class="col-md-6"><a class="avo-action" href="{{ path(action.url) }}"><strong>{{ action.title }}</strong><span>{{ action.body }}</span></a></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

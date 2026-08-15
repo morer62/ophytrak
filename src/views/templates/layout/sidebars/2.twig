@@ -1,0 +1,142 @@
+﻿{% set hasServiceOps = 'services' in active_module_slugs or 'service_operations' in active_module_slugs %}
+{% set hasStoreLogistics = 'store_delivery_tracking' in active_module_slugs or 'store_logistics' in active_module_slugs %}
+{% set hasTicketsRsvp = 'tickets_rsvp' in active_module_slugs or 'ticket_sales_rsvp' in active_module_slugs %}
+{% set hasWarehouse = 'inventory_storage' in active_module_slugs or 'advanced_storage_qr_inventory' in active_module_slugs %}
+{% set hasAiAdvisor = 'ai_advisor' in active_module_slugs %}
+{% set hasAnyCore = hasServiceOps or hasStoreLogistics %}
+{% set sharedContextParam = hasServiceOps ? 'service' : (hasStoreLogistics ? 'store' : '') %}
+{% set sharedContext = sharedContextParam ? '?context=' ~ sharedContextParam : '' %}
+{% set sharedJoinContext = sharedContextParam ? '&context=' ~ sharedContextParam : '' %}
+{% set serviceLock = 'panel/planner-hub/no-access?module=service_operations&required=services' %}
+{% set storeLock = 'panel/planner-hub/no-access?module=store_logistics&required=store_delivery_tracking' %}
+{% set sharedLock = 'panel/planner-hub/no-access?module=shared_operational_tools&required=services,store_delivery_tracking' %}
+
+<li class="sidebar-header">{{ trans('nav.dashboard_group') }}</li>
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/home') }}">
+        <i class="align-middle" data-feather="grid"></i>
+        <span class="align-middle">{{ trans('nav.dashboard') }}</span>
+    </a>
+</li>
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/onboarding') }}">
+        <i class="align-middle" data-feather="compass"></i>
+        <span class="align-middle">{{ trans('nav.start_guide') }}</span>
+    </a>
+</li>
+
+<li class="sidebar-header">{{ trans('nav.workspaces') }}</li>
+<li class="sidebar-item {{ hasServiceOps ? '' : 'sidebar-item-locked' }}">
+    <a class="sidebar-link" href="{{ path(hasServiceOps ? 'panel/planner-hub/management' : serviceLock) }}">
+        <i class="align-middle" data-feather="{{ hasServiceOps ? 'calendar' : 'lock' }}"></i>
+        <span class="align-middle">{{ trans('nav.services') }} <small class="d-block opacity-75">{{ hasServiceOps ? trans('nav.active') : trans('nav.recommended') }}</small></span>
+    </a>
+</li>
+<li class="sidebar-item {{ hasStoreLogistics ? '' : 'sidebar-item-locked' }}">
+    <a class="sidebar-link" href="{{ path(hasStoreLogistics ? 'panel/planner-hub/store/orders/home' : storeLock) }}">
+        <i class="align-middle" data-feather="{{ hasStoreLogistics ? 'truck' : 'lock' }}"></i>
+        <span class="align-middle">{{ trans('nav.store_logistics') }} <small class="d-block opacity-75">{{ hasStoreLogistics ? trans('nav.active') : trans('nav.activate') }}</small></span>
+    </a>
+</li>
+
+<li class="sidebar-header">{{ trans('nav.complementary_modules') }}</li>
+<li class="sidebar-item {{ hasServiceOps ? '' : 'sidebar-item-locked' }}">
+    <a class="sidebar-link" href="{{ path(hasServiceOps ? 'panel/planner-hub/management/crm/' ~ sharedJoinContext : serviceLock) }}">
+        <i class="align-middle" data-feather="{{ hasServiceOps ? 'users' : 'lock' }}"></i>
+        <span class="align-middle">{{ trans('nav.crm') }}</span>
+    </a>
+</li>
+<li class="sidebar-item {{ hasTicketsRsvp ? '' : 'sidebar-item-locked' }}">
+    <a class="sidebar-link" href="{{ path(hasTicketsRsvp ? 'panel/event-invitations' : 'panel/planner-hub/no-access?module=tickets_rsvp&required=tickets_rsvp') }}">
+        <i class="align-middle" data-feather="{{ hasTicketsRsvp ? 'tag' : 'lock' }}"></i>
+        <span class="align-middle">{{ trans('nav.tickets_rsvp') }}</span>
+    </a>
+</li>
+<li class="sidebar-item {{ hasWarehouse ? '' : 'sidebar-item-locked' }}">
+    <a class="sidebar-link" href="{{ path(hasWarehouse ? 'panel/planner-hub/management/storage' : 'panel/planner-hub/no-access?module=inventory_storage&required=inventory_storage') }}">
+        <i class="align-middle" data-feather="{{ hasWarehouse ? 'archive' : 'lock' }}"></i>
+        <span class="align-middle">{{ trans('nav.warehouse') }}</span>
+    </a>
+</li>
+<li class="sidebar-item {{ hasAiAdvisor ? '' : 'sidebar-item-locked' }}">
+    <a class="sidebar-link" href="{{ path(hasAiAdvisor ? 'panel/planner-hub/management/chatia' : 'panel/planner-hub/no-access?module=ai_advisor&required=ai_advisor') }}">
+        <i class="align-middle" data-feather="{{ hasAiAdvisor ? 'cpu' : 'lock' }}"></i>
+        <span class="align-middle">{{ trans('nav.ai_assistant') }}</span>
+    </a>
+</li>
+<li class="sidebar-item {{ hasServiceOps ? '' : 'sidebar-item-locked' }}">
+    <a class="sidebar-link" href="{{ path(hasServiceOps ? 'panel/planner-hub/management/payroll' ~ sharedContext : serviceLock) }}">
+        <i class="align-middle" data-feather="{{ hasServiceOps ? 'clock' : 'lock' }}"></i>
+        <span class="align-middle">{{ trans('ui.payroll') }}</span>
+    </a>
+</li>
+<li class="sidebar-header">{{ trans('nav.team_clients') }}</li>
+<li class="sidebar-item {{ hasAnyCore ? '' : 'sidebar-item-locked' }}">
+    <a class="sidebar-link" href="{{ path(hasAnyCore ? 'panel/planner-hub/management/users?active_tab=clients' ~ sharedJoinContext : sharedLock) }}">
+        <i class="align-middle" data-feather="{{ hasAnyCore ? 'users' : 'lock' }}"></i>
+        <span class="align-middle">{{ trans('nav.customers') }}</span>
+    </a>
+</li>
+<li class="sidebar-item {{ hasAnyCore ? '' : 'sidebar-item-locked' }}">
+    <a class="sidebar-link" href="{{ path(hasAnyCore ? 'panel/planner-hub/management/users' ~ sharedContext : sharedLock) }}">
+        <i class="align-middle" data-feather="{{ hasAnyCore ? 'user-check' : 'lock' }}"></i>
+        <span class="align-middle">{{ trans('nav.team') }}</span>
+    </a>
+</li>
+<li class="sidebar-item {{ hasAnyCore ? '' : 'sidebar-item-locked' }}">
+    <a class="sidebar-link" href="{{ path(hasAnyCore ? 'panel/planner-hub/team/chat' ~ sharedContext : sharedLock) }}">
+        <i class="align-middle" data-feather="{{ hasAnyCore ? 'message-circle' : 'lock' }}"></i>
+        <span class="align-middle">{{ trans('nav.inbox') }}</span>
+    </a>
+</li>
+
+<li class="sidebar-header">{{ trans('nav.insights') }}</li>
+<li class="sidebar-item {{ hasAnyCore ? '' : 'sidebar-item-locked' }}">
+    <a class="sidebar-link" href="{{ path(hasAnyCore ? 'panel/planner-hub/management/payments' ~ sharedContext : sharedLock) }}">
+        <i class="align-middle" data-feather="{{ hasAnyCore ? 'bar-chart-2' : 'lock' }}"></i>
+        <span class="align-middle">{{ trans('nav.reports') }}</span>
+    </a>
+</li>
+
+<li class="sidebar-header">{{ trans('nav.business') }}</li>
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/planner-hub/institution-profile') }}">
+        <i class="align-middle" data-feather="briefcase"></i>
+        <span class="align-middle">{{ trans('nav.public_profile') }}</span>
+    </a>
+</li>
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/membership/manage') }}">
+        <i class="align-middle" data-feather="shopping-bag"></i>
+        <span class="align-middle">{{ trans('nav.modules_billing') }}</span>
+    </a>
+</li>
+{% if isMobileApp == false %}
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/cards') }}">
+        <i class="align-middle" data-feather="credit-card"></i>
+        <span class="align-middle">{{ trans('nav.payment_methods') }}</span>
+    </a>
+</li>
+{% endif %}
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/settings') }}">
+        <i class="align-middle" data-feather="settings"></i>
+        <span class="align-middle">{{ trans('nav.settings') }}</span>
+    </a>
+</li>
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/afiliate-hub') }}">
+        <i class="align-middle" data-feather="share"></i>
+        <span class="align-middle">{{ trans('nav.affiliate_program') }}</span>
+    </a>
+</li>
+
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/planner-hub/settings/smtp') }}">
+        <i class="align-middle" data-feather="help-circle"></i>
+        <span class="align-middle">{{ trans('nav.help') }}</span>
+    </a>
+</li>
+
+

@@ -1,0 +1,352 @@
+﻿{% extends 'templates/base.admin.twig' %}
+
+{% block style %}
+<style>
+.step-wizard { display: flex; justify-content: space-between; margin-bottom: 2rem; }
+.step-wizard .step { flex: 1; text-align: center; padding: 1rem; position: relative; }
+.step-wizard .step:not(:last-child)::after { content: ''; position: absolute; top: 25px; right: -50%; width: 100%; height: 2px; background: #dee2e6; z-index: -1; }
+.step-wizard .step.active { color: #0d6efd; font-weight: bold; }
+.step-wizard .step.active .step-number { background: #0d6efd; color: white; }
+.step-wizard .step.completed { color: #198754; }
+.step-wizard .step.completed .step-number { background: #198754; color: white; }
+.step-number { display: inline-block; width: 40px; height: 40px; line-height: 40px; border-radius: 50%; background: #dee2e6; margin-bottom: 0.5rem; }
+.event-step { display: none; }
+.event-step.active { display: block; }
+.template-card { cursor: pointer; border: 3px solid transparent; transition: all 0.3s; }
+.template-card:hover { border-color: #0d6efd; transform: translateY(-5px); }
+.template-card.selected { border-color: #198754; background: #d1e7dd; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h1 class="h3 mb-4 text-center">{{ trans('planner_hub.create_new_event') }}</h1>
+            
+            <!-- Step Wizard -->
+            <div class="step-wizard">
+                <div class="step active" id="step-indicator-1">
+                    <div class="step-number">1</div>
+                    <div>{{ trans('planner_hub.event_details') }}</div>
+                </div>
+                <div class="step" id="step-indicator-2">
+                    <div class="step-number">2</div>
+                    <div>{{ trans('planner_hub.venue_date') }}</div>
+                </div>
+                <div class="step" id="step-indicator-3">
+                    <div class="step-number">3</div>
+                    <div>{{ trans('planner_hub.design') }}</div>
+                </div>
+                <div class="step" id="step-indicator-4">
+                    <div class="step-number">4</div>
+                    <div>{{ trans('planner_hub.settings') }}</div>
+                </div>
+            </div>
+
+            <form method="post" id="eventForm" class="card shadow-lg p-4" enctype="multipart/form-data">
+                
+                <!-- STEP 1: Event Details -->
+                <div class="event-step active" id="step-1">
+                    <h4 class="mb-3">{{ trans('planner_hub.step_event_details') }}</h4>
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.event_name_required') }}</label>
+                            <input type="text" name="event_name" class="form-control" required placeholder="{{ trans('planner_hub.event_name_placeholder') }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.event_type_required') }}</label>
+                            <select name="event_type" class="form-select" required>
+                                <option value="">{{ trans('planner_hub.select_type') }}</option>
+                                {% for key, label in eventTypes %}
+                                <option value="{{ key }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.event_description') }}</label>
+                            <textarea name="event_description" class="form-control" rows="4" placeholder="{{ trans('planner_hub.event_description_placeholder') }}"></textarea>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.custom_welcome_message') }}</label>
+                            <textarea name="custom_message" class="form-control" rows="3" placeholder="{{ trans('planner_hub.custom_welcome_placeholder') }}"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Venue & Date -->
+                <div class="event-step" id="step-2">
+                    <h4 class="mb-3">{{ trans('planner_hub.step_venue_date') }}</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.event_date_required') }}</label>
+                            <input type="date" name="event_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.start_time_required') }}</label>
+                            <input type="time" name="event_time" class="form-control" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.end_time') }}</label>
+                            <input type="time" name="event_end_time" class="form-control">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.venue_name') }}</label>
+                            <input type="text" name="venue_name" class="form-control" placeholder="{{ trans('planner_hub.venue_name_placeholder') }}">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.venue_address') }}</label>
+                            <input type="text" name="venue_address" class="form-control" data-places placeholder="{{ trans('planner_hub.venue_address_placeholder') }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.city') }}</label>
+                            <input type="text" name="venue_city" class="form-control">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.state') }}</label>
+                            <input type="text" name="venue_state" class="form-control" maxlength="2" placeholder="FL">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.zip_code') }}</label>
+                            <input type="text" name="venue_zip" class="form-control" maxlength="10">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.expected_guests') }}</label>
+                            <input type="number" name="expected_guests" class="form-control" min="1" placeholder="{{ trans('planner_hub.expected_guests_placeholder') }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.maximum_capacity') }}</label>
+                            <input type="number" name="max_guests" class="form-control" min="1" placeholder="{{ trans('planner_hub.maximum_capacity_placeholder') }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Design -->
+                <div class="event-step" id="step-3">
+                    <h4 class="mb-3">{{ trans('planner_hub.step_choose_design') }}</h4>
+                    <p class="text-muted">{{ trans('planner_hub.select_template_mini_site') }}</p>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-4 mb-3">
+                            <div class="card template-card" onclick="selectTemplate(1)">
+                                <div class="card-body text-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; height: 200px; display: flex; align-items: center; justify-content: center;">
+                                    <div>
+                                        <h5>{{ trans('planner_hub.template_elegant_purple') }}</h5>
+                                        <p class="mb-0">{{ trans('planner_hub.template_perfect_weddings') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card template-card" onclick="selectTemplate(2)">
+                                <div class="card-body text-center" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; height: 200px; display: flex; align-items: center; justify-content: center;">
+                                    <div>
+                                        <h5>{{ trans('planner_hub.template_pink_sunset') }}</h5>
+                                        <p class="mb-0">{{ trans('planner_hub.template_fun_vibrant') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card template-card" onclick="selectTemplate(3)">
+                                <div class="card-body text-center" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; height: 200px; display: flex; align-items: center; justify-content: center;">
+                                    <div>
+                                        <h5>{{ trans('planner_hub.template_ocean_blue') }}</h5>
+                                        <p class="mb-0">{{ trans('planner_hub.template_fresh_modern') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card template-card" onclick="selectTemplate(4)">
+                                <div class="card-body text-center" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; height: 200px; display: flex; align-items: center; justify-content: center;">
+                                    <div>
+                                        <h5>{{ trans('planner_hub.template_mint_green') }}</h5>
+                                        <p class="mb-0">{{ trans('planner_hub.template_calm_sophisticated') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card template-card" onclick="selectTemplate(5)">
+                                <div class="card-body text-center" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; height: 200px; display: flex; align-items: center; justify-content: center;">
+                                    <div>
+                                        <h5>{{ trans('planner_hub.template_warm_sunset') }}</h5>
+                                        <p class="mb-0">{{ trans('planner_hub.template_cozy_inviting') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="template_id" id="template_id" value="1">
+                    <input type="hidden" name="primary_color" id="primary_color" value="#667eea">
+                    <input type="hidden" name="secondary_color" id="secondary_color" value="#764ba2">
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.font_family') }}</label>
+                            <select name="font_family" class="form-select">
+                                <option value="Poppins">{{ trans('planner_hub.font_poppins') }}</option>
+                                <option value="Playfair Display">{{ trans('planner_hub.font_playfair') }}</option>
+                                <option value="Montserrat">{{ trans('planner_hub.font_montserrat') }}</option>
+                                <option value="Dancing Script">{{ trans('planner_hub.font_dancing') }}</option>
+                                <option value="Roboto">{{ trans('planner_hub.font_roboto') }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.header_text_color') }}</label>
+                            <input type="color" name="header_text_color" class="form-control form-control-color" id="header_text_color" value="#FFFFFF" onchange="updateTextColorPreview()">
+                            <small class="text-muted">{{ trans('planner_hub.color_for_header_text') }}</small>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.preview') }}</label>
+                            <div id="text_color_preview" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); padding: 20px; border-radius: 8px; color: #FFFFFF; text-align: center; font-weight: bold;">
+                                {{ trans('planner_hub.sample_header_text') }}
+                            </div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.cover_image_optional') }}</label>
+                            <input type="file" name="cover_image" class="form-control" accept="image/*" id="cover_image_input" onchange="previewCoverImage(this)">
+                            <small class="text-muted">{{ trans('planner_hub.recommended_size') }}</small>
+                            <div id="cover_preview" class="mt-3" style="display:none;">
+                                <img id="cover_preview_img" src="" alt="{{ trans('planner_hub.cover_preview') }}" class="img-fluid rounded shadow-sm" style="max-height: 200px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 4: Settings -->
+                <div class="event-step" id="step-4">
+                    <h4 class="mb-3">{{ trans('planner_hub.step_rsvp_settings') }}</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.rsvp_deadline') }}</label>
+                            <input type="date" name="rsvp_deadline" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.dress_code') }}</label>
+                            <input type="text" name="dress_code" class="form-control" placeholder="{{ trans('planner_hub.dress_code_placeholder') }}">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check form-switch">
+                                <input type="checkbox" name="allow_plus_ones" class="form-check-input" id="allow_plus_ones" checked>
+                                <label class="form-check-label" for="allow_plus_ones">{{ trans('planner_hub.allow_plus_ones') }}</label>
+                            </div>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">{{ trans('planner_hub.max_plus_ones_per_guest') }}</label>
+                            <input type="number" name="max_plus_ones_per_guest" class="form-control" value="5" min="1" max="10">
+                        </div>
+                    </div>
+
+                    <div class="alert alert-success mt-4 tickets-module-alert"><h5>{{ trans('tickets_rsvp_setup.module_included_title') }}</h5><p class="mb-2">{{ trans('tickets_rsvp_setup.module_included_body') }}</p><a class="btn btn-outline-success btn-sm" href="{{ path(paymentSetupUrl|default('panel/planner-hub/settings/payment-providers')) }}">{{ trans('tickets_rsvp_setup.configure_payment_buttons') }}</a></div></div>
+
+                <!-- Navigation Buttons -->
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-secondary" id="prevBtn" onclick="changeStep(-1)" style="display:none;">
+                        <i class="bi bi-arrow-left"></i> {{ trans('planner_hub.previous') }}
+                    </button>
+                    <div></div>
+                    <button type="button" class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">
+                        {{ trans('planner_hub.next') }} <i class="bi bi-arrow-right"></i>
+                    </button>
+                    <button type="button" class="btn btn-success d-none" id="submitBtn" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                        {{ trans('planner_hub.create_event_pay') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentStep = 1;
+const totalSteps = 4;
+const i18n = {
+    please_fill_out: '{{ trans('planner_hub.please_fill_out')|e('js') }}',
+    required_field: '{{ trans('planner_hub.required_field')|e('js') }}',
+    processing_payment: '{{ trans('planner_hub.processing_payment')|e('js') }}',
+    please_wait_dont_close: '{{ trans('planner_hub.please_wait_dont_close')|e('js') }}'
+};
+
+const templates = {
+    1: { primary: '#667eea', secondary: '#764ba2' },
+    2: { primary: '#f093fb', secondary: '#f5576c' },
+    3: { primary: '#4facfe', secondary: '#00f2fe' },
+    4: { primary: '#43e97b', secondary: '#38f9d7' },
+    5: { primary: '#fa709a', secondary: '#fee140' }
+};
+
+function selectTemplate(id) {
+    document.querySelectorAll('.template-card').forEach(card => card.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+    document.getElementById('template_id').value = id;
+    document.getElementById('primary_color').value = templates[id].primary;
+    document.getElementById('secondary_color').value = templates[id].secondary;
+    updateTextColorPreview();
+}
+
+function changeStep(direction) {
+    if (!validateStep(currentStep) && direction > 0) return;
+    
+    document.getElementById(`step-${currentStep}`).classList.remove('active');
+    document.getElementById(`step-indicator-${currentStep}`).classList.remove('active');
+    if (direction < 0) {
+        document.getElementById(`step-indicator-${currentStep}`).classList.remove('completed');
+    }
+    
+    currentStep += direction;
+    
+    document.getElementById(`step-${currentStep}`).classList.add('active');
+    document.getElementById(`step-indicator-${currentStep}`).classList.add('active');
+    
+    for (let i = 1; i < currentStep; i++) {
+        document.getElementById(`step-indicator-${i}`).classList.add('completed');
+    }
+    
+    document.getElementById('prevBtn').style.display = currentStep === 1 ? 'none' : 'block';
+    document.getElementById('nextBtn').style.display = currentStep === totalSteps ? 'none' : 'block';
+    document.getElementById('submitBtn').classList.toggle('d-none', currentStep !== totalSteps);
+}
+
+function validateStep(step) {
+    const stepDiv = document.getElementById(`step-${step}`);
+    const requiredFields = stepDiv.querySelectorAll('[required]');
+    for (const field of requiredFields) {
+        if (!field.value.trim()) {
+            const label = field.previousElementSibling ? field.previousElementSibling.textContent.replace(/\s*\*\s*$/, '').trim() : '';
+            alert((i18n.please_fill_out.replace('{field}', label || i18n.required_field)));
+            field.focus();
+            return false;
+        }
+    }
+    return true;
+}
+
+selectTemplate(1);
+
+function previewCoverImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('cover_preview_img').src = e.target.result;
+            document.getElementById('cover_preview').style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function updateTextColorPreview() {
+    const textColor = document.getElementById('header_text_color').value;
+    const preview = document.getElementById('text_color_preview');
+    const primaryColor = document.getElementById('primary_color').value;
+    const secondaryColor = document.getElementById('secondary_color').value;
+    
+    preview.style.color = textColor;
+    preview.style.background = `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`;
+}
+</script>
+{% endblock %}
+
+

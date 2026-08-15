@@ -1,0 +1,347 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set status = affiliate_profile.application_status|default('PENDING') %}
+{% set aff_code = affiliate_code %}
+{% set base_link = path('/r/' ~ aff_code) %}
+
+<main class="container-fluid py-4">
+  <section class="p-4 p-md-5 rounded-4 mb-4" style="background:linear-gradient(135deg,#071312,#0f766e);color:#fff;">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-4">
+      <div>
+        <div class="text-uppercase fw-bold small mb-2" style="color:#a7f3d0;">Ophyra Referral Partner</div>
+        <h1 class="fw-bold mb-2" style="color:#fff;">Affiliate Dashboard</h1>
+        <p class="mb-0" style="max-width:760px;color:#d1fae5;">
+          Track referrals, eligible recurring commissions, monthly performance and payout information for Ophyra Base and approved add-ons.
+        </p>
+      </div>
+      <div class="align-self-start">
+        {% if status == 'APPROVED' %}
+          <span class="badge bg-success fs-6">Approved</span>
+        {% elseif status == 'REJECTED' %}
+          <span class="badge bg-danger fs-6">Rejected</span>
+        {% elseif status == 'SUSPENDED' %}
+          <span class="badge bg-dark fs-6">Suspended</span>
+        {% else %}
+          <span class="badge bg-warning text-dark fs-6">Pending Review</span>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+      <div class="card h-100 border-0 shadow-sm"><div class="card-body">
+        <div class="text-muted small">Confirmed referrals</div>
+        <div class="fs-2 fw-bold">{{ stats.confirmed_referrals }}</div>
+      </div></div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card h-100 border-0 shadow-sm"><div class="card-body">
+        <div class="text-muted small">Pending payout</div>
+        <div class="fs-2 fw-bold">${{ pending_total|number_format(2,'.',',') }}</div>
+      </div></div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card h-100 border-0 shadow-sm"><div class="card-body">
+        <div class="text-muted small">Total earned</div>
+        <div class="fs-2 fw-bold">${{ stats.total_commissions_earned|number_format(2,'.',',') }}</div>
+      </div></div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card h-100 border-0 shadow-sm"><div class="card-body">
+        <div class="text-muted small">Commission rate</div>
+        <div class="fs-2 fw-bold">{{ affiliate_profile.commission_rate|default(30)|number_format(0) }}%</div>
+      </div></div>
+    </div>
+  </div>
+
+  <section class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <h2 class="h5 fw-bold mb-3">Your tracking link</h2>
+      {% if status == 'APPROVED' %}
+        <div class="input-group input-group-lg">
+          <input id="affLink" type="text" class="form-control" value="" readonly>
+          <button id="copyMainLink" class="btn btn-dark fw-bold" type="button">Copy</button>
+        </div>
+        <small class="text-muted d-block mt-2">Your link tracks approved referrals through Ophyra's referral route.</small>
+      {% else %}
+        <div class="alert alert-warning mb-0">
+          Your application is not approved yet. Complete your profile below. Your link becomes usable after Ophyra approval.
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <div class="row g-4">
+    <div class="col-xl-7">
+      <section class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h5 fw-bold mb-0">Referrals</h2>
+            <span class="badge bg-light text-dark">{{ referrals_total }} total</span>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>{{ trans('ui.status') }}</th>
+                  <th>Paid</th>
+                  <th>Commission</th>
+                  <th>Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for referral in referrals %}
+                  <tr>
+                    <td>
+                      <strong>{{ referral.name }} {{ referral.lastname }}</strong><br>
+                      <small class="text-muted">{{ referral.email }}</small>
+                    </td>
+                    <td>
+                      {% if referral.membership_type == 'PAID' %}
+                        <span class="badge bg-success">Active customer</span>
+                      {% else %}
+                        <span class="badge bg-secondary">Not paid yet</span>
+                      {% endif %}
+                    </td>
+                    <td>${{ referral.total_gross_generated|default(0)|number_format(2,'.',',') }}</td>
+                    <td class="fw-bold text-success">${{ referral.total_commissions_generated|default(0)|number_format(2,'.',',') }}</td>
+                    <td><small>{{ referral.user_registered_at|date('M d, Y') }}</small></td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="5" class="text-center text-muted py-4">No referrals yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h2 class="h5 fw-bold mb-3">Recent commissions</h2>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>{{ trans('ui.date') }}</th>
+                  <th>Customer</th>
+                  <th>Product</th>
+                  <th>Gross</th>
+                  <th>Commission</th>
+                  <th>{{ trans('ui.status') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for commission in commissions %}
+                  <tr>
+                    <td><small>{{ commission.created_at|date('M d, Y') }}</small></td>
+                    <td>{{ commission.referred_name }}</td>
+                    <td>{{ commission.product_name|default(commission.transaction_type|replace({'_':' '})|title) }}</td>
+                    <td>${{ commission.gross_amount|number_format(2,'.',',') }}</td>
+                    <td class="fw-bold text-success">${{ commission.commission_amount|number_format(2,'.',',') }}</td>
+                    <td>
+                      {% if commission.status == 'paid' %}
+                        <span class="badge bg-success">Paid</span>
+                      {% elseif commission.status == 'approved' %}
+                        <span class="badge bg-info">Approved</span>
+                      {% elseif commission.status == 'pending' %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                      {% else %}
+                        <span class="badge bg-secondary">{{ commission.status|title }}</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="6" class="text-center text-muted py-4">No commissions yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-xl-5">
+      <section class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h2 class="h5 fw-bold mb-3">Partner and payout profile</h2>
+          <form method="post" class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Legal name</label>
+              <input class="form-control" name="legal_name" value="{{ affiliate_profile.legal_name|default('') }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Business name</label>
+              <input class="form-control" name="business_name" value="{{ affiliate_profile.business_name|default('') }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Business type</label>
+              <input class="form-control" name="business_type" value="{{ affiliate_profile.business_type|default('') }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tax country</label>
+              <input class="form-control" name="tax_country" value="{{ affiliate_profile.tax_country|default('') }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tax reference</label>
+              <input class="form-control" name="tax_reference" value="{{ affiliate_profile.tax_reference|default('') }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tax ID last 4</label>
+              <input class="form-control" name="tax_id_last4" maxlength="4" value="{{ affiliate_profile.tax_id_last4|default('') }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Contact email</label>
+              <input class="form-control" name="contact_email" type="email" value="{{ affiliate_profile.contact_email|default(user.email) }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Contact phone</label>
+              <input class="form-control" name="contact_phone" value="{{ affiliate_profile.contact_phone|default('') }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Address</label>
+              <input class="form-control" name="address_line1" value="{{ affiliate_profile.address_line1|default('') }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">City</label>
+              <input class="form-control" name="city" value="{{ affiliate_profile.city|default('') }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">State</label>
+              <input class="form-control" name="state" value="{{ affiliate_profile.state|default('') }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">ZIP</label>
+              <input class="form-control" name="zip" value="{{ affiliate_profile.zip|default('') }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Country</label>
+              <input class="form-control" name="country" value="{{ affiliate_profile.country|default('') }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Payout method</label>
+              <select class="form-select" name="payout_method">
+                {% for method in ['PAYPAL','ACH','OTHER','MANUAL'] %}
+                  <option value="{{ method }}" {{ affiliate_profile.payout_method|default('') == method ? 'selected' : '' }}>{{ method }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">PayPal email</label>
+              <input class="form-control" name="paypal_email" type="email" value="{{ affiliate_profile.paypal_email|default('') }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Account holder name</label>
+              <input class="form-control" name="account_holder_name" value="{{ affiliate_profile.account_holder_name|default('') }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Bank name</label>
+              <input class="form-control" name="bank_name" value="{{ affiliate_profile.bank_name|default('') }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Routing number</label>
+              <input class="form-control" name="routing_number" value="{{ affiliate_profile.routing_number|default('') }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Account last 4 only</label>
+              <input class="form-control" name="account_number_last4" maxlength="4" value="{{ affiliate_profile.account_number_last4|default('') }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Account type</label>
+              <input class="form-control" name="account_type" value="{{ affiliate_profile.account_type|default('') }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Payout notes</label>
+              <textarea class="form-control" name="payout_notes" rows="3">{{ affiliate_profile.payout_notes|default('') }}</textarea>
+              <small class="text-muted">Do not enter a full bank account number. Store only the last 4 digits unless Ophyra provides a secure method.</small>
+            </div>
+            <div class="col-12">
+              <button class="btn btn-dark w-100">Save partner profile</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h2 class="h5 fw-bold mb-3">Monthly report</h2>
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead><tr><th>Month</th><th>Gross</th><th>Pending</th><th>Paid</th></tr></thead>
+              <tbody>
+                {% for row in monthly_summary %}
+                  <tr>
+                    <td>{{ row.month }}/{{ row.year }}</td>
+                    <td>${{ row.gross_amount|number_format(2,'.',',') }}</td>
+                    <td>${{ row.pending_amount|number_format(2,'.',',') }}</td>
+                    <td>${{ row.paid_amount|number_format(2,'.',',') }}</td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="4" class="text-center text-muted py-4">No monthly activity yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h2 class="h5 fw-bold mb-3">Payout history</h2>
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead><tr><th>{{ trans('ui.date') }}</th><th>{{ trans('ui.amount') }}</th><th>Method</th><th>Proof</th></tr></thead>
+              <tbody>
+                {% for payout in payout_history %}
+                  <tr>
+                    <td>{{ payout.paid_at ? payout.paid_at|date('M d, Y') : payout.created_at|date('M d, Y') }}</td>
+                    <td>${{ payout.total_amount|number_format(2,'.',',') }}</td>
+                    <td>{{ payout.payout_method|default(payout.payment_method)|replace({'_':' '})|title }}</td>
+                    <td>
+                      {% if payout.payment_proof_url %}
+                        <a href="{{ payout.payment_proof_url }}" target="_blank" rel="noopener">View</a>
+                      {% else %}
+                        <span class="text-muted">None</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="4" class="text-center text-muted py-4">No payouts yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+(function(){
+  const BASE_PATH = "{{ base_link }}";
+  const AFF_CODE = "{{ aff_code }}";
+  const input = document.getElementById('affLink');
+  const button = document.getElementById('copyMainLink');
+
+  if (!input) return;
+
+  const url = new URL(BASE_PATH, window.location.origin);
+  url.searchParams.set('ref', AFF_CODE);
+  input.value = url.toString();
+
+  if (button) {
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(input.value);
+        button.textContent = 'Copied';
+        setTimeout(() => button.textContent = 'Copy', 1400);
+      } catch(e) {}
+    });
+  }
+})();
+</script>
+{% endblock %}

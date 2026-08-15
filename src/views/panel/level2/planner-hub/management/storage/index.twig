@@ -1,0 +1,142 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="mt-4 inventory-home">
+    <div class="container-fluid px-3 px-xl-4">
+        <section class="inventory-hero mb-4">
+            <div>
+                <span class="inventory-kicker">{{ trans('planner_hub.storage_home_badge') }}</span>
+                <h1>{{ trans('planner_hub.storage_home_title') }}</h1>
+                <p>{{ trans('planner_hub.storage_home_subtitle') }}</p>
+            </div>
+            <div class="inventory-hero-actions">
+                <a href="{{ path('panel/planner-hub/management/storage/containers/create') }}" class="btn btn-light fw-bold">{{ trans('planner_hub.add_new_container') }}</a>
+                <a href="{{ first_container_id ? path('panel/planner-hub/management/storage/containers/items/create?container=' ~ first_container_id) : path('panel/planner-hub/management/storage/containers') }}" class="btn btn-outline-light fw-bold">{{ trans('planner_hub.add_new_item') }}</a>
+            </div>
+        </section>
+
+        {{ macros.breadcrumb2() }}
+
+        <section class="inventory-search-card mb-4">
+            <div>
+                <span>{{ trans('planner_hub.search_items') }}</span>
+                <h2>{{ trans('planner_hub.storage_search_title') }}</h2>
+                <p>{{ trans('planner_hub.storage_search_desc') }}</p>
+            </div>
+            <form method="get" class="inventory-search-form">
+                <i data-feather="search"></i>
+                <input type="text" name="q" value="{{ term }}" placeholder="{{ trans('planner_hub.search_item_name_placeholder') }}">
+                <button type="submit">{{ trans('planner_hub.search') }}</button>
+            </form>
+        </section>
+
+        <section class="inventory-stats-grid mb-4">
+            <a href="{{ path('panel/planner-hub/management/storage/containers') }}" class="inventory-stat-card">
+                <span>{{ trans('planner_hub.containers') }}</span>
+                <strong>{{ containers_count }}</strong>
+                <small>{{ trans('planner_hub.storage_containers_metric_desc') }}</small>
+            </a>
+            <a href="{{ path('panel/planner-hub/management/storage/containers/items/search') }}" class="inventory-stat-card">
+                <span>{{ trans('planner_hub.storage_items') }}</span>
+                <strong>{{ items_count }}</strong>
+                <small>{{ trans('planner_hub.storage_items_metric_desc') }}</small>
+            </a>
+        </section>
+
+        <section class="inventory-actions-grid mb-4">
+            <a href="{{ path('panel/planner-hub/management/storage/containers/create') }}" class="inventory-action-card">
+                <span class="inventory-action-icon"><i data-feather="box"></i></span>
+                <div>
+                    <strong>{{ trans('planner_hub.create_container') }}</strong>
+                    <p>{{ trans('planner_hub.storage_create_container_help') }}</p>
+                </div>
+            </a>
+            <a href="{{ first_container_id ? path('panel/planner-hub/management/storage/containers/items/create?container=' ~ first_container_id) : path('panel/planner-hub/management/storage/containers') }}" class="inventory-action-card">
+                <span class="inventory-action-icon"><i data-feather="plus-circle"></i></span>
+                <div>
+                    <strong>{{ trans('planner_hub.add_new_item') }}</strong>
+                    <p>{{ first_container_id ? trans('planner_hub.storage_add_item_help') : trans('planner_hub.storage_add_item_needs_container') }}</p>
+                </div>
+            </a>
+        </section>
+
+        {% if term or items_count > 0 %}
+            <section class="inventory-results-card">
+                <div class="inventory-results-head">
+                    <div>
+                        <span>{{ term ? trans('planner_hub.search_results_for') : trans('planner_hub.all_inventory_items') }}</span>
+                        <h2>{% if term %}"{{ term }}"{% else %}{{ trans('planner_hub.inventory_catalog') }}{% endif %}</h2>
+                    </div>
+                    <strong>{{ results|length }} {{ trans('planner_hub.results')|default('results') }}</strong>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle inventory-results-table">
+                        <thead>
+                            <tr>
+                                <th>{{ trans('planner_hub.containers') }}</th>
+                                <th>{{ trans('planner_hub.item_name') }}</th>
+                                <th>{{ trans('planner_hub.quantity') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in results %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ path('panel/planner-hub/management/storage/containers/items', { container_id: item.container_id }) }}">{{ item.container_name }}</a>
+                                    </td>
+                                    <td>{{ item.item_name }}</td>
+                                    <td><span class="inventory-qty">{{ item.quantity }}</span></td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-4">{{ trans('planner_hub.no_matching_items_found') }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        {% endif %}
+    </div>
+</main>
+
+<style>
+.inventory-home { color:#0f172a; }
+.inventory-hero { align-items:flex-end; background:radial-gradient(circle at 88% 18%, rgba(45,212,191,.24), transparent 34%),linear-gradient(135deg,#102338,#0f766e); border-radius:28px; box-shadow:0 24px 70px rgba(15,23,42,.14); color:#fff; display:flex; gap:1.5rem; justify-content:space-between; padding:clamp(1.4rem,4vw,3rem); }
+.inventory-kicker, .inventory-search-card span, .inventory-results-head span, .inventory-stat-card span { color:#8ff7e8; display:block; font-size:.78rem; font-weight:900; letter-spacing:.16em; text-transform:uppercase; }
+.inventory-hero h1 { color:#fff; font-size:clamp(2rem,4vw,3.8rem); font-weight:900; letter-spacing:-.04em; margin:.4rem 0 0; }
+.inventory-hero p { color:rgba(255,255,255,.84); font-size:1rem; line-height:1.6; margin:.75rem 0 0; max-width:760px; }
+.inventory-hero-actions { display:flex; flex-wrap:wrap; gap:.7rem; justify-content:flex-end; min-width:260px; }
+.inventory-search-card, .inventory-results-card { background:#fff; border:1px solid rgba(148,163,184,.24); border-radius:24px; box-shadow:0 18px 55px rgba(15,23,42,.08); padding:1.35rem; }
+.inventory-search-card { align-items:center; display:grid; gap:1rem; grid-template-columns:minmax(0,1fr) minmax(320px,620px); }
+.inventory-search-card h2, .inventory-results-head h2 { font-size:1.55rem; font-weight:900; letter-spacing:-.03em; margin:.2rem 0; }
+.inventory-search-card p { color:#64748b; margin:0; }
+.inventory-search-form { align-items:center; background:#f8fafc; border:1px solid #dbe5ef; border-radius:999px; display:flex; gap:.7rem; padding:.45rem .45rem .45rem 1rem; }
+.inventory-search-form svg { color:#64748b; height:20px; width:20px; }
+.inventory-search-form input { background:transparent; border:0; flex:1; font-size:1rem; min-width:0; outline:0; }
+.inventory-search-form button { background:linear-gradient(135deg,#0f4c5c,#0f766e); border:0; border-radius:999px; color:#fff; font-weight:900; padding:.75rem 1.35rem; }
+.inventory-stats-grid { display:grid; gap:1rem; grid-template-columns:repeat(3,minmax(0,1fr)); }
+.inventory-stat-card { background:#fff; border:1px solid rgba(148,163,184,.24); border-radius:22px; color:#0f172a; padding:1.25rem; text-decoration:none; transition:.18s ease; }
+.inventory-stat-card:hover { box-shadow:0 18px 50px rgba(15,23,42,.1); transform:translateY(-2px); }
+.inventory-stat-card span { color:#0f766e; }
+.inventory-stat-card strong { display:block; font-size:2.4rem; font-weight:950; letter-spacing:-.05em; line-height:1; margin:.55rem 0; }
+.inventory-stat-card small { color:#64748b; font-weight:700; }
+.inventory-actions-grid { display:grid; gap:1rem; grid-template-columns:repeat(3,minmax(0,1fr)); }
+.inventory-action-card { align-items:flex-start; background:#fff; border:1px solid rgba(148,163,184,.24); border-radius:22px; color:#0f172a; display:flex; gap:1rem; padding:1.25rem; text-decoration:none; transition:.18s ease; }
+.inventory-action-card:hover { box-shadow:0 18px 50px rgba(15,23,42,.1); transform:translateY(-2px); }
+.inventory-action-card-muted { background:#f8fafc; color:#334155; }
+.inventory-action-icon { align-items:center; background:linear-gradient(135deg,#99f6e4,#14b8a6); border-radius:16px; color:#083344; display:flex; flex:0 0 52px; height:52px; justify-content:center; width:52px; }
+.inventory-action-card strong { display:block; font-size:1.05rem; font-weight:900; margin:.15rem 0 .35rem; }
+.inventory-action-card p { color:#64748b; line-height:1.5; margin:0; }
+.inventory-results-head { align-items:center; display:flex; gap:1rem; justify-content:space-between; margin-bottom:1rem; }
+.inventory-results-head span { color:#0f766e; }
+.inventory-results-head strong { background:#ecfeff; border:1px solid #99f6e4; border-radius:999px; color:#0f766e; padding:.55rem .9rem; }
+.inventory-results-table { margin:0; }
+.inventory-results-table thead th { background:#f8fafc; color:#64748b; font-size:.78rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+.inventory-results-table a { color:#0f766e; font-weight:900; text-decoration:none; }
+.inventory-qty { background:#ecfeff; border:1px solid #99f6e4; border-radius:999px; color:#0f766e; display:inline-block; font-weight:900; min-width:48px; padding:.35rem .7rem; text-align:center; }
+@media (max-width:992px){ .inventory-hero{align-items:stretch; flex-direction:column;} .inventory-hero-actions{justify-content:flex-start;} .inventory-search-card{grid-template-columns:1fr;} .inventory-stats-grid,.inventory-actions-grid{grid-template-columns:1fr;} }
+@media (max-width:576px){ .inventory-search-form{border-radius:20px; flex-wrap:wrap;} .inventory-search-form button{width:100%;} .inventory-results-head{align-items:flex-start; flex-direction:column;} }
+</style>
+{% endblock %}

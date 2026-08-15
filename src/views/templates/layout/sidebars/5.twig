@@ -1,0 +1,98 @@
+﻿<li class="sidebar-header">{{ trans('ui.client_portal') }}</li>
+
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/home') }}">
+        <i class="align-middle" data-feather="home"></i>
+        <span class="align-middle">{{ trans('ui.home') }}</span>
+    </a>
+</li>
+
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/planner-hub/orders/orders?view=orders') }}">
+        <i class="align-middle" data-feather="shopping-cart"></i>
+        <span class="align-middle">{{ trans('client_service_orders.sidebar_service_orders') }}</span>
+    </a>
+</li>
+
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/store/orders/home') }}">
+        <i class="align-middle" data-feather="truck"></i>
+        <span class="align-middle">{{ trans('client_service_orders.sidebar_store_purchases_delivery') }}</span>
+    </a>
+</li>
+
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/planner-hub/orders/orders?view=documents') }}">
+        <i class="align-middle" data-feather="file-text"></i>
+        <span class="align-middle">{{ trans('ui.contracts_files') }}</span>
+    </a>
+</li>
+
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/chat') }}">
+        <i class="align-middle" data-feather="message-circle"></i>
+        <span class="align-middle">{{ trans('ui.messages') }}</span>
+    </a>
+</li>
+
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/settings') }}">
+        <i class="align-middle" data-feather="settings"></i>
+        <span class="align-middle">{{ trans('ui.account') }}</span>
+    </a>
+</li>
+
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/cards') }}">
+        <i class="align-middle" data-feather="credit-card"></i>
+        <span class="align-middle">{{ trans('planner_hub.saved_cards') }}</span>
+    </a>
+</li>
+
+<li class="sidebar-header">{{ trans('client_home.business_affiliate_tools') }}</li>
+
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/afiliate-hub') }}">
+        <i class="align-middle" data-feather="share-2"></i>
+        <span class="align-middle">{{ trans('affiliate_hub.title') }}</span>
+    </a>
+</li>
+
+<li class="sidebar-header">{{ trans('nav.switch_view') }}</li>
+
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/home') }}">
+        <i class="align-middle" data-feather="user"></i>
+        <span class="align-middle">{{ trans('nav.client_portal') }} <small class="d-block opacity-75">{{ trans('nav.current_view') }}</small></span>
+    </a>
+</li>
+
+<li class="sidebar-item">
+    <form method="post" action="{{ path('panel/home') }}" class="m-0">
+        <input type="hidden" name="level" value="2">
+        <button type="submit" class="sidebar-link border-0 bg-transparent w-100 text-start">
+            <i class="align-middle" data-feather="briefcase"></i>
+            <span class="align-middle">{{ trans('nav.business_admin') }} <small class="d-block opacity-75">{{ trans('nav.business_admin_desc') }}</small></span>
+        </button>
+    </form>
+</li>
+
+<li class="sidebar-item">
+    <form method="post" action="{{ path('panel/home') }}" class="m-0">
+        <input type="hidden" name="level" value="4">
+        <button type="submit" class="sidebar-link border-0 bg-transparent w-100 text-start">
+            <i class="align-middle" data-feather="briefcase"></i>
+            <span class="align-middle">{{ trans('nav.team_member_view') }} <small class="d-block opacity-75">{{ trans('nav.team_member_view_desc') }}</small></span>
+        </button>
+    </form>
+</li>
+
+<li class="sidebar-header">{{ trans('ui.extras') }}</li>
+
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ path('panel/event-invitations') }}">
+        <i class="align-middle" data-feather="calendar"></i>
+        <span class="align-middle">{{ trans('ui.event_invitations') }}</span>
+    </a>
+</li>
+

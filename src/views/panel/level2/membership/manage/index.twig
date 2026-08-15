@@ -1,0 +1,283 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<div class="billing-shell">
+  <div class="billing-hero" id="billing-overview">
+    <div>
+      <span class="billing-kicker">{{ trans('billing_overview.kicker')|default('Billing & Renewal') }}</span>
+      <h1>{{ trans('billing_overview.title')|default('Billing & Renewal Overview') }}</h1>
+      <p>{{ trans('billing_overview.subtitle')|default('Review your next renewal, payment method, statements and active Ophyra modules from one place.') }}</p>
+    </div>
+    <div class="billing-hero-actions">
+      <a href="#manage-modules" class="btn btn-light fw-bold">{{ trans('billing_overview.manage_modules')|default('Manage Modules') }}</a>
+      <a href="{{ path('panel/cards') }}" class="btn btn-outline-light fw-bold">{{ trans('billing_overview.payment_methods')|default('Payment Methods') }}</a>
+    </div>
+  </div>
+
+  <div class="billing-tabs" aria-label="{{ trans('billing_overview.navigation')|default('Billing navigation') }}">
+    <a href="#billing-overview">{{ trans('billing_overview.overview')|default('Overview') }}</a>
+    <a href="#renewal-breakdown">{{ trans('billing_overview.breakdown')|default('Next charge') }}</a>
+    <a href="#monthly-statements">{{ trans('billing_overview.statements')|default('Statements') }}</a>
+    <a href="#manage-modules">{{ trans('billing_overview.manage_modules')|default('Manage Modules') }}</a>
+  </div>
+
+  <section class="billing-summary-grid">
+    <article class="billing-summary-card featured">
+      <span>{{ trans('billing_overview.next_renewal')|default('Next renewal') }}</span>
+      <strong>{{ billingOverview.renewal_date ?: trans('billing_overview.no_renewal_date')|default('No renewal date scheduled') }}</strong>
+      <p>{{ trans('billing_overview.renewal_copy')|default('All active paid modules renew together on this date when automatic renewal is enabled.') }}</p>
+    </article>
+    <article class="billing-summary-card">
+      <span>{{ trans('billing_overview.next_charge')|default('Next charge') }}</span>
+      <strong>{{ billingOverview.next_charge }}</strong>
+      <p>{{ trans('billing_overview.next_charge_help')|default('Estimated monthly total for modules included in the next cycle.') }}</p>
+    </article>
+    <article class="billing-summary-card">
+      <span>{{ trans('billing_overview.due_today')|default('Amount due today') }}</span>
+      <strong>{{ billingOverview.due_today }}</strong>
+      <p>{{ trans('billing_overview.due_today_help')|default('New modules may still charge prorated amounts during checkout.') }}</p>
+    </article>
+    <article class="billing-summary-card">
+      <span>{{ trans('billing_overview.payment_method')|default('Payment method') }}</span>
+      <strong>
+        {% if billingOverview.has_payment_method %}
+          {{ trans('billing_overview.card_ending')|default('Card ending in') }} {{ billingOverview.payment_method_last4 }}
+        {% else %}
+          {{ trans('billing_overview.no_saved_card')|default('No saved card') }}
+        {% endif %}
+      </strong>
+      <p>{{ billingOverview.payment_status }}</p>
+    </article>
+  </section>
+
+  <section class="billing-panel" id="renewal-breakdown">
+    <div class="billing-panel-head">
+      <div>
+        <span class="billing-kicker muted">{{ trans('billing_overview.included_kicker')|default('Renewal details') }}</span>
+        <h2>{{ trans('billing_overview.included_title')|default("What's included in your next charge") }}</h2>
+        <p>{{ trans('billing_overview.included_help')|default('Canceling a module keeps it available until the end of the current billing period.') }}</p>
+      </div>
+      <form method="post" class="billing-inline-form">
+        {{ macros.csrf() }}
+        <input type="hidden" name="action" value="pay_upcoming_renewal">
+        <input type="hidden" name="payment_currency" value="{{ selectedPaymentCurrency }}">
+        <button class="btn btn-dark fw-bold" type="submit">{{ trans('billing_overview.pay_upcoming')|default('Pay upcoming renewal') }}</button>
+      </form>
+    </div>
+
+    <div class="billing-table-wrap">
+      <table class="billing-table">
+        <thead>
+          <tr>
+            <th>{{ trans('billing_overview.module')|default('Module') }}</th>
+            <th>{{ trans('billing_overview.status')|default('Status') }}</th>
+            <th>{{ trans('billing_overview.monthly_price')|default('Monthly price') }}</th>
+            <th>{{ trans('billing_overview.proration')|default('Proration') }}</th>
+            <th>{{ trans('billing_overview.included_next')|default('Included in next renewal') }}</th>
+            <th>{{ trans('billing_overview.renews_on')|default('Renews on') }}</th>
+            <th>{{ trans('billing_overview.action')|default('Action') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for module in billingModules %}
+            <tr class="{{ highlightModule == module.slug ? 'is-highlighted' : '' }}">
+              <td><strong>{{ module.name }}</strong><small>{{ module.slug }}</small></td>
+              <td><span class="billing-status {{ module.status }}">{{ trans('billing_overview.status_' ~ module.status)|default(module.status|replace({'_':' '})|title) }}</span></td>
+              <td>{{ module.monthly_price }}</td>
+              <td>{{ module.proration }}</td>
+              <td>{{ module.included_next_renewal ? trans('ui.yes')|default('Yes') : trans('ui.no')|default('No') }}</td>
+              <td>{{ module.renews_on ?: '-' }}</td>
+              <td>
+                {% if module.included_next_renewal %}
+                  <form method="post" class="m-0">
+                    {{ macros.csrf() }}
+                    <input type="hidden" name="action" value="cancel_module_renewal">
+                    <input type="hidden" name="module_slug" value="{{ module.slug }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">{{ trans('billing_overview.cancel_at_period_end')|default('Cancel at period end') }}</button>
+                  </form>
+                {% elseif module.status == 'cancel_at_period_end' %}
+                  <form method="post" class="m-0">
+                    {{ macros.csrf() }}
+                    <input type="hidden" name="action" value="reactivate_module_renewal">
+                    <input type="hidden" name="module_slug" value="{{ module.slug }}">
+                    <button type="submit" class="btn btn-sm btn-outline-success">{{ trans('billing_overview.reactivate')|default('Reactivate renewal') }}</button>
+                  </form>
+                {% else %}
+                  <a class="btn btn-sm btn-outline-dark" href="{{ path('panel/membership/modules/review?module_slug=' ~ module.slug ~ '&payment_currency=' ~ selectedPaymentCurrency) }}">{{ trans('billing_overview.add_module')|default('Add') }}</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="7" class="text-center text-muted py-4">{{ trans('billing_overview.no_modules')|default('No paid modules available yet.') }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="billing-grid-two">
+    <article class="billing-panel">
+      <div class="billing-panel-head compact">
+        <div>
+          <span class="billing-kicker muted">{{ trans('billing_overview.autorenew')|default('Auto-renew') }}</span>
+          <h2>{{ autopayEnabled ? trans('billing_overview.autorenew_on')|default('Automatic renewal is on') : trans('billing_overview.autorenew_off')|default('Automatic renewal is off') }}</h2>
+          <p>{{ trans('billing_overview.autorenew_help')|default('Auto-renew controls automatic charging only. It does not remove modules from your account by itself.') }}</p>
+        </div>
+      </div>
+      {% if isMobileApp %}
+        <div class="billing-note">{{ trans('billing.web_only_renewal_title')|default('Renewal changes are available on the web version.') }}</div>
+      {% elseif hasCard %}
+        <form method="post" id="autopayForm" class="billing-toggle-form">
+          {{ macros.csrf() }}
+          <input type="hidden" name="action" value="toggle_autopay">
+          <label class="billing-switch-row" for="autopayToggle">
+            <span>{{ trans('billing_overview.enable_autorenew')|default('Enable automatic renewal') }}</span>
+            <input class="form-check-input" type="checkbox" role="switch" id="autopayToggle" name="autopay_enabled" value="1" {{ autopayEnabled ? 'checked' : '' }} onchange="document.getElementById('autopayForm').submit();">
+          </label>
+          <p class="text-muted small mb-0">{{ trans('billing_overview.using_card')|default('Using') }} {{ trans('billing_overview.card_ending')|default('card ending in') }} {{ billingOverview.payment_method_last4 }}.</p>
+        </form>
+      {% else %}
+        <div class="billing-note warning">{{ trans('billing_overview.card_required')|default('Add a saved card before enabling auto-renew.') }}</div>
+        <a href="{{ path('panel/cards') }}" class="btn btn-dark fw-bold">{{ trans('billing_overview.add_payment_method')|default('Add payment method') }}</a>
+      {% endif %}
+    </article>
+
+    <article class="billing-panel" id="monthly-statements">
+      <div class="billing-panel-head compact">
+        <div>
+          <span class="billing-kicker muted">{{ trans('billing_overview.statements')|default('Statements') }}</span>
+          <h2>{{ trans('billing_overview.monthly_statements')|default('Monthly statements') }}</h2>
+          <p>{{ trans('billing_overview.monthly_statements_help')|default('Recent Ophyra module and membership payments appear here.') }}</p>
+        </div>
+      </div>
+      <div class="statement-list">
+        {% for statement in billingStatements %}
+          <div class="statement-row">
+            <div><strong>{{ statement.date ?: trans('billing_overview.statement')|default('Statement') }}</strong><small>{{ statement.reference }}</small></div>
+            <span>{{ statement.amount }}</span>
+            <em>{{ statement.status }}</em>
+          </div>
+        {% else %}
+          <div class="billing-empty">{{ trans('billing_overview.no_statements')|default('No statements yet.') }}</div>
+        {% endfor %}
+      </div>
+    </article>
+  </section>
+
+  <section class="billing-panel" id="manage-modules">
+    <div class="billing-panel-head">
+      <div>
+        <span class="billing-kicker muted">{{ trans('billing_overview.module_marketplace')|default('Manage Modules') }}</span>
+        <h2>{{ trans('billing.paid_modules')|default('Paid Modules') }}</h2>
+        <p>{{ trans('billing_overview.module_marketplace_help')|default('Add new workspaces, review active modules and keep billing in one place.') }}</p>
+      </div>
+      {% if ophyraPaymentCurrencies|length > 1 %}
+        <form method="get" class="billing-currency-form">
+          <select name="payment_currency" class="form-select" onchange="this.form.submit()">
+            {% for currency in ophyraPaymentCurrencies %}
+              <option value="{{ currency }}" {{ selectedPaymentCurrency == currency ? 'selected' : '' }}>{{ currency }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      {% endif %}
+    </div>
+
+    {% if isMobileApp %}
+      <div class="billing-note">{{ trans('billing.addon_web_only')|default('Module checkout is available from the web version.') }}</div>
+    {% else %}
+      <div class="module-grid">
+        {% for addon in availableAddons %}
+          {% set quote = addonQuotes[addon.slug] ?? null %}
+          {% set state = addonStatusBySlug[addon.slug] ?? null %}
+          {% set active = addon.slug in activeAddonSlugs %}
+          {% set canceling = state and state.billing_status|default('') == 'cancel_at_period_end' %}
+          {% set comingSoon = addon.slug in ['marketplace_connectors'] %}
+          <article class="module-card {{ comingSoon ? 'coming-soon' : (active ? 'active' : '') }} {{ canceling ? 'canceling' : '' }}">
+            <div class="module-card-top">
+              <h3>{{ addon.name }}</h3>
+              <span>{{ comingSoon ? trans('nav.coming_soon') : (canceling ? trans('billing_overview.ends_this_period')|default('Ends this period') : (active ? trans('billing.active')|default('Active') : trans('billing.available')|default('Available'))) }}</span>
+            </div>
+            <p>{{ addon.description|default(trans('billing_overview.module_default_help')|default('Extend your Ophyra workspace with this module.')) }}</p>
+            <strong>{{ comingSoon ? trans('nav.coming_soon') : quote.monthly_price_formatted|default(addon.monthly_price|default('')) ~ '/' ~ trans('billing.month')|default('month') }}</strong>
+            <div class="module-tags">
+              {% for feature in addon.features|default([]) %}<small>{{ feature }}</small>{% endfor %}
+            </div>
+            <div class="module-actions">
+              {% if comingSoon %}
+                <span class="btn btn-outline-secondary fw-bold disabled" aria-disabled="true">{{ trans('nav.coming_soon') }}</span>
+              {% elseif active %}
+                <a href="#billing-overview" class="btn btn-outline-dark fw-bold">{{ trans('billing_overview.manage_renewal')|default('Manage renewal') }}</a>
+              {% else %}
+                <a href="{{ path('panel/membership/modules/review?module_slug=' ~ addon.slug ~ '&payment_currency=' ~ selectedPaymentCurrency) }}" class="btn btn-dark fw-bold">{{ trans('billing.add_module')|default('Add module') }}</a>
+              {% endif %}
+            </div>
+          </article>
+        {% else %}
+          <div class="billing-empty">{{ trans('billing_overview.no_modules')|default('No modules are available right now.') }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ parent() }}
+<style>
+  .billing-shell { display:grid; gap:1.5rem; padding-bottom:2rem; }
+  .billing-hero { align-items:flex-end; background:linear-gradient(135deg,#0f172a 0%,#0f766e 100%); border-radius:28px; box-shadow:0 28px 60px rgba(15,23,42,.16); color:#fff; display:flex; gap:1.25rem; justify-content:space-between; overflow:hidden; padding:2rem; position:relative; }
+  .billing-hero:after { background:radial-gradient(circle,rgba(255,255,255,.2),transparent 62%); content:""; height:260px; position:absolute; right:-80px; top:-90px; width:260px; }
+  .billing-hero > * { position:relative; z-index:1; }
+  .billing-kicker { color:#a7f3d0; display:block; font-size:.8rem; font-weight:900; letter-spacing:.16em; text-transform:uppercase; }
+  .billing-kicker.muted { color:#0f766e; }
+  .billing-hero h1 { color:#fff; font-size:clamp(2rem,4vw,3.5rem); font-weight:950; letter-spacing:-.05em; margin:.4rem 0; text-shadow:0 2px 18px rgba(15,23,42,.35); }
+  .billing-hero p { color:rgba(255,255,255,.82); font-size:1.04rem; margin:0; max-width:680px; }
+  .billing-hero-actions { display:flex; flex-wrap:wrap; gap:.75rem; }
+  .billing-tabs { background:#fff; border:1px solid rgba(15,23,42,.08); border-radius:999px; box-shadow:0 18px 45px rgba(15,23,42,.08); display:flex; flex-wrap:wrap; gap:.5rem; padding:.45rem; width:max-content; max-width:100%; }
+  .billing-tabs a { border-radius:999px; color:#0f172a; font-weight:850; padding:.7rem 1rem; text-decoration:none; }
+  .billing-tabs a:hover { background:#ecfeff; color:#0f766e; }
+  .billing-summary-grid { display:grid; gap:1rem; grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .billing-summary-card,.billing-panel { background:#fff; border:1px solid rgba(15,23,42,.08); border-radius:24px; box-shadow:0 18px 45px rgba(15,23,42,.07); padding:1.35rem; }
+  .billing-summary-card.featured { background:linear-gradient(145deg,#f0fdfa,#fff); border-color:rgba(20,184,166,.35); }
+  .billing-summary-card span { color:#64748b; display:block; font-size:.78rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+  .billing-summary-card strong { color:#0f172a; display:block; font-size:1.35rem; margin:.45rem 0; }
+  .billing-summary-card p,.billing-panel-head p { color:#64748b; margin:0; }
+  .billing-panel-head { align-items:flex-start; display:flex; gap:1rem; justify-content:space-between; margin-bottom:1.1rem; }
+  .billing-panel-head.compact { margin-bottom:.85rem; }
+  .billing-panel-head h2 { color:#0f172a; font-size:1.35rem; font-weight:950; margin:.25rem 0; }
+  .billing-table-wrap { overflow:auto; }
+  .billing-table { border-collapse:separate; border-spacing:0; min-width:920px; width:100%; }
+  .billing-table th { background:#f8fafc; color:#475569; font-size:.78rem; font-weight:950; letter-spacing:.08em; padding:.85rem; text-transform:uppercase; }
+  .billing-table td { border-top:1px solid rgba(15,23,42,.08); color:#0f172a; padding:.95rem .85rem; vertical-align:middle; }
+  .billing-table td small { color:#64748b; display:block; margin-top:.15rem; }
+  .billing-table tr.is-highlighted td { background:#ecfeff; }
+  .billing-status { background:#eef2ff; border-radius:999px; color:#3730a3; display:inline-block; font-size:.76rem; font-weight:900; padding:.35rem .65rem; text-transform:capitalize; }
+  .billing-status.active { background:#dcfce7; color:#166534; }
+  .billing-status.cancel_at_period_end { background:#fef3c7; color:#92400e; }
+  .billing-grid-two { display:grid; gap:1rem; grid-template-columns:1fr 1fr; }
+  .billing-switch-row { align-items:center; background:#f8fafc; border:1px solid rgba(15,23,42,.08); border-radius:18px; display:flex; justify-content:space-between; margin-bottom:.75rem; padding:1rem; }
+  .billing-note,.billing-empty { background:#f8fafc; border:1px solid rgba(15,23,42,.08); border-radius:18px; color:#475569; padding:1rem; }
+  .billing-note.warning { background:#fffbeb; color:#92400e; }
+  .statement-list { display:grid; gap:.7rem; }
+  .statement-row { align-items:center; background:#f8fafc; border:1px solid rgba(15,23,42,.08); border-radius:16px; display:grid; gap:.75rem; grid-template-columns:1fr auto auto; padding:.85rem; }
+  .statement-row small { color:#64748b; display:block; }
+  .statement-row em { background:#dcfce7; border-radius:999px; color:#166534; font-style:normal; font-weight:900; padding:.3rem .6rem; }
+  .module-grid { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
+  .module-card { background:linear-gradient(160deg,#fff,#f8fafc); border:1px solid rgba(15,23,42,.08); border-radius:22px; display:flex; flex-direction:column; gap:.85rem; min-height:260px; padding:1.15rem; }
+  .module-card.active { border-color:rgba(20,184,166,.4); box-shadow:0 18px 45px rgba(20,184,166,.12); }
+  .module-card.canceling { border-color:rgba(245,158,11,.45); }
+  .module-card.coming-soon { background:#f5f5f3; border-color:#e0ded8; box-shadow:none; filter:grayscale(.35); opacity:.76; }
+  .module-card-top { align-items:flex-start; display:flex; gap:.75rem; justify-content:space-between; }
+  .module-card h3 { color:#0f172a; font-size:1.08rem; font-weight:950; margin:0; }
+  .module-card-top span { background:#dcfce7; border-radius:999px; color:#166534; font-size:.75rem; font-weight:900; padding:.35rem .6rem; white-space:nowrap; }
+  .module-card.coming-soon .module-card-top span { background:#ebebeb; color:#737373; }
+  .module-card p { color:#64748b; margin:0; }
+  .module-tags { display:flex; flex-wrap:wrap; gap:.4rem; }
+  .module-tags small { background:#f1f5f9; border-radius:999px; color:#475569; font-weight:800; padding:.3rem .55rem; }
+  .module-actions { margin-top:auto; }
+  .billing-currency-form { min-width:160px; }
+  @media (max-width: 992px) { .billing-hero,.billing-panel-head { align-items:stretch; flex-direction:column; } .billing-summary-grid,.billing-grid-two { grid-template-columns:1fr; } .billing-tabs { border-radius:22px; width:100%; } .billing-tabs a { flex:1 1 45%; text-align:center; } }
+  @media (max-width: 640px) { .billing-hero { border-radius:22px; padding:1.35rem; } .billing-summary-card,.billing-panel { border-radius:20px; padding:1rem; } .statement-row { grid-template-columns:1fr; } }
+</style>
+{% endblock %}

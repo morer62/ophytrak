@@ -1,0 +1,166 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<div class="ophyra-page-header">
+    <div>
+        <div class="ophyra-page-kicker">{{ trans('billing.module_review_kicker')|default('Module checkout') }}</div>
+        <h1 class="h3 mb-1">{{ quote.name }}</h1>
+        <p class="text-muted mb-0">{{ trans('billing.module_review_intro')|default('Review the module, billing currency and renewal details before payment.') }}</p>
+    </div>
+    <a href="{{ path('panel/membership/manage?payment_currency=' ~ selectedCurrency) }}" class="btn btn-outline-secondary">{{ trans('ui.back')|default('Back') }}</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card ophyra-card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                    <div>
+                        <h2 class="h5 mb-1">{{ quote.name }}</h2>
+                        <p class="text-muted mb-0">{{ trans('billing.unlocks_after_payment')|default('This module unlocks only after confirmed payment.') }}</p>
+                    </div>
+                    <span class="badge bg-warning text-dark">{{ trans('billing.pending_until_paid')|default('Pending until paid') }}</span>
+                </div>
+
+                <h3 class="h6">{{ trans('billing.unlocks')|default('What unlocks') }}</h3>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    {% for feature in features %}
+                        <span class="badge bg-light text-dark border">{{ feature }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="alert alert-info mb-0">
+                    {{ trans('billing.monthly_terms')|default('You will be charged monthly until cancelled.') }}
+                </div>
+            </div>
+        </div>
+
+        <div class="card ophyra-card">
+            <div class="card-body">
+                <h3 class="h5 mb-3">{{ trans('billing.payment_currency')|default('Payment currency') }}</h3>
+                <form method="get" class="row g-3 align-items-end">
+                    <input type="hidden" name="module_slug" value="{{ moduleSlug }}">
+                    <div class="col-md-6">
+                        <label class="form-label" for="paymentCurrency">{{ trans('billing.select_currency')|default('Select currency') }}</label>
+                        <select id="paymentCurrency" name="payment_currency" class="form-select">
+                            {% for currency in allowedCurrencies %}
+                                <option value="{{ currency }}" {{ currency == selectedCurrency ? 'selected' : '' }}>{{ currency }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <button class="btn btn-outline-primary w-100" type="submit">{{ trans('billing.update_quote')|default('Update quote') }}</button>
+                    </div>
+                </form>
+                {% if quote.payment_currency == 'USD' and selectedCurrency != 'USD' %}
+                    <p class="text-muted small mt-3 mb-0">
+                        {{ trans('billing.currency_fallback_usd')|default('No active exchange rate is available for that currency, so checkout safely falls back to USD.') }}
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card ophyra-card billing-review-card">
+            <div class="card-body">
+                <h3 class="h5 mb-3">{{ trans('billing.review_summary')|default('Review summary') }}</h3>
+
+                <dl class="billing-review-list">
+                    <div>
+                        <dt>{{ trans('billing.amount_due_today')|default('Amount due today') }}</dt>
+                        <dd>{{ quote.formatted_amount_due }}</dd>
+                    </div>
+                    <div>
+                        <dt>{{ trans('billing.charged_currency')|default('Charged currency') }}</dt>
+                        <dd>{{ quote.payment_currency }}</dd>
+                    </div>
+                    <div>
+                        <dt>{{ trans('billing.frequency')|default('Frequency') }}</dt>
+                        <dd>{{ quote.billing_cycle|capitalize }}</dd>
+                    </div>
+                    <div>
+                        <dt>{{ trans('billing.next_renewal')|default('Next renewal') }}</dt>
+                        <dd>{{ renewalDate ?: trans('ui.not_available')|default('Not available') }}</dd>
+                    </div>
+                </dl>
+
+                {% if hasCard %}
+                    <div class="alert alert-light border">
+                        {{ trans('billing.payment_method')|default('Payment method') }}:
+                        <strong>{{ mainCard.brand|default('Card') }} {{ trans('billing.ending_in')|default('ending in') }} {{ mainCard.last4 }}</strong>
+                    </div>
+
+                    <form method="post" class="d-grid gap-2">
+                        {{ macros.csrf() }}
+                        <input type="hidden" name="action" value="confirm_pay">
+                        <input type="hidden" name="module_slug" value="{{ moduleSlug }}">
+                        <input type="hidden" name="payment_currency" value="{{ selectedCurrency }}">
+                        <button class="btn btn-primary btn-lg" type="submit">{{ trans('billing.confirm_and_pay')|default('Confirm and pay') }}</button>
+                    </form>
+                {% else %}
+                    <div class="alert alert-warning">{{ trans('billing.payment_method_required')|default('Add a payment method before confirming payment.') }}</div>
+                    <a href="{{ path('panel/cards') }}" class="btn btn-primary w-100">{{ trans('billing.add_payment_method')|default('Add payment method') }}</a>
+                {% endif %}
+
+                <form method="post" class="mt-2">
+                    {{ macros.csrf() }}
+                    <input type="hidden" name="action" value="cancel_checkout">
+                    <input type="hidden" name="module_slug" value="{{ moduleSlug }}">
+                    <button class="btn btn-link text-muted w-100" type="submit">{{ trans('billing.cancel_back_marketplace')|default('Cancel / Back to Marketplace') }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .billing-review-card {
+        position: sticky;
+        top: 1rem;
+    }
+
+    .billing-review-list {
+        display: grid;
+        gap: .75rem;
+    }
+
+    .billing-review-list div {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        border-bottom: 1px solid rgba(15, 23, 42, .08);
+        padding-bottom: .75rem;
+    }
+
+    .billing-review-list dt {
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    .billing-review-list dd {
+        margin: 0;
+        text-align: right;
+        font-weight: 700;
+    }
+
+    @media (max-width: 991px) {
+        .billing-review-card {
+            position: static;
+        }
+    }
+
+    @media (max-width: 575px) {
+        .billing-review-list div {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: .25rem;
+        }
+
+        .billing-review-list dd {
+            text-align: left;
+        }
+    }
+</style>
+{% endblock %}

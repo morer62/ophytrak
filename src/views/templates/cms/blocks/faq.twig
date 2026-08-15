@@ -1,0 +1,12 @@
+{% set data = block.data|default({}) %}
+<section class="cms-block cms-block-faq">
+  {% if block.title|default('') %}
+    <h2>{{ block.title }}</h2>
+  {% endif %}
+  {% for item in data.items|default([]) %}
+    <details>
+      <summary>{{ item.question|default('Question') }}</summary>
+      <p>{{ item.answer|default('') }}</p>
+    </details>
+  {% endfor %}
+</section>

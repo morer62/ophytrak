@@ -1,0 +1,103 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="mt-4 container">
+
+  {# Back según convención al listado de órdenes #}
+  <a href="{{ path('panel/planner-hub/management/orders/orders') }}" class="btn btn-outline-secondary mb-3">
+    ← {{ trans('planner_hub.back_to_orders') }}
+  </a>
+
+  <!-- 🔹 Top Highlight Feature -->
+  <section class="p-5 rounded-4 shadow-sm mb-5 text-white" style="background: linear-gradient(135deg, #00b894, #00cec9);">
+    <h2 class="fw-bold mb-2">{{ trans('planner_hub.team_setup') }}</h2>
+    <p class="fs-5 mb-3">
+      {{ trans('planner_hub.team_setup_desc') }}
+    </p>
+
+    <div class="d-flex align-items-center gap-3">
+      <button class="btn btn-light btn-lg fw-bold px-4" data-bs-toggle="modal" data-bs-target="#teamNeededModal">
+        {{ trans('planner_hub.define_team_size') }}
+      </button>
+      <span class="badge bg-dark fs-6">
+        {{ trans('planner_hub.current') }}: <span id="teamNeededDisplay">{{ order.total_team_needed ?? 1 }}</span> {{ trans('planner_hub.person_s') }}
+      </span>
+    </div>
+  </section>
+
+  <!-- 🔹 Team Workflow -->
+  <section class="mb-5">
+    <h3 class="fw-bold mb-4">{{ trans('planner_hub.team_workflow') }}</h3>
+    <div class="row text-center g-4 row-cols-1 row-cols-md-3 row-cols-lg-5">
+
+      <div class="col">
+        <div class="p-5 bg-white rounded-4 shadow-sm h-100">
+          <h4 class="fw-bold mb-2">{{ trans('planner_hub.step_1_invite_staff') }}</h4>
+          <p class="text-muted fs-6 mb-3">{{ trans('planner_hub.step_1_desc') }}</p>
+          <a href="{{ path('panel/planner-hub/management/orders/orders/team_comunication/staff') }}?id={{ id }}" class="btn btn-success btn-lg fw-bold px-4">{{ trans('planner_hub.open') }}</a>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="p-5 bg-white rounded-4 shadow-sm h-100">
+          <h4 class="fw-bold mb-2">{{ trans('planner_hub.step_2_assign_tasks') }}</h4>
+          <p class="text-muted fs-6 mb-3">{{ trans('planner_hub.step_2_desc') }}</p>
+          <a href="{{ path('panel/planner-hub/management/orders/orders/team_comunication/tasks/') }}?id={{ id }}" class="btn btn-primary btn-lg fw-bold px-4">{{ trans('planner_hub.open') }}</a>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="p-5 bg-white rounded-4 shadow-sm h-100">
+          <h4 class="fw-bold mb-2">{{ trans('planner_hub.step_3_menu') }}</h4>
+          <p class="text-muted fs-6 mb-3">{{ trans('planner_hub.step_3_menu_desc') }}</p>
+          <a href="{{ path('panel/planner-hub/management/orders/orders/team_comunication/menu') }}?id={{ id }}" class="btn btn-info btn-lg fw-bold px-4">{{ trans('planner_hub.open') }}</a>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="p-5 bg-white rounded-4 shadow-sm h-100">
+          <h4 class="fw-bold mb-2">{{ trans('planner_hub.step_4_event_notes') }}</h4>
+          <p class="text-muted fs-6 mb-3">{{ trans('planner_hub.step_3_desc') }}</p>
+          <a href="{{ path('panel/planner-hub/management/orders/orders/team_comunication/notes') }}?id={{ id }}" class="btn btn-dark btn-lg fw-bold px-4">{{ trans('planner_hub.open') }}</a>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="p-5 bg-white rounded-4 shadow-sm h-100">
+          <h4 class="fw-bold mb-2">{{ trans('planner_hub.step_5_shopping_list') }}</h4>
+          <p class="text-muted fs-6 mb-3">{{ trans('planner_hub.step_4_desc') }}</p>
+          <a href="{{ path('panel/planner-hub/management/orders/orders/team_comunication/shopping') }}?id={{ id }}" class="btn btn-warning btn-lg fw-bold px-4">{{ trans('planner_hub.open') }}</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- 🔹 Modal: Update Team Size -->
+<div class="modal fade" id="teamNeededModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      {# Importante: el POST se procesa en ESTE MISMO index.php #}
+      <form id="teamNeededForm" method="POST" action="">
+        <input type="hidden" name="__action" value="update-team-needed">
+        <input type="hidden" name="id" value="{{ id }}">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ trans('planner_hub.define_team_size') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">{{ trans('planner_hub.total_team_needed') }}</label>
+          <input type="number" name="total_team_needed" class="form-control" min="1" value="{{ order.total_team_needed ?? 1 }}">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans('planner_hub.cancel') }}</button>
+          <button type="submit" class="btn btn-primary">{{ trans('planner_hub.save') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div> 
+{% endblock %}

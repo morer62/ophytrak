@@ -1,0 +1,44 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+    <h1 class="h3 mb-4">⏱️ {{ trans('planner_hub.my_clock') }}</h1>
+
+    {{ macros.breadcrumb2() }}
+
+    {% if activeLog %}
+        <div class="alert alert-success">
+            ✅ {{ trans('planner_hub.session_started_at') }} <strong id="display-date"></strong>.
+        </div>
+
+        <form method="post">
+            <input type="hidden" name="action" value="end">
+            <button class="btn btn-danger">🛑 {{ trans('planner_hub.stop_clock') }}</button>
+        </form>
+    {% else %}
+        <div class="alert alert-warning">
+            ⚠️ {{ trans('planner_hub.no_active_work_session') }}
+        </div>
+
+        <form method="post">
+            <input type="hidden" name="action" value="start">
+            <button class="btn btn-success">▶️ {{ trans('planner_hub.start_clock') }}</button>
+        </form>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            {% if activeLog %}
+                let displayDate = document.getElementById('display-date');
+                let timestamp = parseInt("{{ activeLog.start_time }}")
+
+                let date = new Date(timestamp * 1000);
+
+                displayDate.innerHTML = date.toLocaleString();
+            {% endif %}
+        })
+    </script>
+{% endblock %}

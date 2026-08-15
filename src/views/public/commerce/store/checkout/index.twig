@@ -1,0 +1,1159 @@
+{% extends "templates/base.twig" %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+{% if active_provider_type == 'square' and square_environment %}
+<script type="text/javascript" src="https://{{ square_environment == 'production' ? 'web' : 'sandbox.web' }}.squarecdn.com/v1/square.js"></script>
+{% endif %}
+{% if active_provider_type == 'paypal' and paypal_client_id %}
+<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id|url_encode }}&currency={{ provider_currency|default('USD')|url_encode }}"></script>
+{% endif %}
+<style>
+:root{
+    --store-primary:#111827;
+    --store-accent:#1f2937;
+    --store-soft:#f8fafc;
+    --store-muted:#6b7280;
+    --store-border:#e5e7eb;
+    --store-success:#16a34a;
+    --store-danger:#dc2626;
+    --store-shadow:0 18px 44px rgba(15,23,42,.08);
+}
+
+body{
+    color:#111827;
+    background:#f8fafc;
+}
+
+.checkout-wrap{
+    max-width:1240px;
+    margin:0 auto;
+    padding:2rem 1rem 4rem;
+}
+
+.checkout-header{
+    background:linear-gradient(135deg,#ffffff 0%, #f8fafc 100%);
+    border:1px solid var(--store-border);
+    border-radius:28px;
+    padding:2rem 1.5rem;
+    box-shadow:var(--store-shadow);
+    margin-bottom:1.5rem;
+}
+
+.checkout-title{
+    font-family:'Poppins', sans-serif;
+    font-weight:900;
+    font-size:clamp(2rem,4vw,3rem);
+    line-height:1.05;
+    color:#111827;
+    margin-bottom:.75rem;
+}
+
+.checkout-subtitle{
+    color:var(--store-muted);
+    line-height:1.8;
+    max-width:820px;
+    margin:0;
+}
+
+.checkout-shell{
+    display:grid;
+    grid-template-columns:1fr .95fr;
+    gap:1.2rem;
+}
+
+.checkout-card{
+    background:#fff;
+    border:1px solid var(--store-border);
+    border-radius:26px;
+    box-shadow:var(--store-shadow);
+    overflow:hidden;
+}
+
+.checkout-card-body{
+    padding:1.5rem;
+}
+
+.checkout-section-title{
+    font-size:1.35rem;
+    font-weight:900;
+    color:#111827;
+    margin-bottom:1rem;
+}
+
+.checkout-items{
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+}
+
+.checkout-item{
+    display:grid;
+    grid-template-columns:80px 1fr auto;
+    gap:1rem;
+    align-items:center;
+    border:1px solid var(--store-border);
+    border-radius:18px;
+    padding:1rem;
+    background:#fcfcfd;
+}
+
+.checkout-item-image{
+    width:80px;
+    height:80px;
+    object-fit:cover;
+    border-radius:14px;
+    background:#f6f6f6;
+}
+
+.checkout-item-title{
+    font-weight:900;
+    color:#111827;
+    margin-bottom:.2rem;
+}
+
+.checkout-item-meta{
+    color:var(--store-muted);
+    font-size:.94rem;
+    line-height:1.6;
+}
+
+.checkout-item-chip{
+    display:inline-flex;
+    align-items:center;
+    padding:.38rem .7rem;
+    border-radius:999px;
+    background:#f3f4f6;
+    border:1px solid var(--store-border);
+    color:#374151;
+    font-size:.76rem;
+    font-weight:800;
+    margin:0 .35rem .35rem 0;
+}
+
+.checkout-item-total{
+    font-weight:900;
+    color:#111827;
+}
+
+.summary-box{
+    background:linear-gradient(135deg,#ffffff, #f8fafc);
+    border:1px solid var(--store-border);
+    border-radius:22px;
+    padding:1rem;
+    margin-bottom:1rem;
+}
+
+.summary-row{
+    display:flex;
+    justify-content:space-between;
+    gap:1rem;
+    padding:.5rem 0;
+    color:#4b5563;
+}
+
+.summary-row.discount{
+    color:#166534;
+    font-weight:800;
+}
+
+.summary-row.total{
+    border-top:1px dashed #d1d5db;
+    margin-top:.35rem;
+    padding-top:.95rem;
+    font-weight:900;
+    color:#111827;
+    font-size:1.05rem;
+}
+
+.field{
+    margin-bottom:1rem;
+}
+
+.field label{
+    display:block;
+    font-weight:800;
+    margin-bottom:.45rem;
+    color:#374151;
+}
+
+.field input{
+    width:100%;
+    border:1px solid #d1d5db;
+    border-radius:14px;
+    padding:.95rem 1rem;
+    background:#fff;
+    color:#111827;
+    outline:none;
+}
+
+.field input:focus{
+    border-color:#111827;
+    box-shadow:0 0 0 4px rgba(17,24,39,.08);
+    background:#fff;
+}
+
+.field input[readonly]{
+    background:#f8fafc;
+    color:#6b7280;
+    cursor:not-allowed;
+}
+
+#square-card-container,
+#stripe-card-container{
+    min-height:44px;
+    border:1px solid #d1d5db;
+    border-radius:16px;
+    padding:14px;
+    background:#fff;
+}
+
+.alert-box{
+    border-radius:16px;
+    padding:1rem 1rem;
+    font-weight:800;
+    margin-bottom:1rem;
+    display:none;
+}
+
+.alert-error{
+    background:#fff1f2;
+    border:1px solid #fecdd3;
+    color:#be123c;
+}
+
+.alert-success{
+    background:#ecfdf3;
+    border:1px solid #bbf7d0;
+    color:#166534;
+}
+
+.btn-main{
+    background:#111827;
+    color:#fff !important;
+    padding:1rem 1.75rem;
+    font-size:1rem;
+    border-radius:999px;
+    text-decoration:none;
+    font-weight:900;
+    display:inline-flex;
+    gap:.55rem;
+    align-items:center;
+    justify-content:center;
+    border:none;
+    box-shadow:0 12px 28px rgba(17,24,39,.18);
+    transition:all .22s ease;
+    width:100%;
+}
+
+.btn-light{
+    padding:.95rem 1.4rem;
+    font-size:1rem;
+    border-radius:999px;
+    font-weight:800;
+    border:1.2px solid #d1d5db;
+    color:#111827 !important;
+    background:#fff;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    justify-content:center;
+    width:100%;
+}
+
+.checkout-note{
+    color:var(--store-muted);
+    font-size:.92rem;
+    line-height:1.7;
+    margin-top:.75rem;
+}
+
+.checkout-empty{
+    text-align:center;
+    padding:3rem 1rem;
+    color:var(--store-muted);
+    border:1px dashed #d1d5db;
+    border-radius:18px;
+    background:#fcfcfd;
+}
+
+.shipping-fields{
+    display:block;
+    margin-top:1rem;
+}
+
+.shipping-fields.hidden{
+    display:none;
+}
+
+.saved-cards-field{
+    display:none;
+    margin-bottom:1rem;
+}
+
+.saved-cards-actions{
+    display:flex;
+    gap:.6rem;
+    flex-wrap:wrap;
+    margin-top:.6rem;
+}
+
+.payment-methods{
+    display:grid;
+    gap:.65rem;
+    margin-bottom:1rem;
+}
+
+.payment-method-option{
+    display:flex;
+    align-items:center;
+    gap:.7rem;
+    border:1px solid var(--store-border);
+    border-radius:14px;
+    padding:.85rem 1rem;
+    background:#fff;
+    font-weight:800;
+    color:#374151;
+}
+
+.payment-method-option input{
+    width:auto;
+}
+
+@media (max-width: 991px){
+    .checkout-shell{
+        grid-template-columns:1fr;
+    }
+}
+
+@media (max-width: 768px){
+    .checkout-item{
+        grid-template-columns:1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<main class="checkout-wrap">
+    <section class="checkout-header">
+        <h1 class="checkout-title">Checkout</h1>
+        <p class="checkout-subtitle">
+            Review your selected items, confirm your billing and shipping details, and complete your payment securely.
+        </p>
+    </section>
+
+    {% if not store_available %}
+    <div class="alert-box alert-error" style="display:block;">This store is not available right now.</div>
+    {% endif %}
+
+    <section class="checkout-shell">
+        <div class="checkout-card">
+            <div class="checkout-card-body">
+                <h2 class="checkout-section-title">Order summary</h2>
+
+                <div class="alert-box alert-error" id="checkoutErrorBox"></div>
+                <div class="alert-box alert-success" id="checkoutSuccessBox"></div>
+
+                <div id="checkoutItemsWrap">
+                    <div class="checkout-empty">Loading your cart...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="checkout-card">
+            <div class="checkout-card-body">
+                <h2 class="checkout-section-title">Payment</h2>
+
+                <div class="summary-box">
+                    <div class="summary-row">
+                        <span>Items</span>
+                        <strong id="checkoutItemsCount">0</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Quantity total</span>
+                        <strong id="checkoutQuantityTotal">0</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <strong id="checkoutSubtotal">$0.00</strong>
+                    </div>
+                    <div class="summary-row discount" id="checkoutDiscountRow" style="display:none;">
+                        <span>Coupon discount</span>
+                        <strong id="checkoutDiscount">-$0.00</strong>
+                    </div>
+                    <div class="summary-row total">
+                        <span>{{ trans('ui.total') }}</span>
+                        <strong id="checkoutTotal">$0.00</strong>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="display_currency">Display currency</label>
+                    <select id="display_currency" class="form-select">
+                        {% for currency_code in display_currencies|default(['USD']) %}
+                            <option value="{{ currency_code }}" {% if currency_code == display_currency|default('USD') %}selected{% endif %}>{{ currency_code }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="guest_name">Full name</label>
+                    <input type="text" id="guest_name" placeholder="Your full name">
+                </div>
+
+                <div class="field">
+                    <label for="guest_email">{{ trans('ui.email') }}</label>
+                    <input type="email" id="guest_email" placeholder="you@example.com">
+                </div>
+
+                <div class="field">
+                    <label for="guest_phone">{{ trans('ui.phone') }}</label>
+                    <input type="text" id="guest_phone" placeholder="(305) 000-0000" inputmode="tel" autocomplete="tel">
+                </div>
+
+                <div class="field">
+                    <label for="billing_address_1">Billing address</label>
+                    <input type="text" id="billing_address_1" placeholder="Street address">
+                </div>
+
+                <div class="field">
+                    <label for="billing_address_2">Billing address line 2</label>
+                    <input type="text" id="billing_address_2" placeholder="Apartment, suite, unit (optional)">
+                </div>
+
+                <div class="field">
+                    <label for="billing_city">Billing city</label>
+                    <input type="text" id="billing_city" placeholder="City">
+                </div>
+
+                <div class="field">
+                    <label for="billing_state">Billing state</label>
+                    <input type="text" id="billing_state" placeholder="State">
+                </div>
+
+                <div class="field">
+                    <label for="billing_zip">Billing ZIP</label>
+                    <input type="text" id="billing_zip" placeholder="ZIP code">
+                </div>
+
+                <div class="field">
+                    <label for="billing_country">Billing country</label>
+                    <input type="text" id="billing_country" placeholder="US" value="{{ payment_availability.country|default('US') }}">
+                </div>
+
+                <div class="field">
+                    <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+                        <input type="checkbox" id="shipping_same_as_billing" checked>
+                        <span>Shipping address is the same as billing</span>
+                    </label>
+                </div>
+
+                <div class="shipping-fields hidden" id="shippingFieldsBlock">
+                    <div class="field">
+                        <label for="shipping_address_1">Shipping address</label>
+                        <input type="text" id="shipping_address_1" placeholder="Street address">
+                    </div>
+
+                    <div class="field">
+                        <label for="shipping_address_2">Shipping address line 2</label>
+                        <input type="text" id="shipping_address_2" placeholder="Apartment, suite, unit (optional)">
+                    </div>
+
+                    <div class="field">
+                        <label for="shipping_city">Shipping city</label>
+                        <input type="text" id="shipping_city" placeholder="City">
+                    </div>
+
+                    <div class="field">
+                        <label for="shipping_state">Shipping state</label>
+                        <input type="text" id="shipping_state" placeholder="State">
+                    </div>
+
+                    <div class="field">
+                        <label for="shipping_zip">Shipping ZIP</label>
+                        <input type="text" id="shipping_zip" placeholder="ZIP code">
+                    </div>
+                </div>
+
+                <div class="saved-cards-field" id="savedCardsField">
+                    <div class="field">
+                        <label for="savedCardsSelect">Saved cards</label>
+                        <select id="savedCardsSelect" class="form-select">
+                            <option value="">Select a saved card</option>
+                        </select>
+                    </div>
+                    <div class="saved-cards-actions">
+                        <button type="button" class="btn btn-outline-dark btn-sm" id="useAnotherCardBtn">Use a new card instead</button>
+                    </div>
+                </div>
+
+                <div class="payment-methods" id="paymentMethods">
+                    {% if active_provider_type in ['square', 'stripe', 'paypal'] %}
+                        <label class="payment-method-option">
+                            <input type="radio" name="payment_method" value="{{ active_provider_type }}" checked>
+                            <span>{{ active_provider_type|capitalize }}</span>
+                        </label>
+                    {% endif %}
+                    {% if bank_transfer_available %}
+                        <label class="payment-method-option">
+                            <input type="radio" name="payment_method" value="bank_transfer" {% if active_provider_type not in ['square', 'stripe', 'paypal'] %}checked{% endif %}>
+                            <span>Bank transfer</span>
+                        </label>
+                    {% endif %}
+                </div>
+
+                {% if active_provider_type == 'square' %}
+                    <div class="field provider-payment-field" data-provider-field="square">
+                        <label>Card details</label>
+                        <div id="square-card-container"></div>
+                        <div class="text-danger small mt-2" id="squareCardErrors"></div>
+                    </div>
+                {% elseif active_provider_type == 'stripe' %}
+                    <div class="field provider-payment-field" data-provider-field="stripe">
+                        <label>Card details</label>
+                        <div id="stripe-card-container"></div>
+                        <div class="text-danger small mt-2" id="stripeCardErrors"></div>
+                    </div>
+                {% elseif active_provider_type == 'paypal' %}
+                    <div class="field provider-payment-field" data-provider-field="paypal">
+                        <label>PayPal</label>
+                        <div id="paypal-button-container"></div>
+                        <div class="text-danger small mt-2" id="paypalErrors"></div>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning mb-3">
+                        No active payment provider is configured.
+                    </div>
+                {% endif %}
+
+                <button type="button" class="btn-main" id="payNowBtn" {% if active_provider_type == 'paypal' %}style="display:none;"{% endif %}>
+                    <i class="fa-solid fa-lock"></i> Pay now
+                </button>
+
+                <a href="{{ path('store/cart') }}" class="btn-light mt-3">
+                    <i class="fa-solid fa-arrow-left"></i> Back to cart
+                </a>
+
+                <div class="checkout-note">
+                    This checkout now uses the standard store flow and accepts fixed or variable products already normalized in the cart.
+                </div>
+            </div>
+        </div>
+    </section>
+{% include 'templates/partials/payment-method-consent-modal.twig' with {
+    gateway_supports_saved_methods: active_provider_type in ['stripe', 'square'],
+    uses_saved_method: false,
+    has_active_consent: false
+} %}
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const CART_KEY = 'store_cart_selection';
+    const SESSION_KEY = 'store_cart_session_token';
+    const PAYMENT_SUCCESS_FALLBACK = `{{ path('store/payment-successful') }}`;
+    const RECOVERY_TOKEN = `{{ recovery_token|default('')|e('js') }}`;
+
+    const errorBox = document.getElementById('checkoutErrorBox');
+    const successBox = document.getElementById('checkoutSuccessBox');
+    const itemsWrap = document.getElementById('checkoutItemsWrap');
+
+    const itemsCountEl = document.getElementById('checkoutItemsCount');
+    const quantityTotalEl = document.getElementById('checkoutQuantityTotal');
+    const subtotalEl = document.getElementById('checkoutSubtotal');
+    const discountRowEl = document.getElementById('checkoutDiscountRow');
+    const discountEl = document.getElementById('checkoutDiscount');
+    const totalEl = document.getElementById('checkoutTotal');
+
+    const guestNameInput = document.getElementById('guest_name');
+    const guestEmailInput = document.getElementById('guest_email');
+    const guestPhoneInput = document.getElementById('guest_phone');
+    const displayCurrencyInput = document.getElementById('display_currency');
+
+    const billingAddress1Input = document.getElementById('billing_address_1');
+    const billingAddress2Input = document.getElementById('billing_address_2');
+    const billingCityInput = document.getElementById('billing_city');
+    const billingStateInput = document.getElementById('billing_state');
+    const billingZipInput = document.getElementById('billing_zip');
+    const billingCountryInput = document.getElementById('billing_country');
+
+    const shippingSameAsBillingInput = document.getElementById('shipping_same_as_billing');
+    const shippingFieldsBlock = document.getElementById('shippingFieldsBlock');
+    const shippingAddress1Input = document.getElementById('shipping_address_1');
+    const shippingAddress2Input = document.getElementById('shipping_address_2');
+    const shippingCityInput = document.getElementById('shipping_city');
+    const shippingStateInput = document.getElementById('shipping_state');
+    const shippingZipInput = document.getElementById('shipping_zip');
+
+    const payNowBtn = document.getElementById('payNowBtn');
+    const activeProviderType = `{{ active_provider_type|default('')|e('js') }}`;
+    const stripePublicKey = `{{ stripe_public_key|default('')|e('js') }}`;
+    const cardErrors = document.getElementById(activeProviderType === 'stripe' ? 'stripeCardErrors' : (activeProviderType === 'paypal' ? 'paypalErrors' : 'squareCardErrors'));
+
+    const savedCardsField = document.getElementById('savedCardsField');
+    const savedCardsSelect = document.getElementById('savedCardsSelect');
+    const useAnotherCardBtn = document.getElementById('useAnotherCardBtn');
+
+    let sessionToken = localStorage.getItem(SESSION_KEY) || '';
+    let checkoutState = { cart: null, items: [] };
+    let card = null;
+    let stripe = null;
+    let stripeCard = null;
+    let stripeElements = null;
+    let paymentTokenType = 'new_card';
+    let paymentConsentConfirmed = false;
+    const savePaymentMethodInput = document.getElementById('savePaymentMethodInput');
+    const autoChargeConsentInput = document.getElementById('autoChargeConsentInput');
+    const paymentConsentModalEl = document.getElementById('paymentMethodConsentModal');
+    const paymentConsentContinueBtn = document.querySelector('[data-payment-consent-continue]');
+    let selectedPaymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || activeProviderType || 'bank_transfer';
+    let selectedSavedCardToken = '';
+    let paypalOrderToken = '';
+
+    function showError(message) {
+        errorBox.textContent = message;
+        errorBox.style.display = 'block';
+        successBox.style.display = 'none';
+    }
+
+    function showSuccess(message) {
+        successBox.textContent = message;
+        successBox.style.display = 'block';
+        errorBox.style.display = 'none';
+    }
+
+    function hideMessages() {
+        errorBox.style.display = 'none';
+        successBox.style.display = 'none';
+        if (cardErrors) cardErrors.textContent = '';
+    }
+
+    function formatUSPhoneDisplay(value) {
+        const digits = String(value || '').replace(/\D/g, '').slice(0, 10);
+        const area = digits.slice(0, 3);
+        const exch = digits.slice(3, 6);
+        const line = digits.slice(6, 10);
+
+        if (!digits) return '';
+        if (digits.length < 4) return `(${area}`;
+        if (digits.length < 7) return `(${area}) ${exch}`;
+        return `(${area}) ${exch}-${line}`;
+    }
+
+    function readLocalCart() {
+        try {
+            const raw = localStorage.getItem(CART_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            return parsed && typeof parsed === 'object' ? parsed : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function applyShippingToggle() {
+        const same = !!shippingSameAsBillingInput.checked;
+        shippingFieldsBlock.classList.toggle('hidden', same);
+
+        [shippingAddress1Input, shippingAddress2Input, shippingCityInput, shippingStateInput, shippingZipInput].forEach(el => {
+            if (!el) return;
+            el.disabled = same;
+        });
+
+        if (same) {
+            shippingAddress1Input.value = billingAddress1Input.value || '';
+            shippingAddress2Input.value = billingAddress2Input.value || '';
+            shippingCityInput.value = billingCityInput.value || '';
+            shippingStateInput.value = billingStateInput.value || '';
+            shippingZipInput.value = billingZipInput.value || '';
+        }
+    }
+
+    function renderSummary(cart) {
+        const itemsCount = Number(cart.items_count || (cart.items || []).length || 0);
+        const quantityTotal = Number(cart.meals_count || cart.quantity_total || 0);
+        const subtotal = Number(cart.subtotal || 0);
+        const discount = Number(cart.discount || cart.coupon_discount || 0);
+        const total = Number(cart.total || subtotal);
+        const pricing = cart.pricing || {};
+        const currency = pricing.display_currency || displayCurrencyInput?.value || 'USD';
+        const displaySubtotal = currency === 'USD' ? subtotal : Number(subtotal * Number(pricing.display_exchange_rate || 1));
+        const displayDiscount = currency === 'USD' ? discount : Number(discount * Number(pricing.display_exchange_rate || 1));
+        const displayTotal = Number(pricing.display_amount || total);
+
+        itemsCountEl.textContent = itemsCount;
+        quantityTotalEl.textContent = quantityTotal;
+        subtotalEl.textContent = formatCurrency(displaySubtotal, currency);
+        totalEl.textContent = formatCurrency(displayTotal, currency);
+
+        if (discount > 0) {
+            discountRowEl.style.display = 'flex';
+            discountEl.textContent = `-${formatCurrency(displayDiscount, currency)}`;
+        } else {
+            discountRowEl.style.display = 'none';
+        }
+    }
+
+    function formatCurrency(amount, currency) {
+        return `${currency} ${Number(amount || 0).toFixed(currency === 'JPY' || currency === 'CLP' ? 0 : 2)}`;
+    }
+
+    function renderItems(items) {
+        if (!items || !items.length) {
+            itemsWrap.innerHTML = `<div class="checkout-empty">Your cart is empty.</div>`;
+            return;
+        }
+
+        itemsWrap.innerHTML = `
+            <div class="checkout-items">
+                ${items.map(item => `
+                    <div class="checkout-item">
+                        ${
+                            item.main_image
+                                ? `<img src="${item.main_image}" alt="${item.product_name_snapshot || item.product_name || ''}" class="checkout-item-image">`
+                                : `<div class="checkout-item-image d-flex align-items-center justify-content-center text-muted">No image</div>`
+                        }
+                        <div>
+                            <div class="checkout-item-title">${item.product_name_snapshot || item.product_name || 'Item'}</div>
+                            <div class="checkout-item-meta">
+                                ${(item.variation_name_snapshot || item.variation_name) ? `<div><strong>${item.variation_name_snapshot || item.variation_name}</strong></div>` : ''}
+                                ${
+                                    Array.isArray(item.variation_options)
+                                        ? item.variation_options.map(opt => `<span class="checkout-item-chip">${opt.attribute_name}: ${opt.attribute_value}</span>`).join('')
+                                        : ''
+                                }
+                                <div>${item.quantity} x $${Number(item.unit_price || 0).toFixed(2)}</div>
+                            </div>
+                        </div>
+                        <div class="checkout-item-total">$${Number(item.line_total || 0).toFixed(2)}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    async function loadSummary() {
+        hideMessages();
+
+        try {
+            const response = await fetch('{{ path("store/checkout") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    action: 'summary',
+                    session_token: sessionToken,
+                    recovery_token: RECOVERY_TOKEN,
+                    display_currency: displayCurrencyInput?.value || 'USD',
+                    billing_country: billingCountryInput?.value || 'US'
+                })
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                showError(data.message || 'Could not load checkout summary.');
+                return false;
+            }
+
+            checkoutState.cart = data.cart || null;
+            checkoutState.items = Array.isArray(data.items) ? data.items : [];
+
+            if (checkoutState.cart) {
+                guestNameInput.value = checkoutState.cart.guest_name || '';
+                guestEmailInput.value = checkoutState.cart.guest_email || '';
+                guestPhoneInput.value = formatUSPhoneDisplay(checkoutState.cart.guest_phone || '');
+
+                billingAddress1Input.value = checkoutState.cart.billing_address_1 || '';
+                billingAddress2Input.value = checkoutState.cart.billing_address_2 || '';
+                billingCityInput.value = checkoutState.cart.billing_city || '';
+                billingStateInput.value = checkoutState.cart.billing_state || '';
+                billingZipInput.value = checkoutState.cart.billing_zip || '';
+
+                shippingAddress1Input.value = checkoutState.cart.shipping_address_1 || '';
+                shippingAddress2Input.value = checkoutState.cart.shipping_address_2 || '';
+                shippingCityInput.value = checkoutState.cart.shipping_city || '';
+                shippingStateInput.value = checkoutState.cart.shipping_state || '';
+                shippingZipInput.value = checkoutState.cart.shipping_zip || '';
+            }
+
+            applyShippingToggle();
+            renderItems(checkoutState.items);
+            renderSummary(checkoutState.cart || {});
+
+            return true;
+        } catch (e) {
+            showError('Could not load checkout.');
+            return false;
+        }
+    }
+
+    async function loadSavedCards() {
+        if (window.OPHYRA_CLIENT_AUTHENTICATED !== true) return;
+        if (!guestEmailInput.value.trim()) return;
+
+        try {
+            const response = await fetch('{{ path("store/checkout") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    action: 'saved_cards',
+                    session_token: sessionToken,
+                    recovery_token: RECOVERY_TOKEN,
+                    guest_email: guestEmailInput.value.trim()
+                })
+            });
+
+            const data = await response.json();
+            if (!data.success || !Array.isArray(data.cards) || !data.cards.length) {
+                return;
+            }
+
+            savedCardsField.style.display = 'block';
+            savedCardsSelect.innerHTML = `<option value="">Select a saved card</option>` + data.cards.map(card => {
+                const label = `${card.brand || 'Card'} **** ${card.last4 || '0000'} ${card.exp ? '(' + card.exp + ')' : ''}`;
+                return `<option value="${card.token}">${label}</option>`;
+            }).join('');
+        } catch (e) {}
+    }
+
+    function setPaymentMode(mode) {
+        paymentTokenType = mode;
+
+        const stripeContainer = document.getElementById('stripe-card-container');
+        const squareContainer = document.getElementById('square-card-container');
+        const stripeErr = document.getElementById('stripeCardErrors');
+        const squareErr = document.getElementById('squareCardErrors');
+
+        if (mode === 'stored_card') {
+            if (savedCardsField) savedCardsField.style.display = 'block';
+            if (stripeContainer) stripeContainer.style.display = 'none';
+            if (squareContainer) squareContainer.style.display = 'none';
+            if (stripeErr) stripeErr.style.display = 'none';
+            if (squareErr) squareErr.style.display = 'none';
+        } else {
+            if (stripeContainer) stripeContainer.style.display = '';
+            if (squareContainer) squareContainer.style.display = '';
+            if (stripeErr) stripeErr.style.display = '';
+            if (squareErr) squareErr.style.display = '';
+        }
+    }
+
+    function continuePaymentAfterConsent(event) {
+        if (event) {
+            event.preventDefault();
+        }
+        paymentConsentConfirmed = true;
+        if (paymentConsentModalEl && window.bootstrap) {
+            bootstrap.Modal.getOrCreateInstance(paymentConsentModalEl).hide();
+        }
+        setTimeout(() => payNowBtn.click(), 50);
+    }
+
+    window.ophyraContinuePaymentAfterConsent = continuePaymentAfterConsent;
+
+    if (paymentConsentContinueBtn) {
+        paymentConsentContinueBtn.onclick = continuePaymentAfterConsent;
+        paymentConsentContinueBtn.addEventListener('click', function (event) {
+            if (event.defaultPrevented) {
+                return;
+            }
+            event.preventDefault();
+            paymentConsentConfirmed = true;
+            if (paymentConsentModalEl && window.bootstrap) {
+                bootstrap.Modal.getOrCreateInstance(paymentConsentModalEl).hide();
+            }
+            setTimeout(() => payNowBtn.click(), 50);
+        });
+    }
+
+    if (savedCardsSelect) {
+        savedCardsSelect.addEventListener('change', function () {
+            selectedSavedCardToken = this.value || '';
+            if (selectedSavedCardToken) {
+                setPaymentMode('stored_card');
+            } else {
+                setPaymentMode('new_card');
+            }
+        });
+    }
+
+    if (useAnotherCardBtn) {
+        useAnotherCardBtn.addEventListener('click', function () {
+            selectedSavedCardToken = '';
+            if (savedCardsSelect) savedCardsSelect.value = '';
+            setPaymentMode('new_card');
+        });
+    }
+
+    [billingAddress1Input, billingAddress2Input, billingCityInput, billingStateInput, billingZipInput].forEach(input => {
+        if (!input) return;
+        input.addEventListener('input', applyShippingToggle);
+    });
+
+    if (shippingSameAsBillingInput) {
+        shippingSameAsBillingInput.addEventListener('change', applyShippingToggle);
+    }
+
+    if (guestPhoneInput) {
+        guestPhoneInput.addEventListener('input', () => {
+            const formatted = formatUSPhoneDisplay(guestPhoneInput.value);
+            if (guestPhoneInput.value !== formatted) {
+                guestPhoneInput.value = formatted;
+            }
+        });
+    }
+
+    function syncPaymentMethodUi() {
+        selectedPaymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || selectedPaymentMethod;
+        const isBankTransfer = selectedPaymentMethod === 'bank_transfer';
+
+        document.querySelectorAll('.provider-payment-field').forEach(field => {
+            field.style.display = isBankTransfer ? 'none' : '';
+        });
+
+        if (payNowBtn) {
+            payNowBtn.style.display = selectedPaymentMethod === 'paypal' ? 'none' : '';
+            payNowBtn.innerHTML = isBankTransfer
+                ? '<i class="fa-solid fa-building-columns"></i> Submit bank transfer'
+                : '<i class="fa-solid fa-lock"></i> Pay now';
+        }
+    }
+
+    document.querySelectorAll('input[name="payment_method"]').forEach(input => {
+        input.addEventListener('change', syncPaymentMethodUi);
+    });
+
+    if (displayCurrencyInput) {
+        displayCurrencyInput.addEventListener('change', async () => {
+            document.cookie = `ophyra_display_currency=${encodeURIComponent(displayCurrencyInput.value)}; path=/; max-age=31536000; SameSite=Lax`;
+            await loadSummary();
+        });
+    }
+
+    if (billingCountryInput) {
+        billingCountryInput.addEventListener('change', async () => {
+            document.cookie = `ophyra_country=${encodeURIComponent(billingCountryInput.value || 'US')}; path=/; max-age=31536000; SameSite=Lax`;
+            await loadSummary();
+        });
+    }
+
+    async function mountPaymentFields() {
+        if (activeProviderType === 'square') {
+            try {
+                const payments = window.Square.payments(`{{ square_application_id|default('')|e('js') }}`, `{{ square_location_id|default('')|e('js') }}`);
+                card = await payments.card();
+                await card.attach('#square-card-container');
+            } catch (e) {
+                showError('Could not load Square payment form.');
+            }
+            return;
+        }
+
+        if (activeProviderType === 'stripe' && stripePublicKey) {
+            try {
+                stripe = Stripe(stripePublicKey);
+                stripeElements = stripe.elements();
+                stripeCard = stripeElements.create('card', {hidePostalCode: true});
+                stripeCard.mount('#stripe-card-container');
+            } catch (e) {
+                showError('Could not load Stripe payment form.');
+            }
+            return;
+        }
+
+        if (activeProviderType === 'paypal' && window.paypal) {
+            window.paypal.Buttons({
+                createOrder: async function () {
+                    const response = await fetch('{{ path("store/checkout") }}', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+                        body: JSON.stringify({
+                            action: 'paypal_create_order',
+                            session_token: sessionToken,
+                            recovery_token: RECOVERY_TOKEN,
+                            display_currency: displayCurrencyInput?.value || 'USD',
+                            billing_country: billingCountryInput?.value || 'US'
+                        })
+                    });
+                    const data = await response.json();
+                    if (!data.success) throw new Error(data.message || 'Could not create PayPal order.');
+                    return data.order_id;
+                },
+                onApprove: async function (data) {
+                    paypalOrderToken = data.orderID || '';
+                    payNowBtn.click();
+                },
+                onError: function (error) {
+                    showError(error.message || 'PayPal payment could not be completed.');
+                }
+            }).render('#paypal-button-container');
+        }
+    }
+
+    async function getPaymentToken() {
+        if (selectedPaymentMethod === 'bank_transfer') {
+            return {token: '', card_brand: 'bank_transfer', card_last4: '', card_exp: ''};
+        }
+
+        if (paymentTokenType === 'stored_card') {
+            if (!selectedSavedCardToken) {
+                throw new Error('Please select a saved card.');
+            }
+            return {
+                token: selectedSavedCardToken,
+                card_brand: '',
+                card_last4: '',
+                card_exp: ''
+            };
+        }
+
+        if (activeProviderType === 'square') {
+            const result = await card.tokenize();
+            if (result.status !== 'OK') {
+                throw new Error('Could not tokenize Square card.');
+            }
+            return {
+                token: result.token,
+                card_brand: '',
+                card_last4: '',
+                card_exp: ''
+            };
+        }
+
+        if (activeProviderType === 'stripe') {
+            const result = await stripe.createToken(stripeCard, {
+                name: guestNameInput.value.trim(),
+                address_zip: billingZipInput.value.trim(),
+                address_country: billingCountryInput.value.trim() || 'US'
+            });
+            if (result.error) {
+                throw new Error(result.error.message || 'Could not tokenize Stripe card.');
+            }
+            return {
+                token: result.token.id,
+                card_brand: result.token.card?.brand || '',
+                card_last4: result.token.card?.last4 || '',
+                card_exp: `${result.token.card?.exp_month || ''}/${result.token.card?.exp_year || ''}`
+            };
+        }
+
+        if (activeProviderType === 'paypal' && paypalOrderToken) {
+            return {token: paypalOrderToken, card_brand: 'paypal', card_last4: '', card_exp: ''};
+        }
+
+        throw new Error('No active payment provider configured.');
+    }
+
+    payNowBtn.addEventListener('click', async function () {
+        hideMessages();
+
+        if (!guestNameInput.value.trim() || !guestEmailInput.value.trim()) {
+            showError('Name and email are required.');
+            return;
+        }
+
+        if (!billingAddress1Input.value.trim() || !billingCityInput.value.trim() || !billingStateInput.value.trim() || !billingZipInput.value.trim()) {
+            showError('Billing address is required.');
+            return;
+        }
+
+        if (!shippingSameAsBillingInput.checked) {
+            if (!shippingAddress1Input.value.trim() || !shippingCityInput.value.trim() || !shippingStateInput.value.trim() || !shippingZipInput.value.trim()) {
+                showError('Shipping address is required.');
+                return;
+            }
+        }
+
+        if (paymentTokenType === 'new_card' && ['stripe', 'square'].includes(activeProviderType) && !paymentConsentConfirmed && paymentConsentModalEl && window.bootstrap) {
+            bootstrap.Modal.getOrCreateInstance(paymentConsentModalEl).show();
+            return;
+        }
+        paymentConsentConfirmed = false;
+
+        payNowBtn.disabled = true;
+        payNowBtn.innerHTML = selectedPaymentMethod === 'bank_transfer'
+            ? '<i class="fa-solid fa-spinner fa-spin"></i> Submitting request...'
+            : '<i class="fa-solid fa-spinner fa-spin"></i> Processing payment...';
+
+        try {
+            const paymentData = await getPaymentToken();
+
+            const response = await fetch('{{ path("store/checkout") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    action: 'pay',
+                    session_token: sessionToken,
+                    recovery_token: RECOVERY_TOKEN,
+                    payment_token_type: paymentTokenType,
+                    save_payment_method: savePaymentMethodInput && savePaymentMethodInput.checked ? 1 : 0,
+                    auto_charge_consent: autoChargeConsentInput && autoChargeConsentInput.checked ? 1 : 0,
+                    payment_method: selectedPaymentMethod,
+                    customer_token: paymentData.token,
+                    display_currency: displayCurrencyInput?.value || 'USD',
+                    guest_name: guestNameInput.value.trim(),
+                    guest_email: guestEmailInput.value.trim(),
+                    guest_phone: guestPhoneInput.value.trim(),
+                    billing_address_1: billingAddress1Input.value.trim(),
+                    billing_address_2: billingAddress2Input.value.trim(),
+                    billing_city: billingCityInput.value.trim(),
+                    billing_state: billingStateInput.value.trim(),
+                    billing_zip: billingZipInput.value.trim(),
+                    billing_country: billingCountryInput.value.trim(),
+                    shipping_address_1: shippingSameAsBillingInput.checked ? billingAddress1Input.value.trim() : shippingAddress1Input.value.trim(),
+                    shipping_address_2: shippingSameAsBillingInput.checked ? billingAddress2Input.value.trim() : shippingAddress2Input.value.trim(),
+                    shipping_city: shippingSameAsBillingInput.checked ? billingCityInput.value.trim() : shippingCityInput.value.trim(),
+                    shipping_state: shippingSameAsBillingInput.checked ? billingStateInput.value.trim() : shippingStateInput.value.trim(),
+                    shipping_zip: shippingSameAsBillingInput.checked ? billingZipInput.value.trim() : shippingZipInput.value.trim(),
+                    card_brand: paymentData.card_brand || '',
+                    card_last4: paymentData.card_last4 || '',
+                    card_exp: paymentData.card_exp || ''
+                })
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                showError(data.message || 'Payment could not be completed.');
+                return;
+            }
+
+            localStorage.removeItem(CART_KEY);
+            localStorage.removeItem(SESSION_KEY);
+            showSuccess('Payment completed successfully.');
+
+            setTimeout(() => {
+                window.location.href = data.redirect || PAYMENT_SUCCESS_FALLBACK;
+            }, 700);
+        } catch (e) {
+            showError(e.message || 'Payment could not be completed.');
+        } finally {
+            payNowBtn.disabled = false;
+            syncPaymentMethodUi();
+        }
+    });
+
+    (async function init() {
+        const loaded = await loadSummary();
+        if (!loaded) return;
+        syncPaymentMethodUi();
+        await loadSavedCards();
+        await mountPaymentFields();
+    })();
+});
+</script>
+{% endblock %}

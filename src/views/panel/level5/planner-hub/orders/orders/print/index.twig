@@ -1,0 +1,24 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="container mt-4">
+    <h1 class="mb-4">{{ trans('planner_hub.generate_order_documents') }}</h1>
+    {{ macros.breadcrumb2() }}
+     <a href="{{ path('panel/planner-hub/orders/orders') }}" class="btn btn-sm btn-light mb-3">{{ trans('planner_hub.back_to_orders') }}</a>
+
+    <section class="card shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title">{{ trans('planner_hub.choose_document') }}</h5>
+            <p class="card-text">{{ trans('planner_hub.download_print_documents') }}</p>
+
+            <div class="d-grid gap-3 mt-4">
+                <a class="btn btn-primary" href="{{ path(current_location ~ '/order-details?id=' ~ id) }}">
+                    {{ trans('planner_hub.order_details') }}
+                </a>
+                 
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}

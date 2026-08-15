@@ -1,0 +1,118 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+<main class="container-fluid revops-page">
+  <section class="revops-hero">
+    <div>
+      <span class="revops-kicker">Revenue Operations Center</span>
+      <h1>Ophyra Module Manager</h1>
+      <p>List first. Detail second. Action third. Search customers, billing status, modules and risk without loading every module card on the same screen.</p>
+    </div>
+    <div class="revops-actions">
+      <a href="{{ path('panel/membership-renewal-queue') }}" class="btn btn-light fw-bold">Renewal Queue</a>
+      <a href="{{ path('panel/membership-reports') }}" class="btn btn-outline-light fw-bold">Membership Reports</a>
+    </div>
+  </section>
+
+  <section class="revops-panel">
+    <form method="get" class="revops-filters">
+      <div class="filter-search">
+        <label>Search</label>
+        <input type="search" name="search" value="{{ filters.search }}" placeholder="Search customers, emails, businesses, modules or status...">
+      </div>
+      <div>
+        <label>Filter</label>
+        <select name="filter">
+          {% for value,label in filterOptions %}
+            <option value="{{ value }}" {{ filters.filter == value ? 'selected' : '' }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Per page</label>
+        <select name="per_page">
+          {% for size in [25,50,100] %}<option value="{{ size }}" {{ customers.per_page == size ? 'selected' : '' }}>{{ size }}</option>{% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-dark fw-bold" type="submit">Apply</button>
+      <a href="{{ path('panel/module-manager') }}" class="btn btn-outline-dark fw-bold">Clear</a>
+    </form>
+  </section>
+
+  <section class="revops-panel">
+    <div class="revops-table-head">
+      <div>
+        <strong>{{ customers.total }} customers</strong>
+        <span>Page {{ customers.page }} of {{ customers.pages }}</span>
+      </div>
+      <div class="revops-mini-actions">
+        <a href="{{ path('panel/membership-renewal-queue?filter=eligible') }}" class="btn btn-sm btn-outline-success">Charge-ready</a>
+        <a href="{{ path('panel/user-hygiene') }}" class="btn btn-sm btn-outline-warning">Spam cleanup</a>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="revops-table">
+        <thead>
+          <tr>
+            <th>Customer / Business</th>
+            <th>Email</th>
+            <th>Membership</th>
+            <th>Active modules</th>
+            <th>Billing</th>
+            <th>Renewal date</th>
+            <th>Amount due</th>
+            <th>Payment method</th>
+            <th>Risk</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for customer in customers.rows %}
+            <tr>
+              <td>
+                <strong>{{ customer.name }}</strong>
+                <small>{{ customer.business ?: 'No business profile' }}{% if customer.business_id %} · Business #{{ customer.business_id }}{% endif %}</small>
+              </td>
+              <td>{{ customer.email }}<small>User #{{ customer.id }}</small></td>
+              <td><span class="status-pill {{ customer.membership_status }}">{{ customer.membership_status|replace({'_':' '})|title }}</span></td>
+              <td><strong>{{ customer.active_modules_count }}</strong><small>{{ customer.courtesy_modules }} courtesy</small></td>
+              <td><span class="status-pill billing">{{ customer.billing_status|replace({'_':' '})|title }}</span><small>{{ customer.eligibility_reason }}</small></td>
+              <td>{{ customer.membership_due_label ?: '-' }}</td>
+              <td><strong>{{ customer.amount_due_label }}</strong><small>Next {{ customer.next_charge_label }}</small></td>
+              <td>{{ customer.payment_method }}<small>{{ customer.autorenew ? 'Auto-renew ON' : 'Auto-renew OFF' }}</small></td>
+              <td><span class="risk {{ customer.risk|lower }}">{{ customer.risk }}</span></td>
+              <td>
+                <div class="btn-group">
+                  <a class="btn btn-sm btn-dark" href="{{ path('panel/customer-billing?customer_id=' ~ customer.id) }}">View</a>
+                  <a class="btn btn-sm btn-outline-dark" href="{{ path('panel/customer-billing?customer_id=' ~ customer.id ~ '#manage-modules') }}">Manage</a>
+                  <button class="btn btn-sm btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown">More</button>
+                  <div class="dropdown-menu dropdown-menu-end">
+                    <a class="dropdown-item" href="{{ path('panel/customer-billing?customer_id=' ~ customer.id ~ '#billing-summary') }}">Open billing</a>
+                    <a class="dropdown-item" href="{{ path('panel/customer-billing?customer_id=' ~ customer.id ~ '#manage-modules') }}">Add module</a>
+                    <a class="dropdown-item" href="{{ path('panel/customer-billing?customer_id=' ~ customer.id ~ '#grant-courtesy') }}">Grant courtesy</a>
+                    <a class="dropdown-item" href="{{ path('panel/customer-billing?customer_id=' ~ customer.id ~ '#charge-now') }}">Charge now</a>
+                    <a class="dropdown-item" href="{{ path('panel/customer-billing?customer_id=' ~ customer.id ~ '#payment-method') }}">Add payment method</a>
+                    <a class="dropdown-item" href="{{ path('panel/user-hygiene?search=' ~ customer.email) }}">Mark for review / spam</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="10" class="text-center py-5 text-muted">No customers match this filter.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="revops-pagination">
+      {% set base = 'panel/module-manager?search=' ~ filters.search ~ '&filter=' ~ filters.filter ~ '&per_page=' ~ customers.per_page ~ '&page=' %}
+      <a class="btn btn-outline-dark {{ customers.page <= 1 ? 'disabled' : '' }}" href="{{ path(base ~ (customers.page - 1)) }}">Previous</a>
+      <span>Page {{ customers.page }} / {{ customers.pages }}</span>
+      <a class="btn btn-outline-dark {{ customers.page >= customers.pages ? 'disabled' : '' }}" href="{{ path(base ~ (customers.page + 1)) }}">Next</a>
+    </div>
+  </section>
+</main>
+
+<style>
+.revops-page{--ink:#0f172a;--muted:#64748b;--line:rgba(15,23,42,.1);display:grid;gap:1.25rem}.revops-hero{align-items:flex-end;background:linear-gradient(135deg,#0f172a,#0f766e);border-radius:28px;color:#fff;display:flex;gap:1rem;justify-content:space-between;padding:2rem;box-shadow:0 24px 60px rgba(15,23,42,.16)}.revops-hero h1{color:#fff!important;font-size:clamp(2rem,4vw,3.4rem);font-weight:950;letter-spacing:-.05em;margin:.25rem 0}.revops-hero p{color:rgba(255,255,255,.82);max-width:760px}.revops-kicker{color:#99f6e4;font-size:.78rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.revops-actions{display:flex;flex-wrap:wrap;gap:.65rem}.revops-panel{background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 18px 48px rgba(15,23,42,.08);padding:1rem}.revops-filters{align-items:end;display:grid;gap:.8rem;grid-template-columns:minmax(260px,1fr) 220px 140px auto auto}.revops-filters label{color:#475569;display:block;font-size:.76rem;font-weight:900;letter-spacing:.08em;margin-bottom:.35rem;text-transform:uppercase}.revops-filters input,.revops-filters select{border:1px solid #dbe4ee;border-radius:14px;padding:.82rem 1rem;width:100%}.revops-table-head,.revops-pagination{align-items:center;display:flex;justify-content:space-between;gap:1rem;margin-bottom:1rem}.revops-table-head span{color:var(--muted);display:block}.revops-mini-actions{display:flex;gap:.5rem}.revops-table{border-collapse:separate;border-spacing:0;min-width:1180px;width:100%}.revops-table th{background:#f8fafc;color:#475569;font-size:.73rem;font-weight:950;letter-spacing:.08em;padding:.85rem;text-transform:uppercase}.revops-table td{border-top:1px solid var(--line);padding:.9rem;vertical-align:middle}.revops-table small{color:var(--muted);display:block;margin-top:.2rem}.status-pill,.risk{border-radius:999px;display:inline-flex;font-size:.75rem;font-weight:900;padding:.38rem .65rem}.status-pill.active,.status-pill.due_today{background:#dcfce7;color:#166534}.status-pill.expired,.status-pill.past_due{background:#fee2e2;color:#991b1b}.status-pill.not_started{background:#f1f5f9;color:#475569}.status-pill.billing{background:#e0f2fe;color:#075985}.risk.low{background:#dcfce7;color:#166534}.risk.medium{background:#fef3c7;color:#92400e}.risk.high{background:#fee2e2;color:#991b1b}@media(max-width:900px){.revops-hero,.revops-table-head,.revops-pagination{align-items:stretch;flex-direction:column}.revops-filters{grid-template-columns:1fr}.revops-actions a{width:100%}}
+</style>
+{% endblock %}

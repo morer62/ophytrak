@@ -1,0 +1,48 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+    <h1 class="h3 mb-4">🧾 {{ trans('planner_hub.payroll_payment_details') }}</h1>
+    {{ macros.breadcrumb2() }}
+
+    <a href="{{ path('panel/planner-hub/team/payroll/paid') }}" class="btn btn-sm btn-light mb-3">← {{ trans('planner_hub.back_to_payroll_history') }}</a>
+
+    <div class="table-responsive">
+        <table class="table table-bordered text-center align-middle" style="min-width: 700px;">
+            <thead>
+                <tr>
+                    <th>{{ trans('planner_hub.employee') }}</th>
+                    <th>{{ trans('planner_hub.start_time') }}</th>
+                    <th>{{ trans('planner_hub.end_time') }}</th>
+                    <th>{{ trans('planner_hub.total_hours') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in hours %}
+                    <tr>
+                        <td>{{ h.email }}</td> 
+                        <td  style="min-width: 200px;">
+                            {{ h.start_time|date_modify("+0 seconds")|date("l, M d, Y h:i A")  }}
+                        </span></td>
+                        <td  style="min-width: 200px;">
+                            {{ h.end_time|date_modify("+0 seconds")|date("l, M d, Y h:i A")  }}
+                        </td> 
+ 
+                        <td>{{ h.total_hours }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="text-muted">{{ trans('planner_hub.no_hours_linked') }}</td>
+                    </tr>
+                {% endfor %}
+
+                {% if hours %}
+                    <tr>
+                        <td colspan="3" class="text-end fw-bold">{{ trans('planner_hub.total') }}</td>
+                        <td class="fw-bold">{{ total }}</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

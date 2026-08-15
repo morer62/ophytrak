@@ -1,0 +1,183 @@
+﻿{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+<main class="container mt-4">
+    <section class="p-4 p-lg-5 rounded-4 shadow-sm mb-4 text-white" style="background: linear-gradient(135deg, #0f172a, #0f766e); color: #fff;">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <p class="text-uppercase fw-bold small mb-2" style="letter-spacing:.06em; opacity:.82; color:#e2e8f0;">{{ trans('wallet.client_wallet') }}</p>
+                <h1 class="h2 fw-bold mb-2" style="color:#fff;">{{ trans('wallet.payment_methods') }}</h1>
+                <p class="fs-6 mb-0" style="opacity:.92; color:#eefcf8;">{{ trans('wallet.hero_body') }}</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{{ path('panel/billing') }}" class="btn btn-light rounded-pill fw-bold px-4">{{ trans('wallet.billing_details') }}</a>
+            </div>
+        </div>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <form id="card-form">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <h2 class="h5 fw-bold mb-2">{{ trans('wallet.add_new_card') }}</h2>
+                        <p class="text-muted small mb-3">{{ trans('wallet.card_security_note') }}</p>
+                        <div id="card-element" class="form-control mb-3 py-3"></div>
+                        <div id="card-errors" class="text-danger mb-2"></div>
+                        <button class="btn btn-dark w-100 rounded-pill fw-bold" id="submit-card" type="submit">{{ trans('wallet.add_card') }}</button>
+                        <div id="loading-text" class="text-center text-muted mt-2" style="display:none;">{{ trans('wallet.processing_card') }}</div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h2 class="h5 fw-bold mb-1">{{ trans('wallet.dashboard_cards') }}</h2>
+                    <p class="text-muted small mb-3">{{ trans('wallet.dashboard_cards_body') }}</p>
+
+                    {% if cards %}
+                        <div class="d-grid gap-3">
+                            {% for card in cards %}
+                                <div class="border rounded-4 p-3 bg-light">
+                                    <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
+                                        <div>
+                                            <div class="fw-bold text-uppercase small text-muted">{{ card.brand }}</div>
+                                            <div class="fs-5 fw-bold">**** **** **** {{ card.last4 }}</div>
+                                            <div class="text-muted small">{{ trans('wallet.expires') }} {{ card.exp }}</div>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                                            {% if card.main_card == 'yes' %}
+                                                <span class="badge rounded-pill bg-success px-3 py-2">{{ trans('wallet.default') }}</span>
+                                            {% else %}
+                                                <form method="post" class="m-0">
+                                                    <input type="hidden" name="set_main" value="{{ card.id }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-success rounded-pill">{{ trans('wallet.make_default') }}</button>
+                                                </form>
+                                            {% endif %}
+                                            <form method="post" class="m-0" onsubmit="return confirm('{{ trans('wallet.remove_saved_card')|e('js') }}');">
+                                                <input type="hidden" name="delete_card" value="{{ card.id }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">{{ trans('wallet.delete') }}</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center border rounded-4 p-4 bg-light">
+                            <h3 class="h6 fw-bold mb-2">{{ trans('wallet.no_dashboard_cards') }}</h3>
+                            <p class="text-muted mb-0">{{ trans('wallet.no_dashboard_cards_body') }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h2 class="h5 fw-bold mb-1">{{ trans('wallet.order_payment_cards') }}</h2>
+                    <p class="text-muted small mb-3">{{ trans('wallet.order_payment_cards_body') }}</p>
+
+                    {% if saved_methods %}
+                        <div class="d-grid gap-3">
+                            {% for method in saved_methods %}
+                                <div class="border rounded-4 p-3 bg-light">
+                                    <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
+                                        <div>
+                                            <div class="fw-bold text-uppercase small text-muted">{{ method.payment_provider }} {% if method.brand %}- {{ method.brand }}{% endif %}</div>
+                                            <div class="fs-5 fw-bold">**** **** **** {{ method.last4 ?: 'saved' }}</div>
+                                            <div class="text-muted small">
+                                                {% if method.exp_month and method.exp_year %}
+                                                    {{ trans('wallet.expires') }} {{ method.exp_month }}/{{ method.exp_year }}
+                                                {% else %}
+                                                    {{ trans('wallet.expiration_not_provided') }}
+                                                {% endif %}
+                                            </div>
+                                            {% if method.billing_email %}
+                                                <div class="text-muted small">{{ method.billing_email }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                                            {% if method.is_default %}
+                                                <span class="badge rounded-pill bg-success px-3 py-2">{{ trans('wallet.default_for_business') }}</span>
+                                            {% else %}
+                                                <form method="post" class="m-0">
+                                                    <input type="hidden" name="set_saved_method_default" value="{{ method.id }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-success rounded-pill">{{ trans('wallet.make_default') }}</button>
+                                                </form>
+                                            {% endif %}
+                                            <form method="post" class="m-0" onsubmit="return confirm('{{ trans('wallet.remove_saved_method')|e('js') }}');">
+                                                <input type="hidden" name="delete_saved_method" value="{{ method.id }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">{{ trans('wallet.delete') }}</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center border rounded-4 p-4 bg-light">
+                            <h3 class="h6 fw-bold mb-2">{{ trans('wallet.no_order_payment_cards') }}</h3>
+                            <p class="text-muted mb-0">{{ trans('wallet.no_order_payment_cards_body') }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    const stripe = Stripe("{{ stripe_key }}");
+    const elements = stripe.elements();
+    const card = elements.create("card");
+    card.mount("#card-element");
+
+    document.getElementById("card-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById("submit-card");
+        const loadingText = document.getElementById("loading-text");
+        const errorBox = document.getElementById("card-errors");
+        submitBtn.disabled = true;
+        loadingText.style.display = "block";
+        errorBox.textContent = "";
+
+        const { token, error } = await stripe.createToken(card);
+        if (error) {
+            errorBox.textContent = error.message;
+            submitBtn.disabled = false;
+            loadingText.style.display = "none";
+            return;
+        }
+
+        const cardInfo = {
+            brand: token.card.brand,
+            last4: token.card.last4,
+            exp: token.card.exp_month + "/" + token.card.exp_year
+        };
+
+        const formData = new FormData();
+        formData.append("token", token.id);
+        formData.append("card_info", JSON.stringify(cardInfo));
+
+        const res = await fetch(location.href, {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await res.json();
+        if (result.success) {
+            window.location.reload();
+            return;
+        }
+
+        errorBox.textContent = result.message || '{{ trans('wallet.save_card_error')|e('js') }}';
+        submitBtn.disabled = false;
+        loadingText.style.display = "none";
+    });
+</script>
+{% endblock %}

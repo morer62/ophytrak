@@ -1,0 +1,246 @@
+{% extends 'templates/base.admin.twig' %}
+{% set _i18n_ready = trans('common.language') %}
+
+{% block body %}
+<div class="billing-info-shell">
+    <section class="billing-info-hero">
+        <div class="billing-info-hero-copy">
+            <span class="billing-info-kicker">{{ trans('wallet.billing_details') }}</span>
+            <h1>{{ trans('wallet.billing_information') }}</h1>
+            <p>{{ trans('wallet.billing_information_help') }}</p>
+        </div>
+        <a href="{{ path('panel/cards') }}" class="billing-info-back">{{ trans('wallet.back_to_cards') }}</a>
+    </section>
+
+    <section class="billing-info-card">
+        <div class="billing-info-card-head">
+            <div>
+                <span class="billing-info-kicker muted">{{ trans('wallet.secure_billing_profile') }}</span>
+                <h2>{{ trans('wallet.billing_address') }}</h2>
+                <p>{{ trans('wallet.billing_address_help') }}</p>
+            </div>
+            <div class="billing-info-badge">{{ trans('wallet.private_secure') }}</div>
+        </div>
+
+        <form method="post" class="billing-info-form">
+            <div class="billing-info-field wide">
+                <label for="billing_address_1">{{ trans('wallet.address') }}</label>
+                <input type="text" id="billing_address_1" name="billing_address_1" class="form-control"
+                       autocomplete="billing street-address"
+                       placeholder="{{ trans('wallet.address_placeholder') }}"
+                       value="{{ billing.billing_address_1 ?? '' }}">
+            </div>
+
+            <div class="billing-info-field">
+                <label for="billing_city">{{ trans('wallet.city') }}</label>
+                <input type="text" id="billing_city" name="billing_city" class="form-control"
+                       autocomplete="billing address-level2"
+                       placeholder="{{ trans('wallet.city_placeholder') }}"
+                       value="{{ billing.billing_city ?? '' }}">
+            </div>
+
+            <div class="billing-info-field">
+                <label for="billing_state">{{ trans('wallet.state') }}</label>
+                <input type="text" id="billing_state" name="billing_state" class="form-control"
+                       autocomplete="billing address-level1"
+                       placeholder="{{ trans('wallet.state_placeholder') }}"
+                       value="{{ billing.billing_state ?? '' }}">
+            </div>
+
+            <div class="billing-info-field">
+                <label for="billing_zip">{{ trans('wallet.zip_code') }}</label>
+                <input type="text" id="billing_zip" name="billing_zip" class="form-control"
+                       autocomplete="billing postal-code"
+                       placeholder="{{ trans('wallet.zip_placeholder') }}"
+                       value="{{ billing.billing_zip ?? '' }}">
+            </div>
+
+            <div class="billing-info-actions">
+                <a href="{{ path('panel/cards') }}" class="btn billing-info-secondary">{{ trans('wallet.back_to_cards') }}</a>
+                <button type="submit" class="btn billing-info-primary">{{ trans('wallet.save_billing_info') }}</button>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ parent() }}
+<style>
+    .billing-info-shell {
+        display: grid;
+        gap: 1.25rem;
+        max-width: 1180px;
+        padding-bottom: 2rem;
+    }
+    .billing-info-hero {
+        align-items: center;
+        background:
+            radial-gradient(circle at 88% 12%, rgba(45, 212, 191, .32), transparent 34%),
+            linear-gradient(135deg, #0f172a 0%, #0f4f55 54%, #0f766e 100%);
+        border: 1px solid rgba(153, 246, 228, .28);
+        border-radius: 30px;
+        box-shadow: 0 26px 60px rgba(15, 23, 42, .16);
+        color: #fff;
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+        overflow: hidden;
+        padding: clamp(1.35rem, 3vw, 2.2rem);
+        position: relative;
+    }
+    .billing-info-hero:before {
+        background: linear-gradient(90deg, #5eead4, transparent);
+        bottom: 0;
+        content: "";
+        height: 4px;
+        left: 2rem;
+        position: absolute;
+        width: 42%;
+    }
+    .billing-info-hero-copy h1 {
+        color: #fff;
+        font-size: clamp(2rem, 4vw, 3.4rem);
+        font-weight: 950;
+        letter-spacing: -.05em;
+        line-height: .98;
+        margin: .35rem 0 .65rem;
+        text-shadow: 0 2px 18px rgba(15, 23, 42, .42);
+    }
+    .billing-info-hero-copy p {
+        color: rgba(255, 255, 255, .84);
+        font-size: 1.02rem;
+        margin: 0;
+        max-width: 680px;
+    }
+    .billing-info-kicker {
+        color: #99f6e4;
+        display: block;
+        font-size: .78rem;
+        font-weight: 950;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+    }
+    .billing-info-kicker.muted { color: #0f766e; }
+    .billing-info-back,
+    .billing-info-primary,
+    .billing-info-secondary {
+        align-items: center;
+        border-radius: 999px;
+        display: inline-flex;
+        font-weight: 900;
+        justify-content: center;
+        min-height: 44px;
+        padding: .72rem 1.1rem;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .billing-info-back {
+        background: rgba(255, 255, 255, .95);
+        color: #0f766e;
+        box-shadow: 0 18px 36px rgba(15, 23, 42, .16);
+    }
+    .billing-info-card {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid rgba(15, 23, 42, .08);
+        border-radius: 30px;
+        box-shadow: 0 22px 60px rgba(15, 23, 42, .08);
+        padding: clamp(1.1rem, 2.4vw, 1.75rem);
+    }
+    .billing-info-card-head {
+        align-items: flex-start;
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+        margin-bottom: 1.25rem;
+    }
+    .billing-info-card-head h2 {
+        color: #0f172a;
+        font-size: clamp(1.35rem, 2.4vw, 2rem);
+        font-weight: 950;
+        letter-spacing: -.035em;
+        margin: .25rem 0;
+    }
+    .billing-info-card-head p {
+        color: #64748b;
+        margin: 0;
+        max-width: 680px;
+    }
+    .billing-info-badge {
+        background: #ecfeff;
+        border: 1px solid rgba(20, 184, 166, .24);
+        border-radius: 999px;
+        color: #0f766e;
+        font-size: .82rem;
+        font-weight: 950;
+        padding: .5rem .85rem;
+        white-space: nowrap;
+    }
+    .billing-info-form {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .billing-info-field {
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, .08);
+        border-radius: 22px;
+        padding: .85rem;
+    }
+    .billing-info-field.wide { grid-column: 1 / -1; }
+    .billing-info-field label {
+        color: #334155;
+        display: block;
+        font-size: .82rem;
+        font-weight: 950;
+        letter-spacing: .04em;
+        margin-bottom: .45rem;
+        text-transform: uppercase;
+    }
+    .billing-info-field .form-control {
+        background: #f8fafc;
+        border: 1px solid rgba(100, 116, 139, .26);
+        border-radius: 16px;
+        color: #0f172a;
+        min-height: 48px;
+        padding: .78rem .95rem;
+    }
+    .billing-info-field .form-control:focus {
+        background: #fff;
+        border-color: #14b8a6;
+        box-shadow: 0 0 0 .22rem rgba(20, 184, 166, .18);
+    }
+    .billing-info-actions {
+        align-items: center;
+        display: flex;
+        gap: .75rem;
+        grid-column: 1 / -1;
+        justify-content: space-between;
+        padding-top: .35rem;
+    }
+    .billing-info-primary {
+        background: linear-gradient(135deg, #0f4f55, #0f766e);
+        border: 0;
+        color: #fff;
+        box-shadow: 0 18px 36px rgba(15, 118, 110, .22);
+    }
+    .billing-info-secondary {
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, .12);
+        color: #0f766e;
+    }
+    @media (max-width: 900px) {
+        .billing-info-hero,
+        .billing-info-card-head,
+        .billing-info-actions {
+            align-items: stretch;
+            flex-direction: column;
+        }
+        .billing-info-form { grid-template-columns: 1fr; }
+        .billing-info-back,
+        .billing-info-primary,
+        .billing-info-secondary { width: 100%; }
+        .billing-info-badge { width: max-content; }
+    }
+</style>
+{% endblock %}

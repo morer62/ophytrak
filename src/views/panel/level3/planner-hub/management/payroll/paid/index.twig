@@ -1,0 +1,95 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+    <h1 class="h3 mb-4">💸 {{ trans('planner_hub.payroll_history') }}</h1>
+    {{ macros.breadcrumb2() }}
+
+    <section class="card">
+        <div class="card-body">
+            <form method="get" class="row mb-4" id="filter-form">
+                <div class="col-md-3">
+                    <label class="form-label">{{ trans('planner_hub.employee') }}</label>
+                    <select name="user_id" class="form-select">
+                        <option value="">{{ trans('planner_hub.all_employees') }}</option>
+                        {% for employee in employees %}
+                            <option value="{{ employee.id }}" {{ employee.id == employeeId ? 'selected' : '' }}>
+                                {{ employee.email }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">{{ trans('planner_hub.from') }}</label>
+                    <input type="date" name="from" class="form-control" value="{{ from }}">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">{{ trans('planner_hub.to') }}</label>
+                    <input type="date" name="to" class="form-control" value="{{ to }}">
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary w-100">{{ trans('planner_hub.filter') }}</button>
+                    <button type="button" onclick="resetAndSubmit()" class="btn btn-outline-secondary ms-2" data-bs-toggle="tooltip" data-bs-title="Reset">
+                        <i data-feather="rotate-ccw"></i>
+                    </button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-bordered text-center align-middle" style="min-width: 700px;">
+                    <thead>
+                        <tr>
+                            <th>{{ trans('planner_hub.employee') }}</th>
+                            <th>{{ trans('planner_hub.total_hours') }}</th>
+                            <th>{{ trans('planner_hub.paid_date') }}</th>
+                            <th>{{ trans('planner_hub.proof') }}</th>
+                            <th>{{ trans('planner_hub.details') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in payments %}
+                            <tr>
+                                <td>{{ p.email ?: 'N/A' }}</td>
+                                <td>{{ p.total_hours_readable }}</td>
+
+                                <td>{{ p.paid_at|date("l, F j, Y") }}</td>
+                                <td>
+                                    {% if p.proof_url %}
+
+                                  
+                                            <a href="{{p.proof_url }}" target="_blank" download class="btn btn-sm btn-outline-primary">
+                                                📎 {{ trans('planner_hub.download_proof') }}
+                                            </a>
+                                        
+                                        
+
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ path('panel/planner-hub/management/payroll/paid/details', { id: p.id }) }}" class="btn btn-sm btn-outline-primary">👁 {{ trans('planner_hub.view') }}</a>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-muted">{{ trans('planner_hub.no_records_found_dot') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function resetAndSubmit() {
+        window.location.href = window.location.pathname;
+    }
+</script>
+{% endblock %}

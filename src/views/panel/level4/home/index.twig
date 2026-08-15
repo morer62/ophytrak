@@ -1,0 +1,308 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set companyFallback = trans('team_home.company_workspace_fallback') %}
+{% set currentCompanyName = companyFallback %}
+{% if currentInstitution and currentInstitution.company_name %}
+  {% set currentCompanyName = currentInstitution.company_name %}
+{% endif %}
+{% set ownerLabel = trans('team_home.owner') %}
+{% set teamMemberLabel = trans('team_home.team_member') %}
+{% set roleLabel = teamMemberLabel %}
+{% if currentInstitutionRole == 'owner' %}
+  {% set roleLabel = ownerLabel %}
+{% endif %}
+{% if roleName %}
+  {% set roleLabel = roleName %}
+{% endif %}
+<main class="container mt-4 team-home">
+  <style>
+    .team-home {
+      --team-ink: #0f172a;
+      --team-muted: #64748b;
+      --team-line: rgba(15, 23, 42, .1);
+      --team-green: #0f766e;
+      --team-lime: #84cc16;
+      --team-sky: #0284c7;
+    }
+    .team-hero {
+      border-radius: 28px;
+      padding: clamp(1.25rem, 3vw, 2.5rem);
+      color: #fff;
+      background:
+        radial-gradient(circle at 88% 12%, rgba(132, 204, 22, .26), transparent 28%),
+        linear-gradient(135deg, #071513 0%, #0f3b35 55%, #0f766e 100%);
+      box-shadow: 0 24px 70px rgba(15, 23, 42, .14);
+      overflow: hidden;
+    }
+    .team-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 999px;
+      padding: .42rem .8rem;
+      color: #d9f99d;
+      background: rgba(255,255,255,.08);
+      font-weight: 900;
+      font-size: .76rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .team-hero h1 {
+      color: #fff;
+      font-size: clamp(2rem, 5vw, 4rem);
+      line-height: 1.02;
+      margin: 1rem 0 .75rem;
+      font-weight: 950;
+    }
+    .team-hero p {
+      color: rgba(255,255,255,.86);
+      max-width: 850px;
+      margin-bottom: 0;
+      line-height: 1.65;
+    }
+    .team-context-card {
+      margin-top: 1.35rem;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 22px;
+      background: rgba(255,255,255,.08);
+      padding: 1rem;
+    }
+    .team-panel {
+      border: 1px solid var(--team-line);
+      border-radius: 24px;
+      background: #fff;
+      box-shadow: 0 18px 46px rgba(15, 23, 42, .06);
+      padding: 1.25rem;
+      height: 100%;
+    }
+    .team-panel h2,
+    .team-panel h3 {
+      color: var(--team-ink);
+      font-weight: 900;
+    }
+    .team-panel p {
+      color: var(--team-muted);
+    }
+    .team-action-card {
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      min-height: 190px;
+      border: 1px solid var(--team-line);
+      border-radius: 22px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      padding: 1.15rem;
+      text-decoration: none;
+      color: var(--team-ink);
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .team-action-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 34px rgba(15, 23, 42, .12);
+      color: var(--team-ink);
+    }
+    .team-icon {
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      color: #052e2b;
+      background: linear-gradient(135deg, #ccfbf1, #bef264);
+    }
+    .team-switch-form button {
+      min-height: 44px;
+    }
+    @media (max-width: 768px) {
+      .team-hero { border-radius: 0; margin-inline: -12px; }
+    }
+  </style>
+
+  <section class="team-hero mb-4">
+    <span class="team-kicker"><i data-feather="briefcase"></i> {{ trans('team_home.kicker') }}</span>
+    <h1>{{ trans('team_home.hero_title') }}</h1>
+    <p>Use this area for tasks, delivery, clock-in, team chat and company workspaces. You can switch to {{ trans('ui.client_portal') }} or activate Business {{ trans('team_home.owner') }} View from the same account, without signing up again.</p>
+
+    <div class="team-context-card">
+      <div class="row align-items-center g-3">
+        <div class="col-lg-7">
+          <div class="small text-uppercase fw-bold" style="color:#d9f99d; letter-spacing:.08em;">{{ trans('team_home.current_workspace') }}</div>
+          <div class="h4 fw-bold mb-1" style="color:#fff;">{{ currentCompanyName }}</div>
+          <div style="color:rgba(255,255,255,.78);">
+            {{ trans('team_home.role') }}: {{ roleLabel }}
+            {% if hourlyRate and hourlyRate > 0 %} | ${{ hourlyRate|number_format(2) }}/hr{% endif %}
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+            {% if hasMultipleInstitutions %}
+              <button class="btn btn-light fw-bold rounded-pill px-4" type="button" onclick="showInstitutionSwitcher()">{{ trans('team_home.switch_company') }}</button>
+            {% endif %}
+            <form method="post" action="{{ path('panel/home') }}" class="m-0 team-switch-form">
+              <input type="hidden" name="level" value="5">
+              <button class="btn btn-outline-light fw-bold rounded-pill px-4" type="submit">{{ trans('ui.client_portal') }}</button>
+            </form>
+            <form method="post" action="{{ path('panel/home') }}" class="m-0 team-switch-form">
+              <input type="hidden" name="level" value="2">
+              <button class="btn btn-success fw-bold rounded-pill px-4" type="submit">Business {{ trans('team_home.owner') }} View</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-4">
+      <a class="team-action-card" href="{{ path('panel/planner-hub/team/my-work') }}">
+        <span class="team-icon"><i data-feather="check-square"></i></span>
+        <div>
+          <h3 class="h5 fw-bold mb-1">{{ trans('team_home.my_work_title') }}</h3>
+          <p class="mb-0">{{ trans('team_home.my_work_body') }}</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-lg-4">
+      <a class="team-action-card" href="{{ path('panel/planner-hub/team/driver-mode') }}">
+        <span class="team-icon"><i data-feather="navigation"></i></span>
+        <div>
+          <h3 class="h5 fw-bold mb-1">{{ trans('team_home.driver_mode') }}</h3>
+          <p class="mb-0">{{ trans('team_home.driver_mode_body') }}</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-lg-4">
+      <a class="team-action-card" href="{{ path('panel/planner-hub/team/payroll/clock') }}">
+        <span class="team-icon"><i data-feather="clock"></i></span>
+        <div>
+          <h3 class="h5 fw-bold mb-1">{{ trans('team_home.clock_hours') }}</h3>
+          <p class="mb-0">{{ trans('team_home.clock_hours_body') }}</p>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-8">
+      <section class="team-panel">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+          <div>
+            <p class="text-uppercase small fw-bold mb-1" style="color:var(--team-green); letter-spacing:.08em;">{{ trans('team_home.access_center_kicker') }}</p>
+            <h2 class="h4 mb-2">{{ trans('affiliate_hub.status_approved') }} tools for this workspace</h2>
+            <p class="mb-0">{{ trans('team_home.approved_tools_body') }}</p>
+          </div>
+          <a href="{{ path('panel/planner-hub') }}" class="btn btn-dark rounded-pill fw-bold px-4">Open {{ trans('team_home.access_center_kicker') }}</a>
+        </div>
+      </section>
+    </div>
+    <div class="col-lg-4">
+      <section class="team-panel">
+        <h2 class="h5 mb-2">{{ trans('team_home.contract_status') }}</h2>
+        {% if teamContract and teamContract.status in ['PENDING','SENT'] %}
+          <p class="mb-3">{{ trans('team_home.contract_waiting') }}</p>
+          <a href="{{ path('panel/planner-hub/team/contracts') }}" class="btn btn-warning rounded-pill fw-bold px-4">{{ trans('team_home.sign_contract') }}</a>
+        {% elseif teamContract and teamContract.status in ['SIGNED','VALIDATED','MANUALLY_UPLOADED'] %}
+          <p class="mb-3">{{ trans('team_home.contract_available') }}</p>
+          <a href="{{ path('panel/planner-hub/team/contracts') }}" class="btn btn-outline-success rounded-pill fw-bold px-4">{{ trans('team_home.view_contract') }}</a>
+        {% else %}
+          <p class="mb-3">{{ trans('team_home.no_contract') }}</p>
+          <a href="{{ path('panel/planner-hub/team/contracts') }}" class="btn btn-outline-primary rounded-pill fw-bold px-4">{{ trans('team_home.my_contract') }}</a>
+        {% endif %}
+      </section>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6 col-xl-3">
+      <a class="team-action-card" href="{{ path('panel/planner-hub/team/chat') }}">
+        <span class="team-icon"><i data-feather="message-circle"></i></span>
+        <h3 class="h6 fw-bold mb-0">{{ trans('ui.team_chat') }}</h3>
+        <p class="mb-0">{{ trans('team_home.team_chat_body') }}</p>
+      </a>
+    </div>
+    <div class="col-md-6 col-xl-3">
+      <a class="team-action-card" href="{{ path('panel/planner-hub/team/orders/orders/') }}">
+        <span class="team-icon"><i data-feather="calendar"></i></span>
+        <h3 class="h6 fw-bold mb-0">Assigned {{ trans('client_home.orders_kicker') }}</h3>
+        <p class="mb-0">{{ trans('team_home.assigned_orders_body') }}</p>
+      </a>
+    </div>
+    <div class="col-md-6 col-xl-3">
+      <a class="team-action-card" href="{{ path('panel/planner-hub/team/payroll/pending') }}">
+        <span class="team-icon"><i data-feather="dollar-sign"></i></span>
+        <h3 class="h6 fw-bold mb-0">{{ trans('team_home.pending_pay') }}</h3>
+        <p class="mb-0">{{ trans('team_home.pending_pay_body') }}</p>
+      </a>
+    </div>
+    <div class="col-md-6 col-xl-3">
+      <a class="team-action-card" href="{{ path('panel/afiliate-hub') }}">
+        <span class="team-icon"><i data-feather="share-2"></i></span>
+        <h3 class="h6 fw-bold mb-0">{{ trans('affiliate_hub.title') }}</h3>
+        <p class="mb-0">{{ trans('team_home.affiliate_body') }}</p>
+      </a>
+    </div>
+  </div>
+</main>
+
+<div class="modal fade" id="institutionSwitcherModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">{{ trans('team_home.switch_company') }} workspace</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="list-group">
+          {% for institution in userInstitutions %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="mb-1">{{ institution.company_name }}</h6>
+                <small class="text-muted">{% if institution.role_name %}{{ institution.role_name }}{% else %}{{ institution.relationship_type }}{% endif %}</small>
+              </div>
+              {% if currentInstitution and institution.working_institution_id == currentInstitution.id %}
+                <span class="badge bg-success">{{ trans('team_home.current') }}</span>
+              {% else %}
+                {% set switchRole = 'employee' %}
+                {% if institution.relationship_type == 'primary' %}
+                  {% set switchRole = 'owner' %}
+                {% endif %}
+                <button class="btn btn-outline-primary btn-sm" data-institution-id="{{ institution.working_institution_id }}" data-role="{{ switchRole }}" onclick="switchInstitutionFromButton(this)">{{ trans('team_home.switch') }}</button>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="text-muted">{{ trans('team_home.no_workspaces') }}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showInstitutionSwitcher() {
+  new bootstrap.Modal(document.getElementById('institutionSwitcherModal')).show();
+}
+
+function switchInstitutionFromButton(button) {
+  switchInstitution(button.dataset.institutionId, button.dataset.role);
+}
+
+function switchInstitution(institutionId, role) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = window.location.href;
+  [['switch_institution', '1'], ['institution_id', institutionId], ['role', role]].forEach(function (pair) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = pair[0];
+    input.value = pair[1];
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  form.submit();
+}
+</script>
+{% endblock %}
+

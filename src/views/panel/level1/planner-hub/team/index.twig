@@ -1,0 +1,65 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="mt-4">
+  <div class="container">
+
+    <h2 class="mb-4 text-center">{{ trans('planner_hub.team_members_workspace') }}</h2>
+
+    {{ macros.breadcrumb2() }}
+
+    <div class="row g-4">
+
+      <!-- Assigned Tasks -->
+      <div class="col-md-6">
+        <div class="p-4 bg-white rounded-4 shadow-sm h-100 text-center">
+          <img src="{{ asset_for('assets/images/icons_website/icon_3.png') }}" alt="Orders" class="mb-3" style="height: 90px;">
+          <h5 class="fw-bold mb-2">📦 {{ trans('planner_hub.assigned_tasks') }}</h5>
+          <p class="text-muted small mb-3">{{ trans('planner_hub.track_event_orders') }}</p>
+          {% if user.level not in [2,3] %}
+            <a href="{{ path('panel/planner-hub/team/orders/orders') }}" class="btn btn-success btn-lg fw-bold px-4">{{ trans('planner_hub.view_orders') }}</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Time & Payments -->
+      <div class="col-md-6">
+        <div class="p-4 bg-white rounded-4 shadow-sm h-100 text-center">
+          <img src="{{ asset_for('assets/images/icons_website/icon_7.png') }}" alt="Payroll" class="mb-3" style="height: 90px;">
+          <h5 class="fw-bold mb-2">⏱️ {{ trans('planner_hub.time_payments') }}</h5>
+          <p class="text-muted small mb-3">{{ trans('planner_hub.track_time_manage_payments') }}</p>
+          {% if user.level not in [2,3] %}
+            <a href="{{ path('panel/planner-hub/team/payroll') }}" class="btn btn-success btn-lg fw-bold px-4">{{ trans('planner_hub.go_to_payroll') }}</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Internal Chat -->
+      <div class="col-md-6">
+        <div class="p-4 bg-white rounded-4 shadow-sm h-100 text-center">
+          <img src="{{ asset_for('assets/images/icons_website/icon_8.png') }}" alt="Chat" class="mb-3" style="height: 90px;">
+          <h5 class="fw-bold mb-2">💬 {{ trans('planner_hub.internal_chat') }}</h5>
+          <p class="text-muted small mb-3">{{ trans('planner_hub.talk_to_clients_team') }}</p>
+          {% if user.level not in [2,3] %}
+            <a href="{{ path('panel/planner-hub/team/chat') }}" class="btn btn-success btn-lg fw-bold px-4">{{ trans('planner_hub.start_chat') }}</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Inventory Search -->
+      <div class="col-md-6">
+        <div class="p-4 bg-white rounded-4 shadow-sm h-100 text-center">
+          <img src="{{ asset_for('assets/images/icons_website/icon_1.png') }}" alt="Inventory" class="mb-3" style="height: 90px;">
+          <h5 class="fw-bold mb-2">🔍 {{ trans('planner_hub.inventory_search') }}</h5>
+          <p class="text-muted small mb-3">{{ trans('planner_hub.check_items_manage_containers') }}</p>
+          {% if user.level not in [2,3] %}
+            <a href="{{ path('panel/planner-hub/team/storage') }}" class="btn btn-success btn-lg fw-bold px-4">{{ trans('planner_hub.view_inventory') }}</a>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,313 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<style>
+  .l4-access-shell {
+    --l4-bg: #071513;
+    --l4-panel: #0f2521;
+    --l4-panel-soft: #173730;
+    --l4-mint: #79f2df;
+    --l4-green: #50d88f;
+    --l4-line: rgba(121, 242, 223, .28);
+    --l4-text: #f7fffc;
+    --l4-muted: rgba(247, 255, 252, .72);
+  }
+
+  .l4-access-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    padding: clamp(1.4rem, 3vw, 2.4rem);
+    color: var(--l4-text);
+    background:
+      radial-gradient(circle at 82% 12%, rgba(121, 242, 223, .18), transparent 32%),
+      linear-gradient(135deg, #06110f 0%, #102923 52%, #164d43 100%);
+    box-shadow: 0 24px 70px rgba(6, 17, 15, .22);
+  }
+
+  .l4-access-kicker,
+  .l4-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    border: 1px solid var(--l4-line);
+    border-radius: 999px;
+    color: var(--l4-mint);
+    background: rgba(255, 255, 255, .07);
+    font-weight: 800;
+    font-size: .78rem;
+    letter-spacing: .02em;
+    padding: .42rem .75rem;
+  }
+
+  .l4-access-title {
+    max-width: 820px;
+    margin: 1.1rem 0 .75rem;
+    font-size: clamp(2.1rem, 5vw, 4rem);
+    line-height: 1.02;
+    color: #fff;
+  }
+
+  .l4-access-subtitle {
+    max-width: 850px;
+    margin: 0;
+    color: rgba(255, 255, 255, .82);
+    font-size: 1.03rem;
+    line-height: 1.65;
+  }
+
+  .l4-company-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border: 1px solid var(--l4-line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .075);
+  }
+
+  .l4-company-name {
+    color: #fff;
+    font-weight: 900;
+    font-size: 1.12rem;
+    margin-bottom: .25rem;
+  }
+
+  .l4-company-meta {
+    color: var(--l4-muted);
+    margin: 0;
+  }
+
+  .l4-section-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 2rem 0 1rem;
+  }
+
+  .l4-section-head h2 {
+    font-size: 1.35rem;
+    margin: 0;
+    font-weight: 900;
+    color: #0d1b2a;
+  }
+
+  .l4-section-head p {
+    margin: .25rem 0 0;
+    color: #64748b;
+  }
+
+  .l4-access-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .l4-access-card {
+    min-height: 218px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #dbe7e4;
+    border-radius: 8px;
+    padding: 1.05rem;
+    background: #fff;
+    box-shadow: 0 18px 44px rgba(15, 23, 42, .07);
+  }
+
+  .l4-access-card.is-active {
+    color: var(--l4-text);
+    border-color: rgba(121, 242, 223, .34);
+    background:
+      linear-gradient(135deg, rgba(121, 242, 223, .10), transparent 42%),
+      linear-gradient(180deg, var(--l4-panel) 0%, var(--l4-bg) 100%);
+  }
+
+  .l4-access-card.is-locked {
+    background: #f8fafc;
+  }
+
+  .l4-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: .8rem;
+    margin-bottom: 1rem;
+  }
+
+  .l4-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #79f2df, #43c878);
+    color: #06110f;
+  }
+
+  .l4-access-card h3 {
+    margin: 0 0 .5rem;
+    font-size: 1.08rem;
+    font-weight: 900;
+    color: inherit;
+  }
+
+  .l4-access-card p {
+    color: #64748b;
+    line-height: 1.55;
+    margin-bottom: 1rem;
+  }
+
+  .l4-access-card.is-active p {
+    color: var(--l4-muted);
+  }
+
+  .l4-card-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    min-height: 42px;
+    padding: .65rem .9rem;
+    border-radius: 8px;
+    font-weight: 900;
+    text-decoration: none;
+    margin-top: auto;
+  }
+
+  .l4-card-action.is-active {
+    color: #041411;
+    background: var(--l4-mint);
+  }
+
+  .l4-card-action.is-locked {
+    color: #475569;
+    background: #e2e8f0;
+    cursor: not-allowed;
+  }
+
+  .l4-empty {
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 1.2rem;
+    background: #fff;
+    color: #475569;
+  }
+
+  @media (max-width: 1100px) {
+    .l4-access-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 720px) {
+    .l4-company-panel,
+    .l4-section-head {
+      grid-template-columns: 1fr;
+      display: grid;
+      align-items: start;
+    }
+
+    .l4-access-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .l4-access-hero {
+      border-radius: 0;
+      margin-inline: -12px;
+    }
+  }
+</style>
+
+<main class="mt-4 container l4-access-shell">
+  {{ macros.breadcrumb2() }}
+
+  <section class="l4-access-hero">
+    <span class="l4-access-kicker">
+      <i data-feather="shield"></i>
+      {{ trans('level4_access_center.kicker') }}
+    </span>
+    <h1 class="l4-access-title">{{ trans('level4_access_center.title') }}</h1>
+    <p class="l4-access-subtitle">{{ trans('level4_access_center.subtitle') }}</p>
+
+    <div class="l4-company-panel">
+      <div>
+        <div class="l4-company-name">
+          {{ teamContext.selectedInstitution.company_name|default(trans('level4_access_center.no_company')) }}
+        </div>
+        <p class="l4-company-meta">
+          {{ trans('level4_access_center.role_label') }}:
+          {{ teamContext.relationship.role_name|default(trans('level4_access_center.team_member')) }}
+          {% if teamContext.relationship.hourly_rate is defined and teamContext.relationship.hourly_rate %}
+            · {{ trans('level4_access_center.hourly_rate') }}: ${{ teamContext.relationship.hourly_rate|number_format(2, '.', ',') }}
+          {% endif %}
+        </p>
+      </div>
+      {% if teamContext.hasMultipleInstitutions %}
+        <a class="l4-card-action is-active" href="{{ path('panel/home') }}">
+          {{ trans('level4_access_center.switch_company') }}
+        </a>
+      {% endif %}
+    </div>
+  </section>
+
+  <section>
+    <div class="l4-section-head">
+      <div>
+        <h2>{{ trans('level4_access_center.active_access') }}</h2>
+        <p>{{ trans('level4_access_center.active_access_desc') }}</p>
+      </div>
+      <span class="l4-pill">{{ accessCenter.activeItems|length }} {{ trans('level4_access_center.available') }}</span>
+    </div>
+
+    {% if accessCenter.activeItems %}
+      <div class="l4-access-grid">
+        {% for item in accessCenter.activeItems %}
+          <article class="l4-access-card is-active">
+            <div class="l4-card-top">
+              <span class="l4-icon"><i data-feather="{{ item.icon }}"></i></span>
+              <span class="l4-pill">{{ trans('level4_access_center.approved') }}</span>
+            </div>
+            <h3>{{ trans(item.title_key) }}</h3>
+            <p>{{ trans(item.summary_key) }}</p>
+            <a class="l4-card-action is-active" href="{{ path(item.url) }}">
+              {{ trans('level4_access_center.open_access') }}
+              <i data-feather="arrow-right"></i>
+            </a>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="l4-empty">{{ trans('level4_access_center.no_active_access') }}</div>
+    {% endif %}
+  </section>
+
+  <section>
+    <div class="l4-section-head">
+      <div>
+        <h2>{{ trans('level4_access_center.locked_access') }}</h2>
+        <p>{{ trans('level4_access_center.locked_access_desc') }}</p>
+      </div>
+      <span class="l4-pill">{{ accessCenter.lockedItems|length }} {{ trans('level4_access_center.locked') }}</span>
+    </div>
+
+    <div class="l4-access-grid">
+      {% for item in accessCenter.lockedItems %}
+        <article class="l4-access-card is-locked">
+          <div class="l4-card-top">
+            <span class="l4-icon"><i data-feather="{{ item.icon }}"></i></span>
+            <span class="l4-pill">{{ trans('level4_access_center.needs_approval') }}</span>
+          </div>
+          <h3>{{ trans(item.title_key) }}</h3>
+          <p>{{ trans(item.reason_key) }}</p>
+          <span class="l4-card-action is-locked">
+            {{ trans('level4_access_center.admin_approval_required') }}
+          </span>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "templates/base.twig" %}
+
+{% block styles %}
+<style>
+.store-wrap{max-width:1180px;margin:0 auto;padding:2rem 1rem 4rem}.store-head{margin-bottom:1.5rem;background:linear-gradient(135deg,#111827,#0f766e);color:#fff;border-radius:1.4rem;padding:2rem;box-shadow:0 1rem 2rem rgba(15,23,42,.16)}.store-kicker{letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#bbf7d0;font-size:.78rem}.store-title{font-size:2.2rem;font-weight:900;margin:.35rem 0}.store-subtitle{color:#d1fae5;max-width:720px}.store-head-actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem}.store-cart,.store-profile{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:.75rem 1rem;font-weight:800;text-decoration:none}.store-cart{background:#facc15;color:#111827}.store-profile{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35)}.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem}.store-card{border:1px solid #e2e8f0;border-radius:18px;background:#fff;overflow:hidden;box-shadow:0 .65rem 1.25rem rgba(15,23,42,.07)}.store-image{width:100%;aspect-ratio:4/3;object-fit:cover;background:#f1f5f9}.store-body{padding:1rem}.store-name{font-weight:800;margin-bottom:.35rem}.store-price{font-size:1.1rem;font-weight:800;margin:.6rem 0}.store-actions{display:flex;gap:.5rem;flex-wrap:wrap}.store-select{width:100%;border:1px solid #cbd5e1;padding:.6rem;border-radius:10px}.store-qty{width:70px;border:1px solid #cbd5e1;padding:.6rem;border-radius:10px}.store-btn{flex:1;border:0;border-radius:999px;padding:.65rem;background:#0f766e;color:#fff;font-weight:800}.store-empty{padding:2rem;border:1px dashed #cbd5e1;border-radius:16px;color:#64748b;text-align:center;background:#fff}
+</style>
+{% endblock %}
+
+{% block body %}
+<main class="store-wrap">
+    <header class="store-head">
+        <div class="store-kicker">Public store</div>
+        <h1 class="store-title">{{ profile.company_name|default('Store') }}</h1>
+        <p class="store-subtitle">{{ profile.short_description|default('Browse available products and complete your order securely.') }}</p>
+        <div class="store-head-actions">
+            <a class="store-cart" href="{{ path('store/cart') }}?owner={{ owner_id }}">View cart</a>
+            {% if profile_url %}<a class="store-profile" href="{{ profile_url }}">Back to business profile</a>{% endif %}
+        </div>
+    </header>
+    {% if not store_available %}
+    <div class="store-empty">This store is not available right now.</div>
+    {% elseif products %}
+    <section class="store-grid">
+        {% for product in products %}
+        <article class="store-card{% if requested_product and requested_product == product.slug %} border border-success border-3{% endif %}" id="product-{{ product.slug }}">
+            {% if product.main_image %}<img class="store-image" src="{{ product.main_image }}" alt="{{ product.name }}">{% else %}<div class="store-image"></div>{% endif %}
+            <div class="store-body">
+                <div class="store-name">{{ product.name }}</div>
+                <div>{{ product.short_description }}</div>
+                <div class="store-price">${{ (product.promo_price ?: product.price)|number_format(2) }}</div>
+                {% if product.product_type == 'FIXED' and product.stock_quantity > 0 %}
+                <div class="store-actions">
+                    <input class="store-qty" type="number" min="{{ product.min_purchase_qty ?: 1 }}" max="{{ product.stock_quantity }}" value="{{ product.min_purchase_qty ?: 1 }}" data-qty="{{ product.id }}">
+                    <button class="store-btn" type="button" data-add="{{ product.id }}" data-name="{{ product.name|e('html_attr') }}" data-price="{{ product.promo_price ?: product.price }}" data-image="{{ product.main_image|default('')|e('html_attr') }}">Add to cart</button>
+                </div>
+                {% elseif product.product_type == 'VARIABLE' and product.variations %}
+                <div class="store-actions">
+                    <select class="store-select" data-variation="{{ product.id }}">
+                        {% for variation in product.variations %}
+                        <option value="{{ variation.id }}" data-name="{{ variation.name|e('html_attr') }}" data-price="{{ variation.promo_price ?: variation.price }}" data-stock="{{ variation.stock_quantity }}">
+                            {{ variation.name }} - ${{ (variation.promo_price ?: variation.price)|number_format(2) }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <input class="store-qty" type="number" min="1" value="1" data-qty="{{ product.id }}">
+                    <button class="store-btn" type="button" data-add="{{ product.id }}" data-variable="1" data-name="{{ product.name|e('html_attr') }}" data-image="{{ product.main_image|default('')|e('html_attr') }}">Add to cart</button>
+                </div>
+                {% elseif product.stock_quantity <= 0 %}
+                <strong>Out of stock</strong>
+                {% else %}
+                <small>Select options from the product page.</small>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+    {% else %}
+    <div class="store-empty">No products are available yet.</div>
+    {% endif %}
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('click', function (event) {
+    const button = event.target.closest('[data-add]');
+    if (!button) return;
+    const productId = Number(button.dataset.add);
+    const input = document.querySelector(`[data-qty="${productId}"]`);
+    let quantity = Math.max(1, Number(input?.value || 1));
+    const variationSelect = document.querySelector(`[data-variation="${productId}"]`);
+    const variationOption = variationSelect?.selectedOptions?.[0];
+    const variationId = Number(variationOption?.value || 0);
+    const variationStock = Number(variationOption?.dataset.stock || 0);
+    if (button.dataset.variable && (!variationId || variationStock < 1)) return;
+    if (variationId) quantity = Math.min(quantity, variationStock);
+    const key = 'store_cart_selection';
+    const cart = JSON.parse(localStorage.getItem(key) || '{"items":[]}');
+    let items = Array.isArray(cart.items) ? cart.items : [];
+    if (Number(cart.owner_id || 0) !== Number({{ owner_id }})) {
+        items = [];
+    }
+    const existing = items.find(item => Number(item.id_product) === productId && Number(item.id_product_variation || 0) === variationId);
+    if (existing) existing.quantity += quantity;
+    else items.push({id_product: productId, id_product_variation: variationId || null, quantity, product_name_snapshot: button.dataset.name || 'Item', variation_name_snapshot: variationOption?.dataset.name || null, unit_price: Number(variationOption?.dataset.price || button.dataset.price || 0), main_image: button.dataset.image || ''});
+    localStorage.setItem(key, JSON.stringify({owner_id: {{ owner_id }}, items}));
+    window.location.href = '{{ path("store/cart") }}?owner={{ owner_id }}';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,381 @@
+{% extends "templates/base.twig" %}
+
+{% block styles %}
+<style>
+	/* Card input area: provider iframes (Stripe/Square) */
+	.payment-card-field {
+		background: #fff;
+		border: 1px solid var(--bs-border-color, #dee2e6);
+		padding: 0.6rem 0.75rem;
+	}
+	.payment-card-field iframe,
+	.payment-card-field input {
+		width: 100% !important;
+		max-width: 100%;
+	}
+</style>
+{% endblock %}
+
+{% block body %}
+<main class="text-center my-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-lg border-0">
+                    <div class="card-body p-5">
+                        <div class="mb-4">
+                            <div class="rounded-circle bg-success d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="white" class="bi bi-check-lg" viewBox="0 0 16 16">
+                                    <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <h1 class="text-success mb-3">{{ trans('planner_hub.payment_successful') }}</h1>
+                        <p class="lead text-muted mb-4">{{ trans('planner_hub.payment_received_processed') }}</p>
+                        
+                        <div class="alert alert-success mb-4" role="alert">
+                            <strong>✓ {{ trans('planner_hub.order_fully_paid') }}</strong><br>
+                            {{ trans('planner_hub.event_order_completed') }}
+                        </div>
+
+                        {% if show_tip_option %}
+                        <div class="card bg-light border-0 mb-4">
+                            <div class="card-body p-4">
+                                <h5 class="mb-3">💝 {{ trans('planner_hub.add_tip_optional') }}</h5>
+                                <p class="text-muted small mb-3">{{ trans('planner_hub.order_fully_paid_add_tip') }}</p>
+                                
+                                <button type="button" class="btn btn-outline-success btn-lg" data-bs-toggle="modal" data-bs-target="#tipModal">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-heart-fill me-2" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+                                    </svg>
+                                    {{ trans('planner_hub.add_tip') }}
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <a href="{{ path('order-access', { token: token }) }}" class="btn btn-primary btn-lg px-5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-house-fill me-2" viewBox="0 0 16 16">
+                                <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5Z"/>
+                                <path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293l6-6Z"/>
+                            </svg>
+                            {{ trans('planner_hub.return_to_order') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+{% if show_tip_option %}
+<div class="modal fade" id="tipModal" tabindex="-1" aria-labelledby="tipModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="tipModalLabel">💝 {{ trans('planner_hub.add_tip_modal') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-info mb-4">
+                    <small><strong>{{ trans('planner_hub.note') }}</strong> {{ trans('planner_hub.tip_note_optional') }}</small>
+                </div>
+
+                <form id="tipForm">
+                    <input type="hidden" name="token" value="{{ token }}">
+                    <input type="hidden" name="order_id" value="{{ order.id }}">
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">{{ trans('planner_hub.choose_tip_amount') }}</label>
+                        
+                        <div class="btn-group w-100 mb-3" role="group">
+                            {% for tip in suggested_tips %}
+                            <input type="radio" class="btn-check" name="tip_type" id="tip{{ tip.id }}" value="percentage" data-percentage="{{ tip.percentage }}">
+                            <label class="btn btn-outline-primary" for="tip{{ tip.id }}">{{ tip.percentage }}%</label>
+                            {% endfor %}
+                            <input type="radio" class="btn-check" name="tip_type" id="tipCustom" value="custom" checked>
+                            <label class="btn btn-outline-primary" for="tipCustom">{{ trans('planner_hub.custom') }}</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4" id="customTipSection">
+                        <label class="form-label">{{ trans('planner_hub.enter_tip_amount') }}</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">{{ currency_code|default('USD') }}</span>
+                            <input type="number" class="form-control" id="tipAmount" name="tip_amount" step="0.01" min="1" placeholder="0.00" required>
+                        </div>
+                        <small class="text-muted">{{ trans('planner_hub.order_total') }} {{ currency_code|default('USD') }} {{ order_total|number_format(2) }}</small>
+                    </div>
+
+                    <div class="mb-4" id="cardSection" {% if activeProvider and activeProvider.provider_type == 'paypal' %}style="display:none;"{% endif %}>
+                        <label class="form-label fw-bold">{{ trans('planner_hub.card_information') }}</label>
+                        <div class="card border shadow-sm">
+                            <div class="card-body p-3 p-md-4 bg-light bg-opacity-50">
+                                <div id="payment-card-container" class="payment-card-field rounded" style="min-height: 52px;"></div>
+                            </div>
+                        </div>
+                        <div id="payment-card-errors" class="text-danger small mt-2" role="alert"></div>
+                    </div>
+                    {% if activeProvider and activeProvider.provider_type == 'paypal' and paypal_client_id %}
+                    <div class="mb-4" id="paypal-tip-container"></div>
+                    {% endif %}
+                    
+                    <input type="hidden" name="customer_token" id="payment-customer-token">
+                    {% include 'templates/partials/order-access-payment-method-fields.twig' %}
+                    <input type="hidden" name="customer_email" id="payment-customer-email" value="{{ client_email|e('html_attr') }}">
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg" id="submitTipBtn" {% if activeProvider and activeProvider.provider_type == 'paypal' %}style="display:none;"{% endif %}>
+                            <span id="btnText">💝 {{ trans('planner_hub.pay_tip') }}</span>
+                            <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ trans('planner_hub.no_thanks') }}</button>
+                        {% if payment_provider_name %}
+                        <p class="text-muted small text-center mb-0 mt-2">
+                            <span class="opacity-75">{{ trans('planner_hub.secured_by') }} {{ payment_provider_name }}</span>
+                        </p>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if activeProvider and activeProvider.provider_type == 'stripe' and stripe_publishable_key %}
+<script src="https://js.stripe.com/v3/"></script>
+{% elseif activeProvider and activeProvider.provider_type == 'square' %}
+<script type="text/javascript" src="https://{{ square_environment == 'production' ? 'web' : 'sandbox.web' }}.squarecdn.com/v1/square.js"></script>
+{% elseif activeProvider and activeProvider.provider_type == 'paypal' and paypal_client_id %}
+<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id|e('html_attr') }}&currency={{ activeProvider.currency|default('USD') }}&intent=capture"></script>
+{% endif %}
+<script>
+    (async function () {
+        try {
+            {% if activeProvider and activeProvider.provider_type == 'stripe' and stripe_publishable_key %}
+            // Stripe
+            const stripe = Stripe("{{ stripe_publishable_key|e('js') }}");
+            const elements = stripe.elements();
+            const cardElement = elements.create('card', { hidePostalCode: true, style: { base: { fontSize: '16px' } } });
+            cardElement.mount('#payment-card-container');
+            {% elseif activeProvider and activeProvider.provider_type == 'square' %}
+            // Square
+            const squareApplicationId = "{{ square_application_id|e('js') }}";
+            const squareLocationId = "{{ square_location_id|e('js') }}";
+            
+            if (!squareApplicationId || !squareLocationId) {
+                console.error('Square credentials not configured');
+                document.getElementById('payment-card-errors').textContent = '{{ trans('planner_hub.payment_system_not_configured_contact')|e('js') }}';
+                return;
+            }
+
+            const payments = Square.payments(squareApplicationId, squareLocationId);
+            const card = await payments.card();
+            await card.attach('#payment-card-container');
+            {% elseif activeProvider and activeProvider.provider_type == 'paypal' and paypal_client_id %}
+            // PayPal Tip: render button only, no card
+            const tipForm = document.getElementById('tipForm');
+            const tipTokenInput = document.getElementById('payment-customer-token');
+            const tipAmountInput = document.getElementById('tipAmount');
+            const tipToken = '{{ token|e('js') }}';
+            const tipCreateOrderUrl = '{{ base_url }}/order-access/paypal-create-order';
+            const tipSubmitUrl = '{{ base_url }}/order-access/tip';
+
+            paypal.Buttons({
+                createOrder: function() {
+                    const tipAmount = parseFloat(tipAmountInput.value);
+                    if (!tipAmount || tipAmount < 1) return Promise.reject(new Error('{{ trans('planner_hub.please_enter_valid_tip')|e('js') }}'));
+                    return fetch(tipCreateOrderUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'token=' + encodeURIComponent(tipToken) + '&tip_amount=' + tipAmount
+                    }).then(function(r) { return r.json(); }).then(function(data) {
+                        if (data.success && data.orderId) return data.orderId;
+                        throw new Error(data.error || '{{ trans('planner_hub.could_not_create_order')|e('js') }}');
+                    });
+                },
+                onApprove: function(data) {
+                    tipTokenInput.value = data.orderID;
+                    const formData = new FormData(tipForm);
+                    formData.set('customer_token', data.orderID);
+                    formData.append('customer_email', document.getElementById('payment-customer-email').value || '{{ client_email|e('js') }}');
+                    formData.append('tip_amount', tipAmountInput.value);
+                    return fetch(tipSubmitUrl, { method: 'POST', body: formData })
+                        .then(function(r) { return r.text(); })
+                        .then(function(text) {
+                            var result;
+                            try { result = JSON.parse(text); } catch (e) { result = { success: false }; }
+                            if (result.success) window.location.href = '{{ base_url }}/order-access?token={{ token|e('js') }}&tip_success=1';
+                            else alert('Error: ' + (result.error || 'Unknown'));
+                        });
+                },
+                onError: function(err) {
+                    document.getElementById('payment-card-errors').textContent = err.message || '{{ trans('planner_hub.payment_failed')|e('js') }}';
+                }
+            }).render('#paypal-tip-container');
+            return;
+            {% else %}
+            document.getElementById('payment-card-errors').textContent = '{{ trans('planner_hub.payment_provider_not_configured')|e('js') }}';
+            return;
+            {% endif %}
+
+            const form = document.getElementById('tipForm');
+            const submitBtn = document.getElementById('submitTipBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const errorDiv = document.getElementById('payment-card-errors');
+            const tokenInput = document.getElementById('payment-customer-token');
+            const emailInput = document.getElementById('payment-customer-email');
+            const tipAmountInput = document.getElementById('tipAmount');
+            const orderTotal = {{ order_total }};
+
+            // Obtener email del cliente desde la orden (si está disponible)
+            // Por ahora, dejamos que el usuario lo ingrese si es necesario
+            // O podemos obtenerlo del token/orden en el backend
+
+            const tipRadios = document.querySelectorAll('input[name="tip_type"]');
+            
+            tipRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'percentage') {
+                        const percentage = parseFloat(this.dataset.percentage);
+                        const tipAmount = (orderTotal * percentage / 100).toFixed(2);
+                        tipAmountInput.value = tipAmount;
+                    } else {
+                        tipAmountInput.value = '';
+                        tipAmountInput.focus();
+                    }
+                });
+            });
+
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                submitBtn.disabled = true;
+                btnText.classList.add('d-none');
+                btnSpinner.classList.remove('d-none');
+                errorDiv.textContent = '';
+
+                const tipAmount = parseFloat(tipAmountInput.value);
+                
+                if (!tipAmount || tipAmount < 1) {
+                    alert('{{ trans('planner_hub.please_enter_valid_tip')|e('js') }}');
+                    submitBtn.disabled = false;
+                    btnText.classList.remove('d-none');
+                    btnSpinner.classList.add('d-none');
+                    return;
+                }
+
+                try {
+                    const savedSelect = document.getElementById('saved-payment-method-id');
+                    const tokenTypeInput = document.getElementById('payment-token-type');
+                    if (savedSelect && savedSelect.value) {
+                        if (tokenTypeInput) tokenTypeInput.value = 'stored_card';
+                        tokenInput.value = 'SAVED_PAYMENT_METHOD';
+                    } else {
+                    {% if activeProvider and activeProvider.provider_type == 'stripe' and stripe_publishable_key %}
+                    // Stripe tokenization
+                    const { token, error } = await stripe.createToken(cardElement, {
+                        address_zip: (document.getElementById('payment-billing-zip') || {value: ''}).value.trim(),
+                        address_country: 'US'
+                    });
+                    if (error) {
+                        errorDiv.textContent = error.message || '{{ trans('planner_hub.payment_failed_try_again')|e('js') }}';
+                        submitBtn.disabled = false;
+                        btnText.classList.remove('d-none');
+                        btnSpinner.classList.add('d-none');
+                        return;
+                    }
+                    document.getElementById('payment-card-brand').value = token.card?.brand || '';
+                    document.getElementById('payment-card-last4').value = token.card?.last4 || '';
+                    document.getElementById('payment-card-exp-month').value = token.card?.exp_month || '';
+                    document.getElementById('payment-card-exp-year').value = token.card?.exp_year || '';
+                    tokenInput.value = token.id;
+                    {% elseif activeProvider and activeProvider.provider_type == 'square' %}
+                    // Square tokenization
+                    const tokenResult = await card.tokenize();
+                    if (tokenResult.status !== 'OK') {
+                        let errorMessage = '{{ trans('planner_hub.payment_failed_try_again')|e('js') }}';
+                        if (tokenResult.errors && tokenResult.errors.length > 0) {
+                            errorMessage = tokenResult.errors[0].detail || errorMessage;
+                        }
+                        errorDiv.textContent = errorMessage;
+                        submitBtn.disabled = false;
+                        btnText.classList.remove('d-none');
+                        btnSpinner.classList.add('d-none');
+                        return;
+                    }
+                    tokenInput.value = tokenResult.token;
+                    {% endif %}
+                    }
+                    
+                    const formData = new FormData(form);
+                    // Asegurar que todos los campos requeridos estén incluidos
+                    formData.set('token', '{{ token|e('js') }}');
+                    formData.set('customer_token', tokenInput.value);
+                    formData.set('customer_email', emailInput ? emailInput.value : '{{ client_email|e('js') }}');
+                    formData.set('tip_amount', tipAmount.toString());
+
+                    const tipUrl = '{{ base_url }}/order-access/tip';
+                    
+                    const response = await fetch(tipUrl, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const responseText = await response.text();
+                    let result;
+                    try {
+                        result = JSON.parse(responseText);
+                    } catch (e) {
+                        console.error('Invalid JSON response:', responseText);
+                        alert('{{ trans('planner_hub.server_error_try_again')|e('js') }}');
+                        submitBtn.disabled = false;
+                        btnText.classList.remove('d-none');
+                        btnSpinner.classList.add('d-none');
+                        return;
+                    }
+
+                    if (result.success) {
+                        window.location.href = '{{ base_url }}/order-access?token={{ token }}&tip_success=1';
+                    } else {
+                        alert('{{ trans('planner_hub.error_processing_tip')|e('js') }} ' + (result.error || '{{ trans('planner_hub.unknown_error')|e('js') }}'));
+                        submitBtn.disabled = false;
+                        btnText.classList.remove('d-none');
+                        btnSpinner.classList.add('d-none');
+                    }
+                } catch (err) {
+                    errorDiv.textContent = 'Error: ' + err.message;
+                    submitBtn.disabled = false;
+                    btnText.classList.remove('d-none');
+                    btnSpinner.classList.add('d-none');
+                }
+            });
+        } catch (err) {
+            console.error('Payment provider initialization error:', err);
+            document.getElementById('payment-card-errors').textContent = '{{ trans('planner_hub.failed_initialize_payment')|e('js') }}';
+        }
+    })();
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipModalElement = document.getElementById('tipModal');
+        const tipModal = new bootstrap.Modal(tipModalElement);
+        
+        tipModalElement.addEventListener('hidden.bs.modal', function() {
+            tipModalElement.setAttribute('aria-hidden', 'true');
+        });
+        
+        tipModalElement.addEventListener('hide.bs.modal', function() {
+            const closeBtn = tipModalElement.querySelector('.btn-close');
+            if (closeBtn && document.activeElement === closeBtn) {
+                closeBtn.blur();
+            }
+        });
+        
+        tipModal.show();
+    });
+</script>
+{% endif %}
+
+{% endblock %}

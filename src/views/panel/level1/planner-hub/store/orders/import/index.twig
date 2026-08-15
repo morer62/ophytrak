@@ -1,0 +1,6 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set operationQuery = operation_context.query|default('operation=vnv_events') %}
+{% include 'panel/shared/store/import-orders-form.twig' with { back_url: path('panel/planner-hub/store/orders/home') ~ '?' ~ operationQuery, template_url: path('panel/planner-hub/store/orders/import') ~ '?template=1&' ~ operationQuery } %}
+{% endblock %}

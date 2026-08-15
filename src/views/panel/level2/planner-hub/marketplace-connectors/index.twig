@@ -1,0 +1,420 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="marketplace-connectors-page">
+  <section class="marketplace-hero">
+    <div>
+      <p class="marketplace-kicker">Add-on module</p>
+      <h1>Marketplace Connectors</h1>
+      <p>
+        Connect Shopee Brasil, Mercado Libre and TikTok Shop. Products, variants, orders,
+        payments and shipping flow into the existing Store + Logistics workspace.
+      </p>
+    </div>
+    <div class="public-link-card">
+      <span>Public store link</span>
+      <strong>{{ publicStoreUrl }}</strong>
+      <button type="button" class="btn btn-light btn-sm" data-copy="{{ publicStoreUrl }}">Copy</button>
+    </div>
+  </section>
+
+  {% if not dbReady %}
+    <div class="alert alert-warning border-0 shadow-sm">
+      <strong>Database setup required.</strong>
+      Run/review <code>db/ophyra_marketplace_connectors_required.sql</code> before saving tokens or syncing providers.
+      The module, price and route are available, but connector records are intentionally disabled until the SQL is approved.
+    </div>
+  {% endif %}
+
+  {% if dbReady and not encryptionReady %}
+    <div class="alert alert-danger border-0 shadow-sm">
+      <strong>Encryption key required before production use.</strong>
+      Set <code>MARKETPLACE_CONNECTORS_ENCRYPTION_KEY</code> in <code>.env</code> before saving real provider tokens.
+    </div>
+  {% endif %}
+
+  <section class="connector-grid">
+    {% for provider, label in providers %}
+      {% set connector = connectors[provider] ?? null %}
+      {% set tokenExpiresAt = connector ? connector.token_expires_at|default('') : '' %}
+      <article class="connector-card">
+        <div class="connector-card-header">
+          <div class="connector-icon">
+            {% if provider == 'mercadolibre' %}ML{% elseif provider == 'tiktok_shop' %}TT{% else %}SH{% endif %}
+          </div>
+          <div>
+            <h2>{{ label }}</h2>
+            <p>{{ connector ? connector.sync_status|default('NEVER')|replace({'_':' '})|title : 'Not connected' }}</p>
+          </div>
+          <span class="connector-status {{ connector and connector.status == 'ACTIVE' ? 'is-active' : '' }}">
+            {{ connector and connector.status == 'ACTIVE' ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+
+        <form method="post" class="connector-form">
+          {{ macros.csrf() }}
+          <input type="hidden" name="action" value="save_connector">
+          <input type="hidden" name="provider" value="{{ provider }}">
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Connector name</label>
+              <input class="form-control" name="display_name" value="{{ connector.display_name|default(label) }}" {{ not dbReady ? 'disabled' : '' }}>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Account / seller ID</label>
+              <input class="form-control" name="account_id" value="{{ connector.account_id|default('') }}" {{ not dbReady ? 'disabled' : '' }}>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">External shop ID</label>
+              <input class="form-control" name="external_shop_id" value="{{ connector.external_shop_id|default(connector.account_id|default('')) }}" {{ not dbReady ? 'disabled' : '' }}>
+            </div>
+            {% if provider == 'tiktok_shop' %}
+            <div class="col-md-6">
+              <label class="form-label">TikTok shop cipher</label>
+              <input class="form-control" name="shop_cipher" value="{{ connector.shop_cipher|default('') }}" {{ not dbReady ? 'disabled' : '' }}>
+            </div>
+            {% endif %}
+            <div class="col-md-3">
+              <label class="form-label">Country</label>
+              <input class="form-control" name="country_code" maxlength="2" value="{{ connector.country_code|default('BR') }}" {{ not dbReady ? 'disabled' : '' }}>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Currency</label>
+              <input class="form-control" name="currency_code" maxlength="3" value="{{ connector.currency_code|default('BRL') }}" {{ not dbReady ? 'disabled' : '' }}>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Store URL</label>
+              <input class="form-control" name="store_url" value="{{ connector.store_url|default('') }}" placeholder="https://..." {{ not dbReady ? 'disabled' : '' }}>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Shop domain</label>
+              <input class="form-control" name="shop_domain" value="{{ connector.shop_domain|default('') }}" placeholder="{{ provider == 'shopify' ? 'store.myshopify.com' : 'optional' }}" {{ not dbReady ? 'disabled' : '' }}>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Access token</label>
+              <input class="form-control" type="password" name="access_token" placeholder="{{ connector and connector.has_access_token ? 'Saved token - leave blank to keep' : 'Paste access token' }}" {{ not dbReady ? 'disabled' : '' }}>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Refresh token</label>
+              <input class="form-control" type="password" name="refresh_token" placeholder="{{ connector and connector.has_refresh_token ? 'Saved token - leave blank to keep' : 'Optional refresh token' }}" {{ not dbReady ? 'disabled' : '' }}>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Token expires at</label>
+              <input class="form-control" type="datetime-local" name="token_expires_at" value="{{ tokenExpiresAt ? tokenExpiresAt|date('Y-m-d\\TH:i') : '' }}" {{ not dbReady ? 'disabled' : '' }}>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+              <label class="connector-toggle">
+                <input type="checkbox" name="is_active" value="1" {{ connector and connector.status == 'ACTIVE' ? 'checked' : '' }} {{ not dbReady ? 'disabled' : '' }}>
+                <span>Activate connector</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="connector-actions">
+            <button class="btn btn-dark" type="submit" {{ not dbReady ? 'disabled' : '' }}>Save connector</button>
+          </div>
+        </form>
+
+        <form method="post">
+          {{ macros.csrf() }}
+          <input type="hidden" name="action" value="connect_provider">
+          <input type="hidden" name="provider" value="{{ provider }}">
+          <button class="btn btn-success w-100" type="submit" {{ not dbReady ? 'disabled' : '' }}>
+            {{ connector and connector.has_access_token ? 'Reconnect authorized store' : 'Connect authorized store' }}
+          </button>
+        </form>
+
+        <form method="post" class="connector-sync-form">
+          {{ macros.csrf() }}
+          <input type="hidden" name="action" value="manual_sync">
+          <input type="hidden" name="provider" value="{{ provider }}">
+          <div class="sync-callout">
+            <strong>Products + orders</strong>
+            <small>Runs the same idempotent synchronization used by the hourly scheduler.</small>
+          </div>
+          <button class="btn btn-outline-dark w-100" type="submit" {{ not dbReady or not connector or connector.status != 'ACTIVE' ? 'disabled' : '' }}>
+            Synchronize now
+          </button>
+          {% if connector and connector.last_sync_at %}
+            <small>Last sync: {{ connector.last_sync_at|date('Y-m-d H:i') }}</small>
+          {% else %}
+            <small>No sync has been recorded yet.</small>
+          {% endif %}
+        </form>
+        {% if sandboxEnabled %}
+        <form method="post">
+          {{ macros.csrf() }}
+          <input type="hidden" name="action" value="sandbox_sync">
+          <input type="hidden" name="provider" value="{{ provider }}">
+          <button class="btn btn-warning w-100" type="submit" {{ not connector ? 'disabled' : '' }}>Run Ophyra sandbox fixture</button>
+          <small class="text-muted">Clearly marked test data; no external marketplace call.</small>
+        </form>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="sync-history">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
+      <div>
+        <p class="marketplace-kicker mb-1">External order mappings</p>
+        <h2>Recent marketplace order records</h2>
+      </div>
+      <span class="history-pill">Mapped orders stay separate until reviewed/imported</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>External order</th>
+            <th>External status</th>
+            <th>Ophyra status</th>
+            <th>Store order</th>
+            <th>Sync</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for mapping in recentMappings %}
+            <tr>
+              <td>{{ providers[mapping.provider]|default(mapping.provider) }}</td>
+              <td>
+                <strong>{{ mapping.external_order_id }}</strong>
+                <div class="small text-muted">{{ mapping.external_source }}</div>
+              </td>
+              <td>{{ mapping.external_status|default('-') }}</td>
+              <td><span class="badge bg-info text-dark">{{ mapping.internal_status|replace({'_':' '})|title }}</span></td>
+              <td>
+                {% if mapping.id_store_order %}
+                  #{{ mapping.id_store_order }}
+                {% else %}
+                  <span class="text-muted">Review needed</span>
+                {% endif %}
+              </td>
+              <td><span class="badge bg-secondary">{{ mapping.sync_status|replace({'_':' '})|title }}</span></td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="6" class="text-muted">No external order mappings yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sync-history">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
+      <div>
+        <p class="marketplace-kicker mb-1">Manual sync history</p>
+        <h2>Recent connector activity</h2>
+      </div>
+      <span class="history-pill">External statuses map into Ophyra internal statuses</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Status</th>
+            <th>Summary</th>
+            <th>Finished</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for run in recentRuns %}
+            <tr>
+              <td>{{ providers[run.provider]|default(run.provider) }}</td>
+              <td><span class="badge bg-secondary">{{ run.status|replace({'_':' '})|title }}</span></td>
+              <td>{{ run.summary }}</td>
+              <td>{{ run.finished_at ? run.finished_at|date('Y-m-d H:i') : '-' }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="4" class="text-muted">No sync activity yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<style>
+  .marketplace-connectors-page {
+    display: grid;
+    gap: 1.25rem;
+  }
+  .marketplace-hero,
+  .connector-card,
+  .sync-history {
+    border: 1px solid rgba(15, 118, 110, .16);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 18px 50px rgba(15, 23, 42, .08);
+  }
+  .marketplace-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+    gap: 1.5rem;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    color: #fff;
+    background:
+      radial-gradient(circle at 85% 15%, rgba(236, 72, 153, .34), transparent 28%),
+      linear-gradient(135deg, #071512, #0f766e);
+  }
+  .marketplace-hero h1 {
+    margin: 0 0 .75rem;
+    color: #fff;
+    font-size: clamp(2rem, 4vw, 3.4rem);
+    font-weight: 900;
+  }
+  .marketplace-hero p {
+    max-width: 760px;
+    margin: 0;
+    color: rgba(255, 255, 255, .82);
+    font-size: 1.05rem;
+  }
+  .marketplace-kicker {
+    margin: 0 0 .45rem;
+    color: #7ddbd3;
+    font-size: .78rem;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .public-link-card {
+    align-self: center;
+    display: grid;
+    gap: .65rem;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .11);
+  }
+  .public-link-card span {
+    color: rgba(255, 255, 255, .72);
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: .75rem;
+  }
+  .public-link-card strong {
+    word-break: break-all;
+  }
+  .connector-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  .connector-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  .connector-card-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: .85rem;
+    align-items: center;
+  }
+  .connector-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    color: #06201b;
+    background: linear-gradient(135deg, #7ddbd3, #ec4899);
+    font-weight: 900;
+  }
+  .connector-card h2,
+  .sync-history h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 900;
+  }
+  .connector-card-header p {
+    margin: .15rem 0 0;
+    color: #64748b;
+    font-size: .86rem;
+  }
+  .connector-status,
+  .history-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: .3rem .6rem;
+    border-radius: 999px;
+    color: #475569;
+    background: #e2e8f0;
+    font-size: .78rem;
+    font-weight: 900;
+  }
+  .connector-status.is-active {
+    color: #065f46;
+    background: #ccfbf1;
+  }
+  .connector-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    min-height: 38px;
+    font-weight: 800;
+  }
+  .connector-actions {
+    margin-top: 1rem;
+  }
+  .connector-sync-form {
+    display: grid;
+    gap: .55rem;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+  }
+  .connector-sync-form small {
+    color: #64748b;
+  }
+  .marketplace-payload {
+    min-height: 132px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .84rem;
+  }
+  .sync-history {
+    padding: 1rem;
+  }
+  @media (max-width: 1200px) {
+    .connector-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 768px) {
+    .marketplace-hero {
+      grid-template-columns: 1fr;
+    }
+    .connector-card-header {
+      grid-template-columns: auto 1fr;
+    }
+    .connector-status {
+      grid-column: 1 / -1;
+      justify-content: flex-start;
+      width: fit-content;
+    }
+  }
+</style>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(function (button) {
+  button.addEventListener('click', function () {
+    navigator.clipboard.writeText(button.getAttribute('data-copy') || '');
+    button.textContent = 'Copied';
+    setTimeout(function () { button.textContent = 'Copy'; }, 1400);
+  });
+});
+</script>
+{% endblock %}

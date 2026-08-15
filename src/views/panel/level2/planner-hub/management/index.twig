@@ -1,0 +1,251 @@
+﻿{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+{% set active = activeModuleSlugs ?? [] %}
+{% set hasServiceOps = 'services' in active or 'service_operations' in active %}
+{% set hasStoreLogistics = 'store_delivery_tracking' in active or 'store_logistics' in active %}
+{% set hasStorage = 'inventory_storage' in active or 'advanced_storage_qr_inventory' in active %}
+{% set hasAi = 'ai_advisor' in active %}
+{% set context = hasServiceOps ? 'service' : (hasStoreLogistics ? 'store' : 'locked') %}
+
+<main class="mt-4 container level2-ops-hub">
+  <nav class="mb-3 small text-muted">
+    <a href="{{ path('panel/home') }}" class="text-decoration-none">{{ trans('nav.dashboard') }}</a>
+    <span class="mx-2">/</span>
+    <span>{{ trans('nav.services') }}</span>
+  </nav>
+
+  <div class="ops-hero mb-4">
+    <div>
+      <p>{{ trans('nav.services_overview') }}</p>
+      <h1>{{ trans('nav.services') }}</h1>
+      <span>{{ trans('nav.services_overview_text') }}</span>
+    </div>
+    <a href="{{ path('panel/planner-hub/management/orders/orders/create?context=service') }}" class="btn btn-light fw-bold">{{ trans('nav.create_service_order') }}</a>
+  </div>
+
+  <section class="ops-panel mb-4">
+    <div class="ops-grid">
+      {% set serviceNav = [
+        {'title':trans('nav.overview'),'url':'panel/planner-hub/management'},
+        {'title':trans('nav.clients'),'url':'panel/planner-hub/management/users?active_tab=clients&context=service'},
+        {'title':trans('nav.service_orders'),'url':'panel/planner-hub/management/orders/orders?context=service'},
+        {'title':trans('nav.contracts'),'url':'panel/planner-hub/management/orders/contracts'},
+        {'title':trans('nav.tasks'),'url':'panel/planner-hub/team/orders/orders?context=service'},
+        {'title':trans('nav.hours'),'url':'panel/planner-hub/management/payroll?context=service'},
+        {'title':trans('nav.service_reports'),'url':'panel/planner-hub/management/payments?context=service'}
+      ] %}
+      {% for item in serviceNav %}
+        <a class="ops-tool active" href="{{ path(item.url) }}"><strong>{{ item.title }}</strong><span>{{ trans('nav.open') }}</span></a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="row g-4 mb-4">
+    {% set coreCards = [
+      {'title':trans('nav.services'),'active':hasServiceOps,'text':trans('nav.services_card_text'),'url':'panel/planner-hub/management/orders/orders?context=service','lock':'panel/planner-hub/no-access?module=service_operations&required=services'},
+      {'title':trans('nav.store_logistics'),'active':hasStoreLogistics,'text':trans('nav.store_card_text'),'url':'panel/planner-hub/store/orders/home','lock':'panel/planner-hub/no-access?module=store_logistics&required=store_delivery_tracking'}
+    ] %}
+    {% for card in coreCards %}
+      <div class="col-lg-6">
+        <article class="ops-card {{ card.comingSoon|default(false) ? 'coming-soon' : (card.active ? 'active' : 'locked') }}">
+          <div class="d-flex justify-content-between gap-3 mb-2">
+            <h2>{{ card.title }}</h2>
+            <span>{{ card.comingSoon|default(false) ? trans('nav.coming_soon') : (card.active ? trans('dashboard_home.active') : trans('dashboard_home.locked')) }}</span>
+          </div>
+          <p>{{ card.text }}</p>
+          {% if card.comingSoon|default(false) %}
+            <span class="btn btn-outline-secondary fw-bold disabled" aria-disabled="true">{{ trans('nav.coming_soon') }}</span>
+          {% else %}
+            <a href="{{ path(card.active ? card.url : card.lock) }}" class="btn {{ card.active ? 'btn-dark' : 'btn-outline-dark' }} fw-bold">
+              {{ card.active ? trans('nav.open_workspace') : trans('nav.activate_workspace') }}
+            </a>
+          {% endif %}
+        </article>
+      </div>
+    {% endfor %}
+  </section>
+
+  <section class="ops-panel mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+      <div>
+        <p class="ops-kicker">{{ trans('nav.people') }}</p>
+        <h2>{{ trans('nav.included_tools') }}</h2>
+      </div>
+      <span class="context-pill">{{ context|capitalize }}</span>
+    </div>
+
+    {% set contextParam = context in ['all', 'service', 'store'] ? context : '' %}
+    {% set suffix = contextParam ? '?context=' ~ contextParam : '' %}
+    {% set joinSuffix = contextParam ? '&context=' ~ contextParam : '' %}
+    {% set lock = 'panel/planner-hub/no-access?module=shared_operational_tools&required=services,store_delivery_tracking' %}
+    {% set sharedCards = [
+      {'title':trans('nav.customers'),'body':trans('nav.customers_help'),'url':'panel/planner-hub/management/users?active_tab=clients' ~ joinSuffix},
+      {'title':trans('nav.team'),'body':trans('nav.team_help'),'url':'panel/planner-hub/management/users' ~ suffix},
+      {'title':trans('nav.inbox'),'body':trans('nav.inbox_help'),'url':'panel/planner-hub/team/chat' ~ suffix},
+      {'title':trans('nav.hours'),'body':trans('nav.hours_help'),'url':'panel/planner-hub/management/payroll' ~ suffix},
+      {'title':trans('nav.reports'),'body':trans('nav.reports_help'),'url':'panel/planner-hub/management/payments' ~ suffix}
+    ] %}
+    <div class="ops-grid">
+      {% for card in sharedCards %}
+        <a href="{{ path(context == 'locked' ? lock : card.url) }}" class="ops-tool {{ context == 'locked' ? 'locked' : 'active' }}">
+          <strong>{{ card.title }}</strong>
+          <span>{{ context == 'locked' ? trans('dashboard_home.context_locked') : card.body }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="ops-panel">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+      <div>
+        <p class="ops-kicker">{{ trans('nav.business') }}</p>
+        <h2>{{ trans('nav.modules_billing') }}</h2>
+      </div>
+      <a href="{{ path('panel/membership/manage?payment_currency=' ~ preferredCurrency) }}" class="btn btn-outline-dark fw-bold">{{ trans('nav.modules_billing') }}</a>
+    </div>
+    <div class="ops-grid">
+      {% set addonCards = [
+        {'title':trans('sidebar.warehouse'),'active':hasStorage,'url':'panel/planner-hub/management/storage','lock':'panel/planner-hub/no-access?module=advanced_storage_qr_inventory&required=inventory_storage'},
+        {'title':trans('sidebar.ai_advisor'),'active':hasAi,'url':'panel/planner-hub/management/chatia','lock':'panel/planner-hub/no-access?module=ai_advisor&required=ai_advisor'}
+      ] %}
+      {% for card in addonCards %}
+        <a href="{{ path(card.active ? card.url : card.lock) }}" class="ops-tool {{ card.active ? 'active' : 'locked' }}">
+          <strong>{{ card.title }}</strong>
+          <span>{{ card.active ? trans('dashboard_home.active') : trans('dashboard_home.locked') }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+
+<style>
+  .ops-hero {
+    align-items: center;
+    background: linear-gradient(135deg, #111827, #0f766e);
+    border-radius: 20px;
+    color: #fff;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    padding: clamp(1.25rem, 4vw, 2.5rem);
+  }
+
+  .ops-hero p,
+  .ops-kicker {
+    color: #99f6e4;
+    font-size: .76rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    margin: 0 0 .35rem;
+    text-transform: uppercase;
+  }
+
+  .ops-hero h1,
+  .ops-panel h2,
+  .ops-card h2 {
+    font-weight: 800;
+    letter-spacing: 0;
+    margin: 0;
+  }
+
+  .ops-hero h1 {
+    color: #fff;
+  }
+
+  .ops-hero span {
+    color: rgba(255,255,255,.82);
+    display: block;
+    margin-top: .5rem;
+    max-width: 760px;
+  }
+
+  .ops-card,
+  .ops-panel {
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: 16px;
+    box-shadow: 0 14px 44px rgba(15, 23, 42, .08);
+    padding: 1.25rem;
+  }
+
+  .ops-card {
+    min-height: 230px;
+  }
+
+  .ops-card.active {
+    border-color: rgba(20,184,166,.28);
+  }
+
+  .ops-card.locked {
+    background: #f8fafc;
+  }
+
+  .ops-card.coming-soon {
+    background: #f5f5f3;
+    border-color: #e0ded8;
+    box-shadow: none;
+    filter: grayscale(.35);
+    opacity: .76;
+  }
+  .ops-card p {
+    color: #64748b;
+    line-height: 1.65;
+  }
+
+  .ops-card span,
+  .context-pill {
+    background: #e2e8f0;
+    border-radius: 999px;
+    color: #475569;
+    font-size: .76rem;
+    font-weight: 800;
+    padding: .35rem .65rem;
+  }
+
+  .ops-grid {
+    display: grid;
+    gap: .85rem;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  }
+
+  .ops-tool {
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: 14px;
+    color: #0f172a;
+    display: block;
+    min-height: 120px;
+    padding: 1rem;
+    text-decoration: none;
+  }
+
+  .ops-tool.active {
+    background: #f8fafc;
+  }
+
+  .ops-tool.locked {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .ops-tool strong,
+  .ops-tool span {
+    display: block;
+  }
+
+  .ops-tool span {
+    color: #64748b;
+    font-size: .85rem;
+    margin-top: .4rem;
+  }
+
+  @media (max-width: 768px) {
+    .ops-hero {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+</style>
+{% endblock %}
+

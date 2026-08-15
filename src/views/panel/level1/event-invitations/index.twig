@@ -1,0 +1,181 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="h3 mb-2"><i class="bi bi-stars text-success me-2"></i>{{ trans('planner_hub.event_invitations_manager') }}</h1>
+            <p class="text-muted">{{ trans('planner_hub.create_beautiful_mini_sites') }}</p>
+        </div>
+        <div class="col-md-4 text-end">
+            {% if isWeb %}
+            <a href="{{ path('panel/event-invitations/create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> {{ trans('planner_hub.create_new_event') }}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if message %}
+    <div class="alert alert-{{ message.type|default('success') }} alert-dismissible fade show" role="alert">
+        {{ message.message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary shadow">
+                <div class="card-body text-center text-white">
+                    <h6 class="card-title mb-3 text-white opacity-75">{{ trans('planner_hub.total_events') }}</h6>
+                    <h1 class="display-3 fw-bold mb-0 text-white">{{ events|length }}</h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success shadow">
+                <div class="card-body text-center text-white">
+                    <h6 class="card-title mb-3 text-white opacity-75">{{ trans('planner_hub.active_events') }}</h6>
+                    <h1 class="display-3 fw-bold mb-0 text-white">{{ events|filter(e => e.status == 'active')|length }}</h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info shadow">
+                <div class="card-body text-center text-white">
+                    <h6 class="card-title mb-3 text-white opacity-75">{{ trans('planner_hub.total_guests') }}</h6>
+                    <h1 class="display-3 fw-bold mb-0 text-white">{{ events|reduce((carry, e) => carry + e.total_guests, 0) }}</h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning shadow">
+                <div class="card-body text-center text-white">
+                    <h6 class="card-title mb-3 text-white opacity-75">{{ trans('planner_hub.confirmed') }}</h6>
+                    <h1 class="display-3 fw-bold mb-0 text-white">{{ events|reduce((carry, e) => carry + e.confirmed_guests, 0) }}</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events List -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">{{ trans('planner_hub.your_events') }}</h5>
+        </div>
+        <div class="card-body">
+            {% if events|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>{{ trans('planner_hub.event_name') }}</th>
+                            <th>{{ trans('planner_hub.date') }}</th>
+                            <th>{{ trans('planner_hub.type') }}</th>
+                            <th>{{ trans('planner_hub.guests') }}</th>
+                            <th>{{ trans('planner_hub.confirmed') }}</th>
+                            <th>{{ trans('planner_hub.status') }}</th>
+                            <th>{{ trans('planner_hub.actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in events %}
+                        <tr>
+                            <td>
+                                <strong>{{ event.event_name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ event.venue_name }}</small>
+                            </td>
+                            <td>{{ event.event_date|date('M d, Y') }}</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ event.event_type|title }}</span>
+                            </td>
+                            <td>{{ event.total_guests }}</td>
+                            <td>
+                                <span class="badge bg-success">{{ event.confirmed_guests }}</span>
+                            </td>
+                            <td>
+                                {% if event.status == 'active' %}
+                                    <span class="badge bg-success">{{ trans('planner_hub.active') }}</span>
+                                {% elseif event.status == 'draft' %}
+                                    <span class="badge bg-warning">{{ trans('planner_hub.draft') }}</span>
+                                {% elseif event.status == 'closed' %}
+                                    <span class="badge bg-secondary">{{ trans('planner_hub.closed') }}</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{{ trans('planner_hub.cancelled') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <a href="{{ path('panel/event-invitations/guests') }}?id={{ event.id }}" class="btn btn-sm btn-success" title="{{ trans('planner_hub.manage_guests') }}"><i class="bi bi-people-fill me-1"></i>{{ trans('planner_hub.guests') }}</a>
+                                    <a href="{{ path('event') }}?slug={{ event.slug }}" target="_blank" class="btn btn-sm btn-info text-white" title="{{ trans('planner_hub.view_mini_site') }}"><i class="bi bi-eye-fill me-1"></i>{{ trans('planner_hub.view') }}</a>
+                                    <a href="{{ path('panel/event-invitations/manage') }}?id={{ event.id }}" class="btn btn-sm btn-primary" title="{{ trans('planner_hub.settings') }}"><i class="bi bi-gear-fill"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-calendar-event" style="font-size: 4rem; color: #ccc;"></i>
+                <h4 class="mt-3">{{ trans('planner_hub.no_events_yet') }}</h4>
+                <p class="text-muted">{{ trans('planner_hub.create_first_event') }}</p>
+                {% if isWeb %}
+                    <a href="{{ path('panel/event-invitations/create') }}" class="btn btn-primary mt-3">
+                        {{ trans('planner_hub.create_your_first_event') }}
+                    </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Ticket payment setup guide -->
+    {% if isWeb %}
+        <div class="alert alert-success mt-4 tickets-module-alert">
+            <h5>{{ trans('tickets_rsvp_setup.event_creation_included_title') }}</h5>
+            <p class="mb-2">{{ trans('tickets_rsvp_setup.event_creation_included_body') }}</p>
+            <a class="btn btn-outline-success btn-sm" href="{{ path('panel/planner-hub/settings/payment-providers') }}">{{ trans('tickets_rsvp_setup.configure_payment_buttons') }}</a>
+        </div>
+    {% endif %}
+</div>
+
+{% if isWeb and not hasPaymentProvider|default(false) %}
+<div class="modal fade" id="ticketPaymentSetupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0b2a3b, #0f8f7d); color: #fff;">
+                <div>
+                    <p class="text-uppercase small fw-bold mb-1" style="letter-spacing: .12em; color: #a7fff1;">Tickets + RSVP</p>
+                    <h5 class="modal-title mb-0">{{ trans('tickets_rsvp_setup.event_creation_included_title') }}</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="mb-3">{{ trans('tickets_rsvp_setup.event_creation_included_body') }}</p>
+                <div class="rounded-4 p-3" style="background:#eefdfa; border:1px solid #b8f1e8; color:#0b2a3b;">
+                    {{ trans('tickets_rsvp_setup.module_included_body') }}
+                </div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ trans('panel_home.cancel') }}</button>
+                <a class="btn btn-success" href="{{ path('panel/planner-hub/settings/payment-providers') }}">{{ trans('tickets_rsvp_setup.configure_payment_buttons') }}</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var modalEl = document.getElementById('ticketPaymentSetupModal');
+    if (modalEl && window.bootstrap) {
+        window.setTimeout(function () { new bootstrap.Modal(modalEl).show(); }, 500);
+    }
+});
+</script>
+{% endif %}
+{% endblock %}
+
+

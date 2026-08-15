@@ -1,0 +1,79 @@
+{% extends "templates/base.admin.twig" %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+
+<h1 class="h3">
+    {{ trans('planner_hub.create_lead') }}
+</h1>
+
+{{ macros.breadcrumb2() }}
+
+{% if categories is empty %}
+    <div class="alert alert-warning d-flex align-items-center" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+        <div>
+            {{ trans('planner_hub.need_create_category_first') }}
+            <a href="{{ path('panel/planner-hub/management/crm/categories') }}" class="alert-link ms-1">{{ trans('planner_hub.go_to_categories_link') }}</a>
+        </div>
+    </div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            <div class="mb-3">
+                <label class="form-label">{{ trans('planner_hub.full_name') }}</label>
+                <input type="text" class="form-control" name="name" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">{{ trans('planner_hub.email') }}</label>
+                <input type="email" class="form-control" name="email" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">{{ trans('planner_hub.phone') }}</label>
+                <input type="text" class="form-control" name="phone" required data-phone/>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">{{ trans('planner_hub.address') }}</label>
+                <input type="text" class="form-control" name="address" placeholder="{{ trans('planner_hub.enter_address') }}" data-places />
+            </div>
+
+            {# NUEVO: Languaje #}
+            <div class="mb-3">
+                <label class="form-label">{{ trans('planner_hub.language') }}</label>
+                <select class="form-control" name="languaje">
+                    <option value="english" selected>{{ trans('common.english') }}</option>
+                    <option value="spanish">{{ trans('common.spanish') }}</option>
+                    <option value="portuguese">{{ trans('common.portuguese') }}</option>
+                    <option value="french">{{ trans('common.french') }}</option>
+                    <option value="other">Other</option>
+                </select>
+                <div class="form-text">{{ trans('planner_hub.default_english') }}</div>
+            </div>
+
+            {# NUEVO: Comments #}
+            <div class="mb-3">
+                <label class="form-label">{{ trans('planner_hub.comments') }}</label>
+                <textarea class="form-control" name="comments" rows="3" maxlength="240" placeholder="{{ trans('planner_hub.short_note_max') }}"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">{{ trans('planner_hub.categories') }}</label>
+                <select class="form-control" name="category_id" required {% if categories is empty %}disabled{% endif %}>
+                    <option value="">{{ trans('planner_hub.select_category') }}</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button class="btn btn-primary" {% if categories is empty %}disabled{% endif %}>{{ trans('planner_hub.create_lead') }}</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

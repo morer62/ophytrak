@@ -1,0 +1,554 @@
+{% extends 'templates/base.twig' %}
+
+{% block styles %}
+	<style>
+		.summary-box {
+			background: #fff;
+			border-radius: 8px;
+			padding: 2rem;
+			border: 1px solid #ddd;
+			margin-bottom: 2rem;
+		}
+		.summary-box h4 {
+			margin-bottom: 1rem;
+		}
+		.summary-box table td {
+			padding: 0.35rem 0;
+		}
+		.service-table {
+			margin-top: 2rem;
+			border-collapse: collapse;
+			width: 100%;
+		}
+		.service-table th,
+		.service-table td {
+			padding: 0.6rem;
+			border: 1px solid #ccc;
+		}
+		.service-table th {
+			background: #f3f3f3;
+		}
+		.signature-box {
+			border: 1px solid #ccc;
+			min-height: 150px;
+			padding: 1rem;
+			text-align: center;
+			font-family: 'Great Vibes', cursive;
+			font-size: 2rem;
+			color: #333;
+			background: #fff;
+		}
+		.badge {
+			font-size: 0.75rem;
+			padding: 0.25rem 0.5rem;
+			border-radius: 0.375rem;
+		}
+		.bg-warning {
+			background-color: #ffc107;
+		}
+		.text-dark {
+			color: #212529;
+		}
+		.ms-1 {
+			margin-left: 0.25rem;
+		}
+		.bg-danger-light {
+			background-color: #fff5f5 !important;
+		}
+		@keyframes shake {
+			0%, 100% { transform: translateX(0); }
+			10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+			20%, 40%, 60%, 80% { transform: translateX(5px); }
+		}
+		.suborder-badge {
+			background: linear-gradient(45deg, #007bff, #6610f2);
+			color: white;
+			padding: 0.5rem 1rem;
+			border-radius: 20px;
+			font-weight: bold;
+			display: inline-block;
+			margin-bottom: 1rem;
+		}
+		.consent-checkbox-card {
+			display: flex;
+			align-items: flex-start;
+			gap: 0.75rem;
+			padding-left: 1rem !important;
+		}
+		.consent-checkbox-card .form-check-input {
+			float: none;
+			flex: 0 0 auto;
+			margin-left: 0;
+			margin-top: 0.2rem;
+		}
+		.consent-checkbox-card .form-check-label {
+			flex: 1 1 auto;
+			margin-left: 0 !important;
+		}
+		@media (max-width: 575.98px) {
+			.consent-checkbox-card {
+				padding: 1rem !important;
+				margin-left: auto;
+				margin-right: auto;
+			}
+		}
+	</style>
+	<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+	<main class="container mt-5">
+		<div class="suborder-badge">📋 {{ trans('planner_hub.suborder_payment') }}</div>
+		<h2 class="mb-4">📄 {{ trans('planner_hub.sign_pay_suborder') }}</h2>
+
+		<div class="summary-box">
+			<h4>📋 {{ trans('planner_hub.parent_order_information') }}</h4>
+			<table>
+				<tr>
+					<td><strong>{{ trans('planner_hub.parent_order_id') }}</strong></td>
+					<td>VNV-341{{ parentOrder.id }}</td>
+				</tr>
+				<tr>
+					<td><strong>{{ trans('planner_hub.suborder_id_label') }}</strong></td>
+					<td>Sub-{{ suborder.id }}</td>
+				</tr>
+				<tr>
+					<td><strong>{{ trans('planner_hub.status') }}:</strong></td>
+					<td>
+						<span class="badge 
+							{% if current_status == 'INVOICE_DRAFT' %}bg-warning
+							{% elseif current_status == 'INVOICE_READY' %}bg-info
+							{% elseif current_status == 'INVOICE_PARTIAL' %}bg-primary
+							{% elseif current_status == 'INVOICE_PAID' %}bg-success
+							{% elseif current_status == 'INVOICE_EXPIRED' %}bg-danger
+							{% else %}bg-secondary{% endif %}">
+							{% if current_status == 'INVOICE_DRAFT' %}
+								📝 {{ trans('planner_hub.signature_pending') }}
+							{% elseif current_status == 'INVOICE_READY' %}
+								✍️ {{ trans('planner_hub.signed_payment_pending') }}
+							{% elseif current_status == 'INVOICE_PARTIAL' %}
+								💳 {{ trans('planner_hub.first_payment_completed') }}
+							{% elseif current_status == 'INVOICE_PAID' %}
+								✅ {{ trans('planner_hub.fully_paid') }}
+							{% elseif current_status == 'INVOICE_EXPIRED' %}
+								⏰ {{ trans('planner_hub.expired') }}
+							{% else %}
+								{{ current_status }}
+							{% endif %}
+						</span>
+					</td>
+				</tr>
+				<tr>
+					<td><strong>{{ trans('planner_hub.event_date') }}</strong></td>
+					<td>{{ parentOrder.event_date|date("F j, Y") }}</td>
+				</tr>
+				<tr>
+					<td><strong>{{ trans('planner_hub.time') }}</strong></td>
+					<td>{{ parentOrder.start_time|date("g:i A") }} {{ trans('planner_hub.to') }} {{ parentOrder.end_time|date("g:i A") }}</td>
+				</tr>
+				<tr>
+					<td><strong>{{ trans('planner_hub.location') }}</strong></td>
+					<td>{{ parentOrder.address }}</td>
+				</tr>
+				<tr>
+					<td><strong>{{ trans('planner_hub.suborder_created') }}</strong></td>
+					<td>{{ suborder.created_at|date("M j, Y g:i A") }}</td>
+				</tr>
+			</table>
+			<div class="mt-2">
+				<a href="{{ path('order-access?token=' ~ parent_order_token) }}" class="btn btn-outline-primary btn-sm">{{ trans('planner_hub.back_to_main_order') }}</a>
+			</div>
+		</div>
+
+		<div class="summary-box">
+			<h4>🛠️ {{ trans('planner_hub.suborder_services') }}</h4>
+			<div class="table-scroll-wrapper">
+				<table class="service-table" style="text-align:center">
+					<thead>
+						<tr>
+							<th>{{ trans('planner_hub.service') }}</th>
+							<th>{{ trans('planner_hub.qty') }}</th>
+							<th>{{ trans('planner_hub.unit_price') }}</th>
+							<th>{{ trans('planner_hub.subtotal') }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for item in services %}
+							<tr>
+								<td>{{ item.name }}</td>
+								<td>{{ item.qty }}</td>
+								<td>{{ currency_code|default('USD') }} {{ item.unit_price | number_format(2) }}</td>
+								<td>{{ currency_code|default('USD') }} {{ item.subtotal | number_format(2) }}</td>
+							</tr>
+							{% if item.note %}
+								<tr>
+									<td colspan="4">
+										<em>{{ trans('planner_hub.note') }} {{ item.note }}</em>
+									</td>
+								</tr>
+							{% endif %}
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+
+			<div style="max-width:400px">
+				<table class="table">
+					<tr>
+						<td><strong>{{ trans('planner_hub.subtotal_label') }}</strong></td>
+						<td>{{ currency_code|default('USD') }} {{ subtotal | number_format(2) }}</td>
+					</tr>
+					{% if discount is defined and discount > 0 %}
+					<tr>
+						<td><strong>{{ trans('planner_hub.discount_label') }}{% if discount_type == 'percent' %} ({{ discount_value | number_format(2) }}%){% endif %}:</strong></td>
+						<td>- {{ currency_code|default('USD') }} {{ discount | number_format(2) }}</td>
+					</tr>
+					{% endif %}
+					{% if advances_total is defined and advances_total > 0 %}
+					<tr>
+						<td><strong>{{ trans('planner_hub.advances_label') }}</strong></td>
+						<td>- {{ currency_code|default('USD') }} {{ advances_total | number_format(2) }}</td>
+					</tr>
+					{% endif %}
+					<tr>
+						<td><strong>{{ trans('planner_hub.tax_processing_fee') }} ({{ suborder.tax_percertance | number_format(2) }}%):</strong></td>
+						<td>{{ currency_code|default('USD') }} {{ tax | number_format(2) }}</td>
+					</tr>
+					<tr>
+						<td><strong>{{ trans('planner_hub.total_amount') }}</strong></td>
+						<td><strong>{{ currency_code|default('USD') }} {{ total | number_format(2) }}</strong></td>
+					</tr>
+				</table>
+
+				<div class="mt-3">
+					{% if payment_type == 'split' %}
+						<p><strong>{{ trans('planner_hub.first_payment_label') }}</strong> {{ currency_code|default('USD') }} {{ first_payment_amount | number_format(2) }}</p>
+						<p><strong>{{ trans('planner_hub.second_payment_label') }}</strong> {{ currency_code|default('USD') }} {{ second_payment_original | number_format(2) }}</p>
+					{% else %}
+						<p><strong>{{ trans('planner_hub.full_payment_label') }}</strong> {{ currency_code|default('USD') }} {{ total | number_format(2) }}</p>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+
+		{% if not hasSigned %}
+			<div class="border rounded p-3 bg-light mb-4" style="font-size: 0.875rem;">
+				<strong>{{ trans('planner_hub.electronic_signature_disclosure') }}</strong>
+				<p class="mb-0 mt-1">{{ trans('planner_hub.electronic_signature_disclosure_text') }} <strong>VNV-341{{ parentOrder.id }}</strong> (Sub-{{ suborder.id }})</p>
+			</div>
+
+			<form method="POST" enctype="multipart/form-data" id="suborderContractForm">
+				<input type="hidden" name="token" value="{{ token }}">
+				<input type="hidden" name="user_local_timestamp" id="userLocalTimestamp">
+
+				<div class="mb-4">
+					<label class="form-label">{{ trans('planner_hub.contract_summary') }}</label>
+					<p class="form-control-plaintext">
+						{{ trans('planner_hub.contract_summary_text') }}
+					</p>
+				</div>
+
+				<div class="mb-3">
+					<label class="form-label">{{ trans('planner_hub.upload_signature_image') }}</label>
+					<input type="file" name="signature_image" accept="image/*" class="form-control">
+				</div>
+
+				<div class="mb-3 text-center text-muted">{{ trans('planner_hub.or') }}</div>
+
+				<div class="mb-3">
+					<label class="form-label">{{ trans('planner_hub.typed_initials') }}</label>
+					<input type="text" name="typed_initials" id="typed_initials" class="form-control" maxlength="20" oninput="renderSignature()">
+				</div>
+
+				<div class="signature-box border p-3 mt-2" id="signatureBox">{{ trans('planner_hub.your_signature') }}</div>
+
+				<div class="alert alert-warning border-warning mb-4 mt-3" id="consentAlert" style="display: none;">
+					<div class="d-flex align-items-start">
+						<i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+						<div>
+							<strong>{{ trans('planner_hub.please_check_consent_box') }}</strong> {{ trans('planner_hub.enable_sign_button') }}
+						</div>
+					</div>
+				</div>
+
+				<div class="form-check consent-checkbox-card mb-4 mt-3 p-3 border rounded bg-light" id="consentCheckboxContainer">
+					<input class="form-check-input" type="checkbox" name="e_sign_consent" id="eSignConsentSub" required style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+					<label class="form-check-label ms-2" for="eSignConsentSub" style="cursor: pointer; font-size: 0.95rem; line-height: 1.5;">
+						<strong>{{ trans('planner_hub.agree_sign_electronically') }}</strong> {{ trans('planner_hub.understand_esignature_legal') }}
+					</label>
+				</div>
+
+				<button type="submit" class="btn btn-success w-100 mt-4" id="signButton">✅ {{ trans('planner_hub.submit_sign') }}</button><br><br><br>
+			</form>
+		{% else %}
+			<div class="alert alert-success">✅ {{ trans('planner_hub.contract_signed_proceed_payment') }}</div>
+
+			{% if not isPaymentReady %}
+				<div class="alert alert-warning text-center">
+					<strong>⚠️ {{ trans('planner_hub.payment_unavailable') }}</strong> {{ trans('planner_hub.payments_unavailable_contact') }}
+					<div class="mt-2">
+						<a href="{{ base_url }}/panel/planner-hub/settings/payment-providers" class="btn btn-outline-warning btn-sm">
+							⚙️ {{ trans('planner_hub.configure_payment_method') }}
+						</a>
+					</div>
+				</div>
+			{% else %}
+				{% if payment_type == "split" and paymentStatus == "pending_first" %}
+					<a href="{{ path('order-access/suborder/first/', { token: token }) }}" class="btn btn-primary w-100 payment-button">
+						💳 {{ trans('planner_hub.pay_first_installment_suborder') }} ({{ currency_code|default('USD') }} {{ first_payment_amount | number_format(2) }})
+					</a>
+				{% elseif payment_type == "split" and paymentStatus == "pending_second" %}
+					<a href="{{ path('order-access/suborder/second/', { token: token }) }}" class="btn btn-primary w-100 payment-button">
+						💳 {{ trans('planner_hub.pay_remaining_balance_suborder') }} ({{ currency_code|default('USD') }} {{ second_payment_amount | number_format(2) }})
+					</a>
+				{% elseif payment_type == "one" and paymentStatus == "pending_first" %}
+					<a href="{{ path('order-access/suborder/full/', { token: token }) }}" class="btn btn-primary w-100 payment-button">
+						💳 {{ trans('planner_hub.pay_full_amount_suborder') }} ({{ currency_code|default('USD') }} {{ total | number_format(2) }})
+					</a>
+				{% else %}
+					<div class="alert alert-info mt-3">✅ {{ trans('planner_hub.all_payments_completed') }}</div>
+				{% endif %}
+				{% if total > 0 and paymentStatus != 'complete' %}
+
+				{% endif %}
+			{% endif %}
+		{% endif %}
+	</main>
+	<br>
+	<br>
+	<br>
+	<br>
+
+	{{ processingModal|raw }}
+{% endblock %}
+
+{% block scripts %}
+	{{ processingModalScript|raw }}
+	<script>
+		function renderSignature() {
+			const initials = document.getElementById("typed_initials");
+			const box = document.getElementById("signatureBox");
+			if (initials && box) box.textContent = initials.value || "{{ trans('planner_hub.your_signature')|e('js') }}";
+			toggleSuborderSign();
+		}
+		function toggleSuborderSign() {
+			const consent = document.getElementById("eSignConsentSub");
+			const signBtn = document.getElementById("signButton");
+			const consentContainer = document.getElementById("consentCheckboxContainer");
+			const hasInitials = document.getElementById("typed_initials") && document.getElementById("typed_initials").value.trim().length > 0;
+			const hasFile = document.querySelector('input[name="signature_image"]') && document.querySelector('input[name="signature_image"]').files.length > 0;
+			
+			if (signBtn && consentContainer) {
+				const isValid = consent && consent.checked && (hasInitials || hasFile);
+				
+				// Update button visual state
+				if (isValid) {
+					signBtn.classList.remove('btn-secondary');
+					signBtn.classList.add('btn-success');
+					signBtn.style.opacity = '1';
+					signBtn.style.cursor = 'pointer';
+				} else {
+					signBtn.classList.remove('btn-success');
+					signBtn.classList.add('btn-secondary');
+					signBtn.style.opacity = '0.6';
+					signBtn.style.cursor = 'not-allowed';
+				}
+				
+				// Update container border
+				if (consent && !consent.checked) {
+					consentContainer.classList.remove('border-danger', 'bg-danger-light', 'border-success');
+					consentContainer.classList.add('border-secondary');
+				} else {
+					consentContainer.classList.remove('border-danger', 'bg-danger-light', 'border-secondary');
+					consentContainer.classList.add('border-success');
+				}
+			}
+		}
+		
+		// Handle form submit and show feedback if validation fails
+		document.addEventListener('DOMContentLoaded', function() {
+			const form = document.getElementById('suborderContractForm');
+			const signBtn = document.getElementById("signButton");
+			const consent = document.getElementById("eSignConsentSub");
+			const consentAlert = document.getElementById("consentAlert");
+			const consentContainer = document.getElementById("consentCheckboxContainer");
+			
+			if (form && signBtn && consent) {
+				form.addEventListener('submit', function(e) {
+					const hasInitials = document.getElementById("typed_initials") && document.getElementById("typed_initials").value.trim().length > 0;
+					const hasFile = document.querySelector('input[name="signature_image"]') && document.querySelector('input[name="signature_image"]').files.length > 0;
+					const isValid = consent.checked && (hasInitials || hasFile);
+					
+					if (!isValid) {
+						e.preventDefault();
+						e.stopPropagation();
+						
+						// Show alert
+						if (consentAlert) {
+							consentAlert.style.display = 'block';
+							setTimeout(() => {
+								consentAlert.style.display = 'none';
+							}, 5000);
+						}
+						
+						// Highlight container
+						if (consentContainer) {
+							consentContainer.classList.remove('border-secondary');
+							consentContainer.classList.add('border-danger', 'bg-danger-light');
+							consentContainer.style.animation = 'shake 0.5s';
+							
+							setTimeout(() => {
+								consentContainer.style.animation = '';
+							}, 500);
+						}
+						
+						// Scroll to checkbox and focus
+						setTimeout(() => {
+							consent.scrollIntoView({ behavior: 'smooth', block: 'center' });
+							setTimeout(() => {
+								consent.focus();
+								consent.style.outline = '3px solid #0d6efd';
+								consent.style.outlineOffset = '3px';
+								
+								const label = document.querySelector('label[for="eSignConsentSub"]');
+								if (label) {
+									label.style.outline = '2px solid #0d6efd';
+									label.style.outlineOffset = '2px';
+								}
+								
+								setTimeout(() => {
+									consent.style.outline = '';
+									consent.style.outlineOffset = '';
+									if (label) {
+										label.style.outline = '';
+										label.style.outlineOffset = '';
+									}
+								}, 3000);
+							}, 300);
+						}, 100);
+						
+						return false;
+					}
+				});
+				
+				// Also handle button click for visual feedback
+				signBtn.addEventListener('click', function(e) {
+					const hasInitials = document.getElementById("typed_initials") && document.getElementById("typed_initials").value.trim().length > 0;
+					const hasFile = document.querySelector('input[name="signature_image"]') && document.querySelector('input[name="signature_image"]').files.length > 0;
+					const isValid = consent.checked && (hasInitials || hasFile);
+					
+					if (!isValid) {
+						// Show alert
+						if (consentAlert) {
+							consentAlert.style.display = 'block';
+							setTimeout(() => {
+								consentAlert.style.display = 'none';
+							}, 5000);
+						}
+						
+						// Highlight container
+						if (consentContainer) {
+							consentContainer.classList.remove('border-secondary');
+							consentContainer.classList.add('border-danger', 'bg-danger-light');
+							consentContainer.style.animation = 'shake 0.5s';
+							
+							setTimeout(() => {
+								consentContainer.style.animation = '';
+							}, 500);
+						}
+						
+						// Scroll to checkbox and focus
+						setTimeout(() => {
+							consent.scrollIntoView({ behavior: 'smooth', block: 'center' });
+							setTimeout(() => {
+								consent.focus();
+								consent.style.outline = '3px solid #0d6efd';
+								consent.style.outlineOffset = '3px';
+								
+								const label = document.querySelector('label[for="eSignConsentSub"]');
+								if (label) {
+									label.style.outline = '2px solid #0d6efd';
+									label.style.outlineOffset = '2px';
+								}
+								
+								setTimeout(() => {
+									consent.style.outline = '';
+									consent.style.outlineOffset = '';
+									if (label) {
+										label.style.outline = '';
+										label.style.outlineOffset = '';
+									}
+								}, 3000);
+							}, 300);
+						}, 100);
+					}
+				});
+			}
+		});
+
+		// Prevenir clics múltiples en botones
+		document.addEventListener('DOMContentLoaded', function() {
+			// Para el formulario de firma
+			document.getElementById('eSignConsentSub')?.addEventListener('change', toggleSuborderSign);
+			document.querySelector('#suborderContractForm input[name="signature_image"]')?.addEventListener('change', toggleSuborderSign);
+			const form = document.getElementById('suborderContractForm');
+			if (form) {
+				form.addEventListener('submit', function(e) {
+					const submitButton = form.querySelector('button[type="submit"]');
+					const consent = document.getElementById("eSignConsentSub");
+					const hasInitials = document.getElementById("typed_initials") && document.getElementById("typed_initials").value.trim().length > 0;
+					const hasFile = document.querySelector('input[name="signature_image"]') && document.querySelector('input[name="signature_image"]').files.length > 0;
+					const isValid = consent && consent.checked && (hasInitials || hasFile);
+					
+					if (submitButton && isValid) {
+						submitButton.disabled = true;
+						submitButton.innerHTML = '⏳ {{ trans('planner_hub.processing')|e('js') }}';
+						submitButton.style.opacity = '0.6';
+
+						window.VnvProcessingModal.show('orderAccessProcessingModal', {
+							title: '{{ trans('planner_hub.signing_contract')|e('js') }}',
+							message: '{{ trans('planner_hub.saving_signature')|e('js') }}'
+						});
+					}
+				});
+			}
+			
+			// Para los botones de pago
+			const paymentButtons = document.querySelectorAll('a.payment-button');
+			paymentButtons.forEach(button => {
+				button.addEventListener('click', function(e) {
+					if (this.disabled) {
+						e.preventDefault();
+						return false;
+					}
+					
+					this.disabled = true;
+					this.innerHTML = '⏳ {{ trans('planner_hub.processing')|e('js') }}';
+					this.style.opacity = '0.6';
+
+					window.VnvProcessingModal.show('orderAccessProcessingModal', {
+						title: '{{ trans('planner_hub.preparing_payment')|e('js') }}',
+						message: '{{ trans('planner_hub.redirecting_payment_gateway')|e('js') }}'
+					});
+				});
+			});
+		});
+
+		// Capturar hora local del usuario al cargar la página
+		document.addEventListener('DOMContentLoaded', function() {
+			const now = new Date();
+			const timestamp = now.getFullYear() + '-' + 
+				String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+				String(now.getDate()).padStart(2, '0') + ' ' + 
+				String(now.getHours()).padStart(2, '0') + ':' + 
+				String(now.getMinutes()).padStart(2, '0') + ':' + 
+				String(now.getSeconds()).padStart(2, '0');
+			
+			const timestampField = document.getElementById('userLocalTimestamp');
+			if (timestampField) {
+				timestampField.value = timestamp;
+				console.log('Suborder contract signing - User local timestamp captured:', timestamp);
+			}
+		});
+	</script>
+{% endblock %}

@@ -1,0 +1,168 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    {{ macros.breadcrumb2() }}
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 fw-bold mb-0">
+            <i data-feather="message-square"></i> {{ trans('planner_hub.forum_management') }}
+        </h1>
+        <a href="{{ path('panel/forum/create') }}" class="btn btn-primary">
+            <i data-feather="plus"></i> {{ trans('planner_hub.create_new_topic') }}
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="category" class="form-label">{{ trans('planner_hub.filter_by_category') }}</label>
+                    <select name="category" id="category" class="form-select" onchange="this.form.submit()">
+                        <option value="">{{ trans('planner_hub.all_categories') }}</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if categoryFilter == category.id %}selected{% endif %}>
+                            {{ category.icon|default('📁') }} {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="search" class="form-label">{{ trans('planner_hub.search_topics') }}</label>
+                    <input type="text" name="search" id="search" class="form-control" 
+                           placeholder="{{ trans('planner_hub.search_by_title_content') }}" value="{{ search }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        <i data-feather="search"></i> {{ trans('planner_hub.search') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Topics Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0">{{ trans('planner_hub.topics') }} ({{ topics|length }})</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ trans('planner_hub.title') }}</th>
+                        <th>{{ trans('planner_hub.category') }}</th>
+                        <th>{{ trans('planner_hub.author') }}</th>
+                        <th class="text-center">{{ trans('planner_hub.stats') }}</th>
+                        <th class="text-center">{{ trans('planner_hub.status') }}</th>
+                        <th>{{ trans('planner_hub.created') }}</th>
+                        <th class="text-end">{{ trans('planner_hub.actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for topic in topics %}
+                    <tr>
+                        <td>
+                            <a href="{{ path('forum/topic') }}?id={{ topic.id }}" class="text-decoration-none fw-bold" target="_blank">
+                                {{ topic.title }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge" style="background-color: {{ topic.category_color }};">
+                                {{ topic.category_name }}
+                            </span>
+                        </td>
+                        <td>{{ topic.user_name }} {{ topic.user_lastname }}</td>
+                        <td class="text-center">
+                            <small class="text-muted">
+                                <i data-feather="message-circle" style="width: 14px;"></i> {{ topic.replies_count }}
+                                <i data-feather="eye" style="width: 14px;" class="ms-2"></i> {{ topic.views_count }}
+                                <i data-feather="heart" style="width: 14px;" class="ms-2"></i> {{ topic.likes_count }}
+                            </small>
+                        </td>
+                        <td class="text-center">
+                            {% if topic.is_pinned %}
+                                <span class="badge bg-warning text-dark">{{ trans('planner_hub.pinned') }}</span>
+                            {% endif %}
+                            {% if topic.is_locked %}
+                                <span class="badge bg-secondary">{{ trans('planner_hub.locked') }}</span>
+                            {% endif %}
+                            {% if not topic.is_pinned and not topic.is_locked %}
+                                <span class="badge bg-success">{{ trans('planner_hub.active') }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ topic.created_at|date('M d, Y') }}</td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ path('panel/forum/edit') }}?id={{ topic.id }}" 
+                                   class="btn btn-outline-primary" title="{{ trans('planner_hub.edit') }}">
+                                    <i data-feather="edit-2" style="width: 14px;"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-warning" 
+                                        onclick="togglePin({{ topic.id }})" title="{{ trans('planner_hub.toggle_pin') }}">
+                                    <i data-feather="bookmark" style="width: 14px;"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" 
+                                        onclick="toggleLock({{ topic.id }})" title="{{ trans('planner_hub.toggle_lock') }}">
+                                    <i data-feather="lock" style="width: 14px;"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" 
+                                        onclick="deleteTopic({{ topic.id }})" title="{{ trans('planner_hub.delete') }}">
+                                    <i data-feather="trash-2" style="width: 14px;"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i data-feather="message-square" style="width: 48px; height: 48px;"></i>
+                            <p class="mt-3">{{ trans('planner_hub.no_topics_found') }}</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Forms -->
+<form id="actionForm" method="POST" style="display: none;">
+    <input type="hidden" name="action" id="actionType">
+    <input type="hidden" name="topic_id" id="topicId">
+</form>
+
+<script>
+function togglePin(topicId) {
+    if (confirm('{{ trans('planner_hub.toggle_pin_status')|e('js') }}')) {
+        document.getElementById('actionType').value = 'toggle_pin';
+        document.getElementById('topicId').value = topicId;
+        document.getElementById('actionForm').submit();
+    }
+}
+
+function toggleLock(topicId) {
+    if (confirm('{{ trans('planner_hub.toggle_lock_status')|e('js') }}')) {
+        document.getElementById('actionType').value = 'toggle_lock';
+        document.getElementById('topicId').value = topicId;
+        document.getElementById('actionForm').submit();
+    }
+}
+
+function deleteTopic(topicId) {
+    if (confirm('{{ trans('planner_hub.sure_delete_topic')|e('js') }}')) {
+        document.getElementById('actionType').value = 'delete';
+        document.getElementById('topicId').value = topicId;
+        document.getElementById('actionForm').submit();
+    }
+}
+</script>
+{% endblock %}
+
+
+
+
+

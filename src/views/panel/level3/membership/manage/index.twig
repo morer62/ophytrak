@@ -1,0 +1,203 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<h1 class="h3 mb-4">🪪 {{ trans('sidebar.my_membership') }}</h1>
+
+{# Membership Status Card #}
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title mb-3">📊 {{ trans('planner_hub.current_plan_status') }}</h5>
+        
+        <div class="alert {{ membershipActive ? 'alert-success' : 'alert-danger' }} mb-3">
+            {% if membershipActive %}
+                <div class="d-flex align-items-center">
+                    <span style="font-size: 2rem;" class="me-3">✅</span>
+                    <div>
+                        <strong>{{ trans('planner_hub.active_membership_status') }}</strong><br>
+                        {{ trans('planner_hub.your_membership_expires_on') }} <strong>{{ membershipDue }}</strong>
+                    </div>
+                </div>
+            {% else %}
+                <div class="d-flex align-items-center">
+                    <span style="font-size: 2rem;" class="me-3">❌</span>
+                    <div>
+                        <strong>{{ trans('planner_hub.inactive_membership_status') }}</strong><br>
+                        {{ trans('planner_hub.please_renew_to_continue') }}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        {# Autopay Status #}
+        {% if hasCard %}
+            <div class="alert {{ autopayEnabled ? 'alert-info' : 'alert-warning' }} mb-0">
+                {% if autopayEnabled %}
+                    <div class="d-flex align-items-center">
+                        <span style="font-size: 2rem;" class="me-3">🔄</span>
+                        <div>
+                            <strong>{{ trans('planner_hub.autopay_enabled') }}</strong><br>
+                            {{ trans('planner_hub.your_membership_will_automatically_renew') }} <strong>{{ autopayPlan }}</strong> {{ trans('planner_hub.basis') }}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="d-flex align-items-center">
+                        <span style="font-size: 2rem;" class="me-3">⏸️</span>
+                        <div>
+                            <strong>{{ trans('planner_hub.autopay_disabled') }}</strong><br>
+                            {{ trans('planner_hub.enable_autopay_below') }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{# Autopay Settings Card #}
+{% if not isMobileApp %}
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title mb-3">🔄 {{ trans('planner_hub.autopay_settings') }}</h5>
+        
+        {% if hasCard %}
+            <form method="post" id="autopayForm">
+                {{ macros.csrf() }}
+                <input type="hidden" name="action" value="toggle_autopay">
+                
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" role="switch" id="autopayToggle" 
+                           name="autopay_enabled" value="1" {{ autopayEnabled ? 'checked' : '' }}
+                           onchange="document.getElementById('autopayForm').submit();">
+                    <label class="form-check-label" for="autopayToggle">
+                        <strong>{{ trans('planner_hub.enable_automatic_renewals') }}</strong>
+                    </label>
+                </div>
+
+                <div class="mb-3" id="planSelection" style="{{ autopayEnabled ? '' : 'display:none;' }}">
+                    <label for="autopayPlan" class="form-label">{{ trans('planner_hub.select_renewal_plan') }}</label>
+                    <select name="autopay_plan" id="autopayPlan" class="form-select" onchange="document.getElementById('autopayForm').submit();">
+                        <option value="monthly" {{ autopayPlan == 'monthly' ? 'selected' : '' }}>
+                            {{ trans('planner_hub.monthly_renewal_option')|replace({'{amount}': monthlyPrice}) }}
+                        </option>
+                        <option value="quarterly" {{ autopayPlan == 'quarterly' ? 'selected' : '' }}>
+                            {{ trans('planner_hub.quarterly_renewal_option')|replace({'{amount}': quarterlyPrice}) }}
+                        </option>
+                        <option value="yearly" {{ autopayPlan == 'yearly' ? 'selected' : '' }}>
+                            {{ trans('planner_hub.yearly_renewal_option')|replace({'{amount}': annualPrice}) }}
+                        </option>
+                    </select>
+                </div>
+
+                <p class="text-muted small mb-0">
+                    💳 {{ trans('planner_hub.payments_will_be_charged_to') }} <strong>{{ mainCard.last4 }}</strong>
+                </p>
+            </form>
+
+            <script>
+                // Show/hide plan selection based on toggle
+                document.getElementById('autopayToggle').addEventListener('change', function() {
+                    document.getElementById('planSelection').style.display = this.checked ? 'block' : 'none';
+                });
+            </script>
+        {% else %}
+            <div class="alert alert-warning">
+                ⚠️ {{ trans('planner_hub.add_payment_method_before_autopay') }}
+            </div>
+            <a href="{{ path('panel/cards') }}" class="btn btn-primary">{{ trans('planner_hub.add_payment_method') }}</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<hr>
+
+<h4>💳 {{ trans('planner_hub.manual_renewal') }}</h4>
+
+{% if isMobileApp %}
+    <div class="alert alert-info border-0 shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="d-flex align-items-center">
+            <div class="me-3" style="font-size: 3rem;">
+                🌐
+            </div>
+            <div class="text-white">
+                <h5 class="mb-2 fw-bold text-white">{{ trans('planner_hub.membership_renewal_available_web_only') }}</h5>
+     
+                <p class="mb-0 mt-3">
+                    <strong>🌐 {{ trans('planner_hub.please_visit_our_website') }}</strong><br>
+                    <a href="{{ websiteUrl }}/panel/membership/manage" target="_blank" class="text-white text-decoration-underline fw-bold" style="font-size: 1.1rem;">{{ websiteUrl|replace({'https://': '', 'http://': ''}) }}</a>
+                </p>
+                <p class="mb-0 mt-2 opacity-75" style="font-size: 0.9rem;">
+                    <em>{{ trans('planner_hub.you_can_log_in_same_credentials') }}</em>
+                </p>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if hasCard %}
+                <p class="mb-3">{{ trans('planner_hub.renew_membership_manually') }}</p>
+                
+                <form method="post" class="mb-3">
+                    {{ macros.csrf() }}
+                    <div class="mb-3">
+                        <label for="plan" class="form-label">{{ trans('planner_hub.choose_a_plan') }}</label>
+                        <select name="plan" id="plan" class="form-select" required>
+                            <option value="monthly">{{ trans('planner_hub.monthly_plan_option')|replace({'{amount}': monthlyPrice}) }}</option>
+                            <option value="quarterly">{{ trans('planner_hub.quarterly_plan_option')|replace({'{amount}': quarterlyPrice}) }}</option>
+                            <option value="annual">{{ trans('planner_hub.annual_plan_option')|replace({'{amount}': annualPrice}) }}</option>
+                        </select>
+                    </div>
+                    <p class="text-muted small">
+                        💳 {{ trans('planner_hub.payment_will_be_charged_to') }} <strong>{{ mainCard.last4 }}</strong>
+                    </p>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-credit-card"></i> {{ trans('planner_hub.pay_now') }}
+                    </button>
+                </form>
+                
+                <div class="alert alert-info small mb-0">
+                    <strong>{{ trans('planner_hub.tip_enable_autopay') }}</strong>
+                </div>
+            {% else %}
+                <div class="alert alert-warning">
+                    ⚠️ {{ trans('planner_hub.no_saved_credit_card') }}
+                </div>
+                <a href="{{ path('panel/cards') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> {{ trans('planner_hub.add_payment_method') }}
+                </a>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+<hr>
+
+<h4>📜 {{ trans('planner_hub.payment_history') }}</h4>
+<div class="table-responsive">
+    <table class="table table-bordered text-center align-middle">
+        <thead>
+            <tr>
+                <th>{{ trans('planner_hub.date') }}</th>
+                <th>{{ trans('planner_hub.amount') }}</th>
+                <th>{{ trans('planner_hub.renewal_date') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+                <tr>
+                    <td>{{ payment.payment_date|date('Y-m-d') }}</td>
+                    <td>${{ payment.total|number_format(2) }}</td>
+                    <td>{{ payment.renewal|date('Y-m-d') }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="3" class="text-muted">{{ trans('planner_hub.no_membership_payments_found') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+

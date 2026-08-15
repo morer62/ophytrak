@@ -1,0 +1,5 @@
+ALTER TABLE `store_orders`
+    ADD COLUMN IF NOT EXISTS `manual_fee_type` VARCHAR(20) NOT NULL DEFAULT 'none',
+    ADD COLUMN IF NOT EXISTS `manual_fee_value` DECIMAL(12,4) NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS `manual_fee_amount` DECIMAL(12,2) NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS `manual_fee_label` VARCHAR(120) NULL;

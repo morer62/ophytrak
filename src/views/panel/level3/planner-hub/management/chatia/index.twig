@@ -1,0 +1,167 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="mt-4 container">
+  {{ macros.breadcrumb2() }}
+
+  <h3 class="fw-bold mb-2">🤖 Ophyra app</h3>
+  <p class="text-muted mb-4">Ask about your next event, this month's earnings, etc.</p>
+
+  <div class="row">
+    <div class="col-lg-10">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center py-2">
+          <span class="fw-bold">🤖 Ophyra app</span>
+          <small class="text-muted" id="managementAgentChatUsage"></small>
+        </div>
+        <div class="card-body p-0 d-flex flex-column" style="height: 480px;">
+          <div id="managementAgentChatMessages" class="flex-grow-1 p-3" style="max-height: 380px; overflow-y: auto;">
+            <div class="text-muted small">Ask about your next event, this month's earnings, etc.</div>
+          </div>
+          <div class="p-2 border-top bg-light">
+            <div class="input-group">
+              <input type="text"
+                     class="form-control"
+                     id="managementAgentChatInput"
+                     placeholder="Type your question..."
+                     autocomplete="off">
+              <button class="btn btn-primary" type="button" id="managementAgentChatSend">
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var pathname = window.location.pathname || '';
+  var panelIndex = pathname.indexOf('/panel');
+  var basePath = (panelIndex >= 0 ? pathname.substring(0, panelIndex) : pathname.replace(/\/[^/]*$/, '')) || '';
+  var agentChatUrl = window.location.origin + basePath + '/api/panel/agent-chat';
+  var agentUsageUrl = window.location.origin + basePath + '/api/panel/agent-usage';
+  var storageKey = 'planner_agent_chat_history_chatia_{{ user.id }}';
+
+  var messagesEl = document.getElementById('managementAgentChatMessages');
+  var inputEl = document.getElementById('managementAgentChatInput');
+  var sendBtn = document.getElementById('managementAgentChatSend');
+  var usageEl = document.getElementById('managementAgentChatUsage');
+  if (!messagesEl || !inputEl || !sendBtn) return;
+
+  function scrollChatToEnd() { messagesEl.scrollTop = messagesEl.scrollHeight; }
+  function formatNum(n) { return typeof n === 'number' ? n.toLocaleString() : (n || '0'); }
+  function showUsage(u) {
+    if (!usageEl) return;
+    if (u && (u.used !== undefined || u.limit !== undefined)) {
+      usageEl.textContent =
+        'Consumo: ' + formatNum(u.used) + ' / ' + formatNum(u.limit) +
+        ' tokens' + (u.period ? ' (' + u.period + ')' : '');
+    } else {
+      usageEl.textContent = '';
+    }
+  }
+  function setUsageLoading(loading) {
+    if (!usageEl) return;
+    usageEl.textContent = loading ? 'Cargando consumo…' : '';
+  }
+  function fetchUsage() {
+    setUsageLoading(true);
+    fetch(agentUsageUrl, { method: 'GET', credentials: 'same-origin' })
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(data) {
+        setUsageLoading(false);
+        if (data.success && data.usage) showUsage(data.usage);
+      })
+      .catch(function() {
+        setUsageLoading(false);
+        if (usageEl) usageEl.textContent = 'No se pudo cargar el consumo.';
+      });
+  }
+
+  var agentHistory = [];
+  var maxHistoryPairs = 10;
+  function saveHistory() {
+    try { sessionStorage.setItem(storageKey, JSON.stringify(agentHistory)); } catch (e) {}
+  }
+  function loadHistory() {
+    try {
+      var raw = sessionStorage.getItem(storageKey);
+      if (raw) {
+        var arr = JSON.parse(raw);
+        if (Array.isArray(arr)) agentHistory = arr.slice(-maxHistoryPairs);
+      }
+    } catch (e) {}
+  }
+  function appendMessage(text, isUser) {
+    var wrap = document.createElement('div');
+    wrap.className = 'mb-2 ' + (isUser ? 'text-end' : '');
+    var bubble = document.createElement('div');
+    bubble.className = 'd-inline-block p-2 rounded ' +
+      (isUser ? 'bg-primary text-white' : 'bg-light');
+    bubble.style.maxWidth = '85%';
+    bubble.textContent = text;
+    wrap.appendChild(bubble);
+    var firstHint = messagesEl.querySelector('.text-muted.small');
+    if (firstHint) firstHint.remove();
+    messagesEl.appendChild(wrap);
+    scrollChatToEnd();
+  }
+
+  loadHistory();
+  agentHistory.forEach(function(pair) {
+    if (pair.user) appendMessage(pair.user, true);
+    if (pair.reply) appendMessage(pair.reply, false);
+  });
+  scrollChatToEnd();
+  fetchUsage();
+
+  function setLoading(loading) {
+    sendBtn.disabled = loading;
+    sendBtn.textContent = loading ? '...' : 'Send';
+  }
+  function sendMessage() {
+    var msg = (inputEl.value || '').trim();
+    if (!msg) return;
+    inputEl.value = '';
+    appendMessage(msg, true);
+    setLoading(true);
+    var body = { message: msg, history: agentHistory };
+    fetch(agentChatUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify(body),
+      credentials: 'same-origin'
+    }).then(function(r) {
+      var ct = r.headers.get('Content-Type') || '';
+      if (!ct.includes('application/json')) throw new Error('Respuesta no JSON');
+      return r.json();
+    }).then(function(data) {
+      var reply = (data && data.reply) ? data.reply : 'No hay respuesta.';
+      appendMessage(reply, false);
+      agentHistory.push({ user: msg, reply: reply });
+      if (agentHistory.length > maxHistoryPairs) agentHistory = agentHistory.slice(-maxHistoryPairs);
+      saveHistory();
+      if (data.usage) showUsage({ used: data.usage.used, limit: data.usage.limit, period: data.usage.period });
+    }).catch(function() {
+      appendMessage('Error de conexión. Intenta de nuevo.', false);
+    }).finally(function() { setLoading(false); });
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  inputEl.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') sendMessage();
+  });
+});
+</script>
+{% endblock %}
+

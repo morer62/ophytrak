@@ -1,0 +1,24 @@
+{% extends "templates/base.twig" %}
+
+{% block body %}
+<main class="d-flex w-100 justify-content-center align-items-center bg-light">
+    <div class="container py-5 text-center">
+        <span style="display:inline-block;background:#020a16;padding:14px 22px;border-radius:16px"><img src="{{ asset_for(product_mode == 'ophytrack' ? brand.logo : 'assets/images/planner-hub-logo-negative.png') }}" width="260px" alt="{{ brand.name|default('Ophyra') }}"></span><br><br>
+
+        <div class="card border-0 shadow-sm mx-auto" style="max-width: 680px; border-radius: 16px;">
+            <div class="card-body p-5">
+                <h2 class="fw-bold mb-2">{{ trans('auth.create_business_account') }}</h2>
+                <p class="lead text-muted mb-4">
+                    {{ trans('auth.signup_choose_description') }}
+                </p>
+
+                <a href="{{ path('signup') }}" class="btn btn-primary btn-lg fw-bold px-5">{{ trans('auth.continue') }}</a>
+
+                <div class="text-center mt-4">
+                    {{ trans('auth.have_account_question') }} <a href="{{ path('login') }}">{{ trans('auth.back_to_sign_in') }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

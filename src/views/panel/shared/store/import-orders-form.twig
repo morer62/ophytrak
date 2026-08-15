@@ -1,0 +1,27 @@
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+      <p class="text-uppercase text-muted fw-bold small mb-1">{{ trans('store_import.badge') }}</p>
+      <h1 class="h3 mb-1">{{ trans('store_import.title') }}</h1>
+      <p class="text-muted mb-0">{{ trans('store_import.subtitle') }}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{{ template_url }}" class="btn btn-outline-success">{{ trans('store_import.download_template') }}</a>
+      <a href="{{ back_url }}" class="btn btn-light">{{ trans('store_manual.back_to_orders') }}</a>
+    </div>
+  </div>
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data" class="row g-3 align-items-end">
+        <div class="col-md-8">
+          <label class="form-label">{{ trans('store_import.csv_file') }}</label>
+          <input class="form-control" type="file" name="orders_csv" accept=".csv,text/csv" required>
+          <div class="form-text">{{ trans('store_import.help') }}</div>
+        </div>
+        <div class="col-md-4">
+          <button class="btn btn-success w-100 fw-bold">{{ trans('store_import.import_orders') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

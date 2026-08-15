@@ -1,0 +1,419 @@
+{% extends "templates/base.twig" %}
+
+{% block styles %}
+<style>
+  .support-shell{
+    color:#0f172a;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(38,166,154,.20), transparent 30%),
+      radial-gradient(circle at 90% 8%, rgba(15,118,110,.16), transparent 34%),
+      linear-gradient(180deg,#f5fffc 0%,#ffffff 44%,#f7fafc 100%);
+  }
+  .support-nav{
+    border-bottom:1px solid rgba(15,23,42,.08);
+    background:rgba(255,255,255,.88);
+    backdrop-filter:blur(14px);
+  }
+  .support-brand img{
+    width:142px;
+    height:auto;
+    display:block;
+  }
+  .support-nav-links{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:.65rem;
+    flex-wrap:wrap;
+  }
+  .support-nav-links a,
+  .support-back-link{
+    border:1px solid rgba(15,23,42,.10);
+    border-radius:999px;
+    color:#123c37;
+    background:#fff;
+    font-weight:850;
+    padding:.55rem .9rem;
+    text-decoration:none;
+    transition:background .18s ease,border-color .18s ease,transform .18s ease;
+  }
+  .support-nav-links a:hover,
+  .support-back-link:hover{
+    background:#ecfdf8;
+    border-color:rgba(38,166,154,.36);
+    color:#087a52;
+    transform:translateY(-1px);
+  }
+  .support-hero{
+    padding:4.75rem 0 3rem;
+  }
+  .support-hero-card{
+    position:relative;
+    overflow:hidden;
+    border:1px solid rgba(38,166,154,.18);
+    border-radius:34px;
+    background:
+      linear-gradient(135deg,rgba(255,255,255,.96),rgba(237,253,248,.94)),
+      radial-gradient(circle at 88% 18%, rgba(38,166,154,.25), transparent 31%);
+    box-shadow:0 30px 80px rgba(15,23,42,.10);
+    padding:clamp(2rem,5vw,4.25rem);
+  }
+  .support-hero-card::after{
+    content:"";
+    position:absolute;
+    right:-90px;
+    bottom:-120px;
+    width:360px;
+    height:360px;
+    border-radius:50%;
+    background:rgba(38,166,154,.10);
+    pointer-events:none;
+  }
+  .support-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    border:1px solid rgba(38,166,154,.34);
+    border-radius:999px;
+    color:#087a52;
+    background:#ecfdf8;
+    font-weight:900;
+    font-size:.82rem;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    padding:.48rem .8rem;
+    margin-bottom:1.1rem;
+  }
+  .support-hero h1{
+    color:#0f172a;
+    font-size:clamp(2.55rem,5vw,4.8rem);
+    font-weight:950;
+    line-height:1.02;
+    letter-spacing:-.045em;
+    max-width:880px;
+    margin:0;
+  }
+  .support-hero p{
+    color:#516070;
+    font-size:1.08rem;
+    line-height:1.75;
+    max-width:760px;
+    margin:1rem 0 0;
+  }
+  .support-route-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:1rem;
+    margin-top:1.6rem;
+  }
+  .support-route-card{
+    border:1px solid rgba(15,23,42,.08);
+    border-radius:22px;
+    background:rgba(255,255,255,.82);
+    padding:1.15rem;
+    box-shadow:0 14px 34px rgba(15,23,42,.05);
+  }
+  .support-route-card i{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:42px;
+    height:42px;
+    border-radius:14px;
+    color:#063f39;
+    background:#a7f3e5;
+    margin-bottom:.75rem;
+  }
+  .support-route-card h2{
+    color:#0f172a;
+    font-size:1rem;
+    font-weight:900;
+    margin:0 0 .35rem;
+  }
+  .support-route-card p{
+    color:#607085;
+    font-size:.94rem;
+    line-height:1.55;
+    margin:0;
+  }
+  .support-main{
+    padding:1rem 0 4rem;
+  }
+  .support-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 380px;
+    gap:1.25rem;
+    align-items:start;
+  }
+  .support-panel,
+  .support-side-card{
+    border:1px solid rgba(15,23,42,.08);
+    border-radius:28px;
+    background:#fff;
+    box-shadow:0 18px 54px rgba(15,23,42,.07);
+  }
+  .support-panel{
+    padding:clamp(1.4rem,4vw,2.4rem);
+  }
+  .support-panel h2{
+    color:#0f172a;
+    font-size:clamp(1.8rem,3vw,2.55rem);
+    font-weight:950;
+    letter-spacing:-.035em;
+    margin:0 0 .6rem;
+  }
+  .support-muted{
+    color:#607085;
+    line-height:1.72;
+  }
+  .support-contact-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:.5rem;
+    border:1px solid rgba(38,166,154,.24);
+    border-radius:999px;
+    background:#effdfa;
+    color:#0f766e;
+    font-weight:850;
+    padding:.55rem .8rem;
+    text-decoration:none;
+  }
+  .support-form-grid{
+    display:grid;
+    gap:1rem;
+    margin-top:1.5rem;
+  }
+  .support-field label{
+    color:#0f172a;
+    font-weight:850;
+    margin-bottom:.45rem;
+  }
+  .support-field .form-control{
+    border:1px solid #dbe4ec;
+    border-radius:16px;
+    min-height:52px;
+    padding:.85rem 1rem;
+    color:#0f172a;
+    box-shadow:none;
+  }
+  .support-field textarea.form-control{
+    min-height:160px;
+    resize:vertical;
+  }
+  .support-field .form-control:focus{
+    border-color:#13b8a6;
+    box-shadow:0 0 0 .2rem rgba(19,184,166,.14);
+  }
+  .support-submit{
+    border:0;
+    border-radius:999px;
+    background:linear-gradient(135deg,#0f766e,#13b8a6);
+    color:#fff;
+    box-shadow:0 18px 38px rgba(15,118,110,.22);
+    font-weight:950;
+    min-height:54px;
+    padding:.9rem 1.2rem;
+    width:100%;
+  }
+  .support-side-card{
+    padding:1.35rem;
+  }
+  .support-side-card + .support-side-card{
+    margin-top:1rem;
+  }
+  .support-side-card h3{
+    color:#0f172a;
+    font-size:1.05rem;
+    font-weight:900;
+    margin:0 0 .65rem;
+  }
+  .support-side-list{
+    display:grid;
+    gap:.7rem;
+    margin:0;
+    padding:0;
+    list-style:none;
+  }
+  .support-side-list li{
+    display:flex;
+    gap:.65rem;
+    align-items:flex-start;
+    color:#526174;
+    line-height:1.5;
+  }
+  .support-side-list i{
+    color:#13b8a6;
+    margin-top:.2rem;
+  }
+  .support-login-card{
+    border-color:rgba(38,166,154,.20);
+    background:linear-gradient(135deg,#f4fffb,#ffffff);
+  }
+  .support-login-card a{
+    color:#0f766e;
+    font-weight:900;
+    text-decoration:none;
+  }
+  .support-footer{
+    border-top:1px solid rgba(38,166,154,.18);
+    background:#061a18;
+    color:rgba(255,255,255,.72);
+    padding:.9rem 0;
+  }
+  .support-footer-inner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    flex-wrap:wrap;
+    font-size:.92rem;
+  }
+  .support-footer strong{
+    color:#fff;
+  }
+  .support-footer a{
+    color:#9df3e7;
+    font-weight:850;
+    text-decoration:none;
+    margin-left:.9rem;
+  }
+  .support-footer a:hover{
+    color:#fff;
+  }
+  @media (max-width: 991px){
+    .support-route-grid,
+    .support-layout{
+      grid-template-columns:1fr;
+    }
+  }
+  @media (max-width: 720px){
+    .support-nav .container,
+    .support-footer-inner{
+      text-align:center;
+      justify-content:center;
+    }
+    .support-nav-links{
+      justify-content:center;
+      margin-top:1rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<main class="support-shell">
+  <nav class="support-nav py-3">
+    <div class="container d-flex align-items-center justify-content-between flex-wrap">
+      <a class="support-brand" href="{{ path('planner-hub') }}">
+        <img src="{{ asset_for('assets/images/planner-hub-logo-positive.png') }}" alt="OphyraApp">
+      </a>
+      <div class="support-nav-links">
+        <a href="{{ path('planner-hub') }}">{{ trans('common.home') }}</a>
+        <a href="{{ path('privacy-policy') }}">{{ trans('common.privacy') }}</a>
+        <a href="{{ path('terms_and_conditions') }}">{{ trans('common.terms') }}</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="support-hero">
+    <div class="container">
+      <a class="support-back-link mb-4 d-inline-flex" href="{{ path('planner-hub') }}">← {{ trans('public_home.back_to_home') }}</a>
+      <div class="support-hero-card">
+        <span class="support-kicker">{{ trans('support.contact_title') }}</span>
+        <h1>{{ trans('support.title') }}</h1>
+        <p>{{ trans('support.subtitle') }}</p>
+
+        <div class="support-route-grid">
+          <article class="support-route-card">
+            <i class="fa-solid fa-user-shield"></i>
+            <h2>{{ trans('support.route_account_title') }}</h2>
+            <p>{{ trans('support.route_account_text') }}</p>
+          </article>
+          <article class="support-route-card">
+            <i class="fa-solid fa-credit-card"></i>
+            <h2>{{ trans('support.route_billing_title') }}</h2>
+            <p>{{ trans('support.route_billing_text') }}</p>
+          </article>
+          <article class="support-route-card">
+            <i class="fa-solid fa-diagram-project"></i>
+            <h2>{{ trans('support.route_operations_title') }}</h2>
+            <p>{{ trans('support.route_operations_text') }}</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="support-main">
+    <div class="container support-layout">
+      <article class="support-panel">
+        <h2>{{ trans('support.form_heading') }}</h2>
+        <p class="support-muted">{{ trans('support.contact_text') }}</p>
+        <a class="support-contact-pill mt-2" href="mailto:info@ophyra.com">
+          <i class="fa-solid fa-envelope"></i>
+          <strong>{{ trans('support.sales_label') }}:</strong> info@ophyra.com
+        </a>
+
+        {% if sent %}
+          <div class="alert alert-success text-center mt-4">{{ trans('support.sent_success') }}</div>
+        {% endif %}
+        {% if error %}
+          <div class="alert alert-danger text-center mt-4">{{ trans('support.form_error') }}</div>
+        {% endif %}
+
+        <form method="post" class="support-form-grid">
+          <div class="support-field">
+            <label class="form-label">{{ trans('support.full_name') }}</label>
+            <input type="text" name="name" class="form-control" placeholder="{{ trans('support.full_name_placeholder') }}" required>
+          </div>
+          <div class="support-field">
+            <label class="form-label">{{ trans('support.email_address') }}</label>
+            <input type="email" name="email" class="form-control" placeholder="{{ trans('support.email_placeholder') }}" required>
+          </div>
+          <div class="support-field">
+            <label class="form-label">{{ trans('support.message') }}</label>
+            <textarea name="message" class="form-control" rows="5" placeholder="{{ trans('support.message_placeholder') }}" required></textarea>
+          </div>
+          <button type="submit" class="support-submit">{{ trans('support.send_message') }}</button>
+        </form>
+      </article>
+
+      <aside>
+        <article class="support-side-card">
+          <h3>{{ trans('support.response_title') }}</h3>
+          <ul class="support-side-list">
+            <li><i class="fa-solid fa-clock"></i><span>{{ trans('support.response_time') }}</span></li>
+            <li><i class="fa-solid fa-list-check"></i><span>{{ trans('support.include_details') }}</span></li>
+            <li><i class="fa-solid fa-lock"></i><span>{{ trans('support.security_note') }}</span></li>
+          </ul>
+        </article>
+
+        <article class="support-side-card support-login-card">
+          <h3>{{ trans('support.already_have_account') }}</h3>
+          <p class="support-muted mb-2">{{ trans('support.login_help_text') }}</p>
+          <a href="{{ path('login') }}">{{ trans('support.go_to_login') }} →</a>
+        </article>
+
+        <article class="support-side-card">
+          <h3>{{ trans('support.legal_title') }}</h3>
+          <ul class="support-side-list">
+            <li><i class="fa-solid fa-file-shield"></i><a href="{{ path('privacy-policy') }}">{{ trans('common.privacy') }}</a></li>
+            <li><i class="fa-solid fa-scale-balanced"></i><a href="{{ path('terms_and_conditions') }}">{{ trans('common.terms') }}</a></li>
+          </ul>
+        </article>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<footer class="support-footer">
+  <div class="container support-footer-inner">
+    <span><strong>Ophyra App</strong> - {{ trans('common.all_rights_reserved') }}</span>
+    <nav aria-label="Legal links">
+      <a href="{{ path('privacy-policy') }}">{{ trans('common.privacy') }}</a>
+      <a href="{{ path('terms_and_conditions') }}">{{ trans('common.terms') }}</a>
+      <a href="{{ path('support') }}">{{ trans('support.title') }}</a>
+    </nav>
+  </div>
+</footer>
+{% endblock %}

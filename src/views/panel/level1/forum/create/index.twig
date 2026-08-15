@@ -1,0 +1,151 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">
+                        <i data-feather="edit"></i> {{ trans('planner_hub.create_new_forum_topic') }}
+                    </h2>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data">
+                        <!-- Category -->
+                        <div class="mb-4">
+                            <label for="category_id" class="form-label fw-bold">
+                                {{ trans('planner_hub.category') }} <span class="text-danger">*</span>
+                            </label>
+                            <select name="category_id" id="category_id" class="form-select" required>
+                                <option value="">{{ trans('planner_hub.select_category') }}</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if selectedCategory == category.id %}selected{% endif %}>
+                                    {{ category.icon|default('📁') }} {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Title -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label fw-bold">
+                                {{ trans('planner_hub.title') }} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="title" id="title" class="form-control" 
+                                   placeholder="{{ trans('planner_hub.enter_descriptive_title') }}" 
+                                   maxlength="500" required>
+                            <div class="form-text">{{ trans('planner_hub.make_clear_concise') }}</div>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="mb-4">
+                            <label for="content" class="form-label fw-bold">
+                                {{ trans('planner_hub.content') }} <span class="text-danger">*</span>
+                            </label>
+                            <textarea name="content" id="content" class="form-control" 
+                                      rows="12" placeholder="{{ trans('planner_hub.write_post_content') }}" required></textarea>
+                            <div class="form-text">{{ trans('planner_hub.share_thoughts_questions') }}</div>
+                        </div>
+
+                        <!-- Attachments -->
+                        <div class="mb-4">
+                            <label for="attachments" class="form-label fw-bold">
+                                📎 {{ trans('planner_hub.attachments_optional') }}
+                            </label>
+                            <input type="file" name="attachments[]" id="attachments" 
+                                   class="form-control" multiple accept="image/*,.pdf">
+                            <div class="form-text">
+                                {{ trans('planner_hub.upload_multiple_images') }}
+                            </div>
+                            <div id="preview" class="mt-3 row g-2"></div>
+                        </div>
+
+                        <!-- Options -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input type="checkbox" name="is_pinned" id="is_pinned" class="form-check-input" value="1">
+                                <label for="is_pinned" class="form-check-label">
+                                    📌 {{ trans('planner_hub.pin_this_topic') }}
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ path('forum') }}" class="btn btn-outline-secondary">
+                                <i data-feather="x"></i> {{ trans('planner_hub.cancel') }}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-feather="send"></i> {{ trans('planner_hub.publish_topic') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Guidelines -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">💡 {{ trans('planner_hub.community_guidelines') }}</h5>
+                    <ul class="mb-0">
+                        <li>{{ trans('planner_hub.be_respectful') }}</li>
+                        <li>{{ trans('planner_hub.stay_on_topic') }}</li>
+                        <li>{{ trans('planner_hub.use_clear_titles') }}</li>
+                        <li>{{ trans('planner_hub.search_before_posting') }}</li>
+                        <li>{{ trans('planner_hub.do_not_spam') }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Preview uploaded images
+document.getElementById('attachments').addEventListener('change', function(e) {
+    const preview = document.getElementById('preview');
+    preview.innerHTML = '';
+    
+    const files = e.target.files;
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const col = document.createElement('div');
+                col.className = 'col-md-3';
+                col.innerHTML = `
+                    <div class="position-relative">
+                        <img src="${e.target.result}" class="img-fluid rounded" alt="${file.name}">
+                        <div class="position-absolute top-0 end-0 p-1">
+                            <span class="badge bg-dark">${(file.size / 1024).toFixed(0)}KB</span>
+                        </div>
+                    </div>
+                `;
+                preview.appendChild(col);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            const col = document.createElement('div');
+            col.className = 'col-md-12';
+            col.innerHTML = `
+                <div class="alert alert-secondary py-2 px-3 mb-2">
+                    <i data-feather="file"></i> ${file.name} (${(file.size / 1024).toFixed(0)}KB)
+                </div>
+            `;
+            preview.appendChild(col);
+            feather.replace();
+        }
+    }
+});
+</script>
+{% endblock %}
+
+
+
+
+

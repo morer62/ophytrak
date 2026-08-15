@@ -1,0 +1,32 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+
+<h1 class="h3 mb-4">{{ trans('planner_hub.edit_item') }}</h1>
+
+{{ macros.breadcrumb2() }}
+
+<section class="card">
+    <div class="card-body">
+        <form method="post">
+
+            <div class="mb-3">
+                <label class="form-label">{{ trans('planner_hub.item_name') }}</label>
+                <input type="text" name="name" class="form-control" value="{{ item.name }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">{{ trans('planner_hub.quantity') }}</label>
+                <input type="number" name="quantity" class="form-control" min="1" value="{{ item.quantity }}" required>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary">{{ trans('planner_hub.save_item') }}</button>
+                <a href="{{ path('panel/planner-hub/management/storage/containers/items?container_id=' ~ container_id) }}" class="btn btn-danger">{{ trans('planner_hub.cancel') }}</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+{% endblock %}

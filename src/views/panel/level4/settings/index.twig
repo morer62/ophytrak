@@ -1,0 +1,170 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<div class="container-fluid h-100 d-flex flex-column justify-content-center p-3">
+    <h1 class="h3 mb-3 text-center">
+        <strong>{{ trans('planner_hub.edit_your_profile') }}</strong>
+    </h1>
+
+
+
+<div class="alert alert-light border d-flex justify-content-between align-items-center">
+    <div>
+        <strong>{{ trans('planner_hub.want_to_delete_account') }}</strong><br>
+        {{ trans('planner_hub.request_deletion_keep_data') }}
+    </div>
+    <a href="{{ path('panel/settings/user-deletion') }}" class="btn btn-outline-danger">
+        <i data-feather="trash-2"></i> {{ trans('planner_hub.delete_account') }}
+    </a>
+</div>
+
+
+<div class="alert alert-light border d-flex justify-content-between align-items-center">
+    <div>
+        <strong>{{ trans('planner_hub.close_your_account') }}</strong><br>
+        {{ trans('planner_hub.close_account_data_deleted') }}
+    </div>
+    <button class="btn btn-danger" onclick="openConfirmModal()">
+        <i data-feather="trash-2"></i> {{ trans('planner_hub.delete') }}
+    </button>
+</div>
+<div id="customModal" class="custom-modal-overlay" style="display:none;">
+    <div class="custom-modal">
+        <h4>{{ trans('planner_hub.confirm_deletion') }}</h4>
+        <p>{{ trans('planner_hub.confirm_deletion_message') }}</p>
+        <div class="text-right">
+            <button class="btn btn-default" onclick="closeConfirmModal()">{{ trans('planner_hub.cancel') }}</button>
+            <button class="btn btn-danger" onclick="confirmDeletion()">{{ trans('planner_hub.yes_delete_it') }}</button>
+        </div>
+    </div>
+</div>
+<style>
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.custom-modal {
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+</style>
+
+    <div class="d-flex justify-content-center align-items-center">
+        <div class="card shadow-lg p-4 w-100 w-md-75">
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label">{{ trans('planner_hub.first_name') }}</label>
+                        <input class="form-control" name="name" required type="text" value="{{ user.name }}" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ trans('planner_hub.last_name') }}</label>
+                        <input class="form-control" name="lastname" required type="text" value="{{ user.lastname }}" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ trans('planner_hub.email') }}</label>
+                        <input class="form-control" name="email" required type="email" value="{{ user.email }}" />
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ trans('planner_hub.new_password') }}</label>
+                        <input class="form-control" name="password" type="password" placeholder="{{ trans('planner_hub.leave_blank_keep_current') }}" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ trans('planner_hub.confirm_new_password') }}</label>
+                        <input class="form-control" name="password_repeat" type="password" />
+                    </div>
+
+                    <hr>
+
+                    <h5 class="mb-3">{{ trans('planner_hub.language_settings') }}</h5>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ trans('planner_hub.interface_language') }}</label>
+                        <select class="form-select" name="ui_language" required>
+                            <option value="en" {{ user.getUiLanguage() == 'en' ? 'selected' : '' }}>English</option>
+                            <option value="es" {{ user.getUiLanguage() == 'es' ? 'selected' : '' }}>Español</option>
+                            <option value="fr" {{ user.getUiLanguage() == 'fr' ? 'selected' : '' }}>Français</option>
+                            <option value="pt" {{ user.getUiLanguage() in ['pt', 'pr'] ? 'selected' : '' }}>Português</option>
+                        </select>
+                        <small class="form-text text-muted">{{ trans('planner_hub.interface_language_description') }}</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">{{ trans('planner_hub.update_profile') }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="my-4">
+
+
+{% block javascripts %}
+<script>
+function openConfirmModal() {
+    document.getElementById('customModal').style.display = 'flex';
+}
+
+function closeConfirmModal() {
+    document.getElementById('customModal').style.display = 'none';
+}
+
+async function confirmDeletion() {
+    try {
+        const response = await fetch("{{ path('panel/settings/update-active-user') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: 'confirm_hard_delete=yes',
+            credentials: 'include' 
+        });
+
+        
+        if (response.redirected) {
+            window.location.href = response.url;
+            return;
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            const result = await response.json();
+            if (result.success && result.redirect) {
+                window.location.href = result.redirect;
+                return;
+            }
+            throw new Error(result.message || "{{ trans('planner_hub.operation_error')|e('js') }}");
+        }
+    
+        
+        window.location.href = "{{ path('login') }}";
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('{{ trans('planner_hub.error_processing_request')|e('js') }}: ' + error.message);
+        closeConfirmModal();
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}

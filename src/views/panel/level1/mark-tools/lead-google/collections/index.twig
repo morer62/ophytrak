@@ -1,0 +1,60 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+
+
+
+
+    {{ macros.breadcrumb2() }}
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h3 class="mb-0">📚 {{ trans('planner_hub.leads_collections') }}</h3>
+      <small class="text-muted">{{ trans('planner_hub.organize_saved_leads') }}</small>
+    </div>
+    <form method="POST" action="" class="d-flex align-items-center gap-2">
+      <input type="text" name="name" class="form-control" placeholder="{{ trans('planner_hub.new_collection') }}" required>
+      <button type="submit" class="btn btn-success">➕ {{ trans('planner_hub.create') }}</button>
+    </form>
+  </div>
+
+ 
+
+  <br><hr>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th>{{ trans('planner_hub.name') }}</th>
+          <th>{{ trans('planner_hub.leads') }}</th>
+          <th>{{ trans('planner_hub.created') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for collection in collections %}
+          <tr>
+            <td>{{ collection.name }}</td>
+            <td>{{ collection.total_items ?? 0 }}</td>
+            <td>{{ collection.created_at|date('Y-m-d H:i') }}</td>
+            <td class="text-end"> 
+              <a href="{{ path('panel/mark-tools/lead-google/collections_items') }}?id={{ collection.id }}" class="btn btn-sm btn-outline-primary">🔍 {{ trans('planner_hub.leads') }}</a>
+             
+
+              <form method="post" class="d-inline">
+                    <input type="hidden" name="delete_collection" value="{{ collection.id }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">{{ trans('planner_hub.delete') }}</button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="4" class="text-center text-muted">{{ trans('planner_hub.no_collections_created') }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

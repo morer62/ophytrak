@@ -1,0 +1,36 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteRule ^sitemap\.xml$ sitemap.xml.php [L]
+    RewriteRule ^business-profile/([^/]+)/?$ index.php?url=business-profile&slug=$1 [L,QSA]
+
+    # If the requested file or directory exists, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Redirect sitemap-vendors.xml to sitemap-vendors.xml.php
+    RewriteRule ^sitemap-vendors\.xml$ sitemap-vendors.xml.php [L]
+    RewriteRule ^sitemap-venues\.xml$ sitemap-venues.xml.php [L]
+
+    # If the file does not exist, redirect to index.php
+    RewriteRule ^(.*)$ index.php?url=$1 [L,QSA]
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/avif "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType video/mp4 "access plus 1 month"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(?:avif|webp|png|jpe?g|svg|mp4|css|js)$">
+        Header set Cache-Control "public, max-age=2592000, immutable"
+    </FilesMatch>
+</IfModule>

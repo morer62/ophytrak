@@ -1,0 +1,121 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<h1 class="h3 mb-4">🛒 {{ trans('planner_hub.shopping_list_for_order') }} VNV-341{{ order_id }}</h1>
+
+ {# Back según convención al listado de órdenes #}
+  <a href="{{ path('panel/planner-hub/management/orders/orders/team_comunication') }}?id={{ order_id }}" class="btn btn-outline-secondary mb-3">  
+    ← {{ trans('planner_hub.back_to_team_area') }}
+  </a>
+
+<form method="post">
+    <input type="hidden" name="order_id" value="{{ order_id }}">
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">📋 {{ trans('planner_hub.main_order') }} #{{ order_id }} - {{ trans('planner_hub.shopping_list') }}</h4>
+        </div>
+        <div class="card-body">
+            {% for service in services %}
+                <div class="card mb-3">
+                    <div class="card-header fw-bold bg-light">🧩 {{ service.name }}</div>
+                    <div class="card-body" id="shopping-main-{{ service.id_service }}">
+                        {% set shoppingKey = 'main_' ~ service.id_service %}
+                        <input type="hidden" name="shopping_keys[{{ shoppingKey }}][source]" value="main_order">
+                        <input type="hidden" name="shopping_keys[{{ shoppingKey }}][service_id]" value="{{ service.id_service }}">
+                        {% for item in service.items %}
+                            <div class="border p-2 mb-3 position-relative">
+                                <input type="text" maxlength="40" name="shopping[{{ shoppingKey }}][{{ loop.index0 }}][item]" value="{{ item.item }}" class="form-control mb-2" placeholder="{{ trans('planner_hub.item_name') }}">
+                                <input type="text" maxlength="10" name="shopping[{{ shoppingKey }}][{{ loop.index0 }}][quantity]" value="{{ item.quantity }}" class="form-control mb-2" placeholder="{{ trans('planner_hub.quantity_optional') }}">
+                                <textarea maxlength="40" name="shopping[{{ shoppingKey }}][{{ loop.index0 }}][notes]" class="form-control mb-2" placeholder="{{ trans('planner_hub.notes') }}">{{ item.notes }}</textarea>
+                                <button type="button" class="btn-close position-absolute end-0 top-0 m-3" onclick="this.parentNode.remove()"></button>
+                            </div>
+                        {% endfor %}
+                        <button type="button" class="btn btn-outline-secondary" onclick="addItem('main', {{ service.id_service }}, '{{ shoppingKey }}')">➕ {{ trans('planner_hub.add_item') }}</button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if suborderServices|length > 0 %}
+        {% for suborder in suborders %}
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">📦 {{ trans('planner_hub.sub_order') }} #{{ suborder.id }} - {{ trans('planner_hub.shopping_list') }}</h4>
+                </div>
+                <div class="card-body">
+                    {% for service in suborderServices %}
+                        {% if service.suborder_id == suborder.id %}
+                            <div class="card mb-3">
+                                <div class="card-header fw-bold bg-light">🧩 {{ service.name }}</div>
+                                <div class="card-body" id="shopping-sub-{{ suborder.id }}-{{ service.id_service }}">
+                                    {% set shoppingKey = 'sub_' ~ suborder.id ~ '_' ~ service.id_service %}
+                                    <input type="hidden" name="shopping_keys[{{ shoppingKey }}][source]" value="suborder">
+                                    <input type="hidden" name="shopping_keys[{{ shoppingKey }}][service_id]" value="{{ service.id_service }}">
+                                    <input type="hidden" name="shopping_keys[{{ shoppingKey }}][suborder_id]" value="{{ suborder.id }}">
+                                    {% for item in service.items %}
+                                        <div class="border p-2 mb-3 position-relative">
+                                            <input type="text" maxlength="40" name="shopping[{{ shoppingKey }}][{{ loop.index0 }}][item]" value="{{ item.item }}" class="form-control mb-2" placeholder="{{ trans('planner_hub.item_name') }}">
+                                            <input type="text" maxlength="10" name="shopping[{{ shoppingKey }}][{{ loop.index0 }}][quantity]" value="{{ item.quantity }}" class="form-control mb-2" placeholder="{{ trans('planner_hub.quantity_optional') }}">
+                                            <textarea maxlength="40" name="shopping[{{ shoppingKey }}][{{ loop.index0 }}][notes]" class="form-control mb-2" placeholder="{{ trans('planner_hub.notes') }}">{{ item.notes }}</textarea>
+                                            <button type="button" class="btn-close position-absolute end-0 top-0 m-3" onclick="this.parentNode.remove()"></button>
+                                        </div>
+                                    {% endfor %}
+                                    <button type="button" class="btn btn-outline-secondary" onclick="addItem('sub', {{ service.id_service }}, {{ suborder.id }}, '{{ shoppingKey }}')">➕ {{ trans('planner_hub.add_item') }}</button>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <button class="btn btn-success">
+        <i data-feather="save"></i> {{ trans('planner_hub.save_shopping_list') }}
+    </button>
+</form>
+
+<script>
+function addItem(source, serviceId, suborderId = null, shoppingKey = null) {
+    const containerId = source === 'sub' 
+        ? `shopping-sub-${suborderId}-${serviceId}`
+        : `shopping-main-${serviceId}`;
+    const container = document.getElementById(containerId);
+    
+    if (!container) {
+        console.error('Container not found:', containerId);
+        alert('Error: No se pudo encontrar el contenedor. Por favor, recarga la página.');
+        return;
+    }
+    
+    // Si no se proporciona shoppingKey, generarlo
+    if (!shoppingKey) {
+        shoppingKey = source === 'sub' 
+            ? `sub_${suborderId}_${serviceId}`
+            : `main_${serviceId}`;
+    }
+    
+    const existing = container.querySelectorAll('[name^="shopping[' + shoppingKey + ']"]');
+    const currentIndex = Math.floor(existing.length / 3);
+
+    const div = document.createElement('div');
+    div.className = "border p-2 mb-3 position-relative";
+    const translations = {
+        item_name: "{{ trans('planner_hub.item_name')|e('js') }}",
+        quantity_optional: "{{ trans('planner_hub.quantity_optional')|e('js') }}",
+        notes: "{{ trans('planner_hub.notes')|e('js') }}"
+    };
+    
+    div.innerHTML = `
+        <input type="text" maxlength="40" name="shopping[${shoppingKey}][${currentIndex}][item]" class="form-control mb-2" placeholder="${translations.item_name}">
+        <input type="text" maxlength="10" name="shopping[${shoppingKey}][${currentIndex}][quantity]" class="form-control mb-2" placeholder="${translations.quantity_optional}">
+        <textarea maxlength="40" name="shopping[${shoppingKey}][${currentIndex}][notes]" class="form-control mb-2" placeholder="${translations.notes}"></textarea>
+        <button type="button" class="btn-close position-absolute end-0 top-0 m-3" onclick="this.parentNode.remove()"></button>
+    `;
+    container.insertBefore(div, container.lastElementChild);
+}
+</script>
+{% endblock %}

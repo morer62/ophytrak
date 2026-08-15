@@ -1,0 +1,6 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set operationQuery = operation_context.query|default('operation=vnv_events') %}
+{% include 'panel/shared/store/order-history.twig' with { back_url: path('panel/planner-hub/store/orders/home') ~ '?' ~ operationQuery } %}
+{% endblock %}

@@ -1,0 +1,24 @@
+User-agent: *
+Disallow: /panel/
+Disallow: /app/
+Disallow: /api/
+Disallow: /admin/
+Disallow: /private/
+Disallow: /checkout
+Disallow: /cart
+Disallow: /billing
+Disallow: /payment
+Disallow: /order-access/
+Disallow: /commerce/order-access/
+Disallow: /tickets/purchase/
+Disallow: /commerce/tickets/purchase/
+Disallow: /storage/private/
+Disallow: /webhook/
+Disallow: /cron/
+Disallow: /reset-password
+Disallow: /update-password
+Disallow: /forgot_password
+Disallow: /login
+Disallow: /logout
+
+Sitemap: https://ophyra.com/sitemap.xml

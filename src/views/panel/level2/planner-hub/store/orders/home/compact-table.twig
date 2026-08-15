@@ -1,0 +1,177 @@
+<div class="table-responsive store-orders-compact">
+    <table class="table table-hover align-middle mb-0">
+        <thead>
+        <tr>
+            <th>{{ trans('store_report.order') }}</th>
+            <th>{{ trans('store_report.customer') }}</th>
+            <th>{{ trans('store_orders.shipping_address') }}</th>
+            <th>{{ trans('ui.details') }}</th>
+            <th class="text-end">{{ trans('ui.total') }}</th>
+            <th>{{ trans('store_report.payment') }}</th>
+            <th>{{ trans('store_orders.assigned_team_member') }}</th>
+            <th>{{ trans('store_orders.update_order_status') }}</th>
+            <th class="text-end">{{ trans('ui.actions') }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for o in orders %}
+            <tr>
+                <td class="text-nowrap">
+                    <strong>#{{ o.id }}</strong>
+                    {% if o.primary_package %}<div class="small font-monospace text-success">{{ o.primary_package.package_code }}</div>{% endif %}
+                    <div class="small text-muted">{{ o.created_at|date('M j, Y') }}</div>
+                </td>
+                <td>
+                    <div class="fw-semibold text-truncate compact-customer">{{ o.guest_name ?: '-' }}</div>
+                    <div class="small text-muted text-truncate compact-customer">{{ o.guest_email ?: '-' }}</div>
+                </td>
+                <td><div class="small compact-address">{{ o.shipping_address_display ?: '-' }}</div></td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                            data-bs-toggle="modal" data-bs-target="#orderItemsModal"
+                            data-order-id="{{ o.id }}" data-order-date="{{ o.created_at|date('M j, Y g:i A') }}"
+                            data-order-customer="{{ o.guest_name ?: '-' }}" data-order-email="{{ o.guest_email ?: '-' }}"
+                            data-order-phone="{{ o.guest_phone ?: '-' }}" data-order-shipping="{{ o.shipping_address_display ?: '-' }}"
+                            data-order-status="{{ o.status }}" data-order-payment="{{ o.payment_status }}"
+                            data-order-coupon-code="{{ o.coupon_code ?: '' }}" data-order-coupon-discount="{{ (o.coupon_discount ?: 0)|number_format(2, '.', ',') }}"
+                            data-order-total="{{ o.total|number_format(2, '.', ',') }}" data-items="{{ o.items_modal_json|e('html_attr') }}">
+                        {{ trans('store_orders.view_details') }}
+                    </button>
+                </td>
+                <td class="text-end fw-semibold text-nowrap">${{ o.total|number_format(2, '.', ',') }}</td>
+                <td>
+                    <span class="badge {{ o.payment_status == 'PAID' ? 'bg-success' : (o.payment_status == 'FAILED' ? 'bg-danger' : 'bg-warning text-dark') }}">
+                        {{ paymentStatusLabels[o.payment_status]|default(o.payment_status) }}
+                    </span>
+                    <button type="button" class="btn btn-sm btn-link p-0 d-block mt-1"
+                            data-bs-toggle="modal" data-bs-target="#editPaymentModal"
+                            data-order-id="{{ o.id }}" data-payment-status="{{ o.payment_status }}"
+                            data-payment-remaining="{{ o.remaining_balance|number_format(2, '.', '') }}">{{ trans('ui.edit') }}</button>
+                </td>
+                <td>
+                    <div class="d-flex gap-1 mb-1">
+                        <span class="status-dot {{ o.kitchen_user_id ? 'assigned' : '' }}" title="{{ trans('store_orders.preparation_user') }}"></span>
+                        <span class="status-dot {{ o.delivery_user_id ? 'assigned' : '' }}" title="{{ trans('store_orders.delivery_user') }}"></span>
+                    </div>
+                    <button type="button" class="btn btn-sm {{ o.assignment_required ? 'btn-warning' : 'btn-outline-secondary' }}"
+                            data-bs-toggle="modal" data-bs-target="#assignDeliveryModal"
+                            data-order-id="{{ o.id }}" data-delivery-user-id="{{ o.delivery_user_id }}"
+                            data-kitchen-user-id="{{ o.kitchen_user_id }}" data-allow-close="{{ o.allow_team_close_delivery }}"
+                            data-allow-chat="{{ o.allow_chat_with_client }}">
+                        {{ o.assignment_required ? trans('store_orders.assign_now') : trans('store_orders.operations') }}
+                    </button>
+                </td>
+                <td>
+                    {% set statusBadge = o.status in ['DELIVERED', 'COMPLETED'] ? 'bg-success' : (o.status == 'OUT_FOR_DELIVERY' ? 'bg-primary' : 'bg-info text-dark') %}
+                    <span class="badge {{ statusBadge }} d-block mb-1">{{ storeStatusLabels[o.status]|default(o.status) }}</span>
+                    <button type="button" class="btn btn-sm btn-outline-success manual-logistics-btn"
+                            data-bs-toggle="modal" data-bs-target="#manualLogisticsModal"
+                            data-order-id="{{ o.id }}" data-status="{{ o.status }}">
+                        {{ trans('store_orders.manual_update') }}
+                    </button>
+                    {% if o.cancellation_status|default('NONE') == 'REQUESTED' %}
+                        <button type="button" class="btn btn-sm btn-danger mt-1 lifecycle-decision-btn" data-bs-toggle="modal" data-bs-target="#lifecycleDecisionModal" data-order-id="{{ o.id }}" data-kind="cancellation" data-reason="{{ o.cancellation_reason|default('')|e('html_attr') }}">{{ trans('store_orders.review_cancellation') }}</button>
+                    {% elseif o.status in ['RETURN_REQUESTED','RETURN_APPROVED'] %}
+                        <button type="button" class="btn btn-sm btn-warning mt-1 lifecycle-decision-btn" data-bs-toggle="modal" data-bs-target="#lifecycleDecisionModal" data-order-id="{{ o.id }}" data-kind="return" data-reason="{{ o.return_notes|default('')|e('html_attr') }}">{{ trans('store_orders.review_return') }}</button>
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown">{{ trans('ui.actions') }}</button>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            {% if o.id_user %}<a class="dropdown-item" href="{{ path('panel/chat?to=' ~ o.id_user) }}">{{ trans('store_orders.message_customer') }}</a>{% endif %}
+                            <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#createTaskModal" data-order-id="{{ o.id }}">{{ trans('store_orders.add_task') }}</button>
+                            {% if o.primary_package %}<button type="button" class="dropdown-item assign-carrier-btn" data-bs-toggle="modal" data-bs-target="#assignCarrierModal" data-package-id="{{ o.primary_package.id }}" data-package-code="{{ o.primary_package.package_code }}">{{ trans('store_orders.assign_external_carrier') }}</button>{% endif %}
+                            <a class="dropdown-item" href="{{ path('store/order-access?token=' ~ o.public_token) }}" target="_blank">{{ trans('store_orders.view_public') }}</a>
+                            <button type="button" class="dropdown-item print-store-label-btn"
+                                    data-order-id="{{ o.id }}" data-tracking-code="{{ o.primary_package.package_code|default('OPH-' ~ o.id) }}"
+                                    data-order-date="{{ o.created_at|date('Y-m-d H:i') }}" data-customer="{{ o.guest_name ?: trans('store_report.customer') }}"
+                                    data-email="{{ o.guest_email ?: '' }}" data-destination-address="{{ o.shipping_address_1 ?: '' }}"
+                                    data-destination-address2="{{ o.shipping_address_2 ?: '' }}" data-destination-city="{{ o.shipping_city ?: '' }}"
+                                    data-destination-state="{{ o.shipping_state ?: '' }}" data-destination-postal="{{ o.shipping_zip ?: '' }}"
+                                    data-destination-country="{{ o.shipping_country ?: '' }}" data-instructions="{{ o.shipping_instructions ?: '' }}"
+                                    data-sender-name="{{ businessProfile.company_name|default('Ophyra') }}" data-sender-address="{{ businessProfile.address_line1|default('') }}"
+                                    data-sender-city="{{ businessProfile.city|default('') }}" data-sender-state="{{ businessProfile.state|default('') }}"
+                                    data-sender-postal="{{ businessProfile.zip|default('') }}" data-sender-country="{{ businessProfile.country|default('') }}"
+                                    data-carrier-name="{{ o.delivery_assignee_name ?: trans('store_orders.label_logistics') }}"
+                                    data-total="${{ o.total|number_format(2, '.', ',') }}" data-url="{{ path('store/order-access?token=' ~ o.public_token) }}">
+                                {{ trans('store_orders.print_label') }}
+                            </button>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="assignCarrierModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><div class="modal-header"><h3 class="modal-title fs-5">{{ trans('store_orders.assign_external_carrier') }}</h3><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" name="action" value="seller_assign_carrier"><input type="hidden" name="package_id" id="assignCarrierPackageId"><div class="alert alert-info" id="assignCarrierPackageCode"></div><label class="form-label">{{ trans('store_orders.carrier') }}</label><select class="form-select" name="carrier_owner_id" required><option value="">{{ trans('store_orders.select_carrier') }}</option>{% for carrier in carrierOrganizations %}<option value="{{ carrier.id_owner }}">{{ carrier.company_name }} · {{ carrier.city }} {{ carrier.state }}</option>{% endfor %}</select><p class="small text-muted mt-3 mb-0">{{ trans('store_orders.carrier_assignment_help') }}</p></div><div class="modal-footer"><button class="btn btn-light" type="button" data-bs-dismiss="modal">{{ trans('ui.cancel') }}</button><button class="btn btn-success">{{ trans('ui.assign') }}</button></div></form></div></div></div>
+
+<div class="modal fade" id="lifecycleDecisionModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post" id="lifecycleDecisionForm">
+    <div class="modal-header"><div><h5 class="modal-title" id="lifecycleDecisionTitle"></h5><small class="text-muted" id="lifecycleDecisionReason"></small></div><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body"><input type="hidden" name="action" id="lifecycleDecisionAction"><input type="hidden" name="order_id" id="lifecycleDecisionOrderId"><label class="form-label">{{ trans('store_orders.business_decision') }}</label><select class="form-select mb-3" name="decision" id="lifecycleDecisionSelect" required></select><label class="form-label">{{ trans('store_orders.decision_notes') }}</label><textarea class="form-control" name="decision_notes" rows="3" maxlength="1000"></textarea><div class="alert alert-light border small mt-3 mb-0">{{ trans('store_orders.commercial_decision_owner_only') }}</div></div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ trans('ui.cancel') }}</button><button class="btn btn-primary">{{ trans('ui.save') }}</button></div>
+</form></div></div></div>
+
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+ document.querySelectorAll('.assign-carrier-btn').forEach(function(button){button.addEventListener('click',function(){document.getElementById('assignCarrierPackageId').value=button.dataset.packageId;document.getElementById('assignCarrierPackageCode').textContent=button.dataset.packageCode;});});
+ const modal=document.getElementById('lifecycleDecisionModal'); if(!modal)return;
+ modal.addEventListener('show.bs.modal',function(e){const b=e.relatedTarget,kind=b?.dataset.kind||'return',select=document.getElementById('lifecycleDecisionSelect');
+  document.getElementById('lifecycleDecisionOrderId').value=b?.dataset.orderId||'';document.getElementById('lifecycleDecisionReason').textContent=b?.dataset.reason||'';
+  document.getElementById('lifecycleDecisionAction').value=kind==='cancellation'?'resolve_cancellation':'review_return';
+  document.getElementById('lifecycleDecisionTitle').textContent=kind==='cancellation'?{{ trans('store_orders.review_cancellation')|json_encode|raw }}:{{ trans('store_orders.review_return')|json_encode|raw }};
+  select.innerHTML=kind==='cancellation'?'<option value="">—</option><option value="REJECTED">{{ trans('store_orders.reject_cancellation')|e('js') }}</option><option value="RESEND">{{ trans('store_orders.approve_resend')|e('js') }}</option><option value="REFUNDED">{{ trans('store_orders.approve_refund')|e('js') }}</option>':'<option value="">—</option><option value="APPROVE">{{ trans('store_orders.approve_return')|e('js') }}</option><option value="REJECT">{{ trans('store_orders.reject_return')|e('js') }}</option><option value="RECEIVED_RESEND">{{ trans('store_orders.return_received_resend')|e('js') }}</option><option value="RECEIVED_REFUND">{{ trans('store_orders.return_received_refund')|e('js') }}</option>';
+ });
+});
+</script>
+
+<style>
+.store-orders-compact th{font-size:.72rem;letter-spacing:.035em;text-transform:uppercase;white-space:nowrap;color:#64748b}
+.store-orders-compact td{padding:.65rem .55rem;vertical-align:middle;line-height:1.25}
+.store-orders-compact .compact-customer{max-width:180px}
+.store-orders-compact .compact-address{max-width:235px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.store-orders-compact .status-dot{width:9px;height:9px;border-radius:50%;background:#cbd5e1;display:inline-block}
+.store-orders-compact .status-dot.assigned{background:#22c55e}
+</style>
+
+<div class="modal fade" id="manualLogisticsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" enctype="multipart/form-data" id="manualLogisticsForm">
+                <div class="modal-header">
+                    <div><h5 class="modal-title mb-1">{{ trans('store_orders.manual_logistics_update') }}</h5><small class="text-muted">{{ trans('store_orders.admin_no_gps') }}</small></div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="manual_logistics_update">
+                    <input type="hidden" name="async" value="1">
+                    <input type="hidden" name="order_id" id="manualLogisticsOrderId">
+                    <div id="manualLogisticsFeedback" class="alert d-none"></div>
+                    <details id="manualLogisticsDebug" class="d-none mb-3"><summary class="small fw-semibold">Technical response details</summary><pre id="manualLogisticsDebugText" class="small bg-dark text-light p-2 mt-2 rounded" style="max-height:260px;overflow:auto;white-space:pre-wrap"></pre></details>
+                    <label class="form-label">{{ trans('store_orders.operational_status') }}</label>
+                    <select name="status" id="manualLogisticsStatus" class="form-select mb-3" required>
+                        <option value="">-- {{ trans('store_orders.operational_status') }} --</option>
+                        <option value="IN_PREPARATION">{{ storeStatusLabels.IN_PREPARATION }}</option>
+                        <option value="READY_FOR_DELIVERY">{{ storeStatusLabels.READY_FOR_DELIVERY }}</option>
+                        <option value="OUT_FOR_DELIVERY">{{ storeStatusLabels.OUT_FOR_DELIVERY }}</option>
+                        <option value="DELIVERY_ATTEMPTED">{{ storeStatusLabels.DELIVERY_ATTEMPTED }}</option>
+                        <option value="RETURNED_TO_BUSINESS">{{ storeStatusLabels.RETURNED_TO_BUSINESS }}</option>
+                        <option value="REDELIVERY_SCHEDULED">{{ storeStatusLabels.REDELIVERY_SCHEDULED }}</option>
+                        <option value="DELIVERED">{{ storeStatusLabels.DELIVERED }}</option>
+                    </select>
+                    <div class="alert alert-light border small">{{ trans('store_orders.no_map_manual') }}</div>
+                    <div class="mb-3 d-none" id="manualDeliveryPhotoGroup">
+                        <label class="form-label">{{ trans('store_orders.delivery_photo_required') }}</label>
+                        <input type="file" name="manual_delivery_photo" id="manualDeliveryPhoto" class="form-control" accept="image/jpeg,image/png,image/webp" capture="environment">
+                        <div class="form-text">Required only when marking the order delivered.</div>
+                    </div>
+                    <label class="form-label">{{ trans('store_orders.comments') }}</label>
+                    <textarea name="manual_logistics_notes" class="form-control" rows="3" maxlength="1000" placeholder="Who performed the step, delivery notes, recipient or exception..."></textarea>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ trans('ui.cancel') }}</button><button class="btn btn-success d-none" id="manualLogisticsSubmit">{{ trans('ui.save') }}</button></div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,16 @@
+{% set data = block.data|default({}) %}
+<section class="cms-block cms-block-gallery">
+  {% if block.title|default('') %}
+    <h2>{{ block.title }}</h2>
+  {% endif %}
+  <div class="cms-gallery-grid">
+    {% for image in data.images|default([]) %}
+      <figure>
+        <img src="{{ image.secure_url|default(image.url|default('')) }}" alt="{{ image.alt_text|default('') }}">
+        {% if image.caption|default('') %}
+          <figcaption>{{ image.caption }}</figcaption>
+        {% endif %}
+      </figure>
+    {% endfor %}
+  </div>
+</section>

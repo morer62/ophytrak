@@ -1,0 +1,344 @@
+{% extends "templates/base.twig" %}
+
+{% block styles %}
+<style>
+.affiliate-hero {
+  background: linear-gradient(135deg, #071312 0%, #0f2f2c 54%, #111827 100%);
+  color: #fff;
+  padding: 6rem 1.25rem;
+}
+.affiliate-wrap { max-width: 1120px; margin: 0 auto; }
+.affiliate-kicker {
+  display: inline-flex;
+  padding: .45rem .8rem;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px;
+  color: #a7f3d0;
+  font-size: .88rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.affiliate-hero h1 {
+  max-width: 880px;
+  margin: 1.2rem 0 1rem;
+  font-size: clamp(2.4rem, 6vw, 4.8rem);
+  line-height: 1.02;
+  font-weight: 900;
+  color: #fff;
+}
+.affiliate-hero p {
+  max-width: 780px;
+  color: #d1fae5;
+  font-size: 1.18rem;
+  line-height: 1.75;
+}
+.affiliate-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  border-radius: 999px;
+  padding: .95rem 1.35rem;
+  font-weight: 800;
+  text-decoration: none;
+  border: 0;
+}
+.affiliate-btn-primary { background: #22c55e; color: #052e16 !important; }
+.affiliate-btn-secondary { background: rgba(255,255,255,.12); color: #fff !important; border: 1px solid rgba(255,255,255,.58); }
+.affiliate-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.affiliate-section { padding: 4.5rem 1.25rem; }
+.affiliate-section.alt { background: #f8fafc; }
+.affiliate-section h2 {
+  color: #111827;
+  font-weight: 900;
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  line-height: 1.1;
+  margin-bottom: 1rem;
+}
+.affiliate-lead {
+  max-width: 760px;
+  color: #4b5563;
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+.affiliate-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.affiliate-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1.35rem;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, .06);
+}
+.affiliate-card:focus-within {
+  outline: 3px solid rgba(34,197,94,.35);
+  outline-offset: 3px;
+}
+.affiliate-card h3 {
+  color: #111827;
+  font-size: 1.08rem;
+  font-weight: 900;
+  margin-bottom: .6rem;
+}
+.affiliate-card p, .affiliate-card li { color: #4b5563; line-height: 1.65; }
+.affiliate-card ul { padding-left: 1.1rem; margin: 0; }
+.affiliate-note {
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  color: #14532d;
+  border-radius: 14px;
+  padding: 1rem 1.15rem;
+  margin-top: 1.5rem;
+}
+.affiliate-commission-strip {
+  display: grid;
+  grid-template-columns: 1.15fr .85fr;
+  gap: 1rem;
+  max-width: 960px;
+  margin-top: 1.5rem;
+}
+.affiliate-commission-card {
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.20);
+  border-radius: 20px;
+  padding: 1.2rem;
+  box-shadow: 0 20px 48px rgba(0,0,0,.18);
+}
+.affiliate-commission-card strong {
+  display:block;
+  color:#fff;
+  font-size: clamp(1.6rem, 4vw, 2.8rem);
+  line-height: 1;
+  margin-bottom: .45rem;
+}
+.affiliate-commission-card span,
+.affiliate-commission-card p {
+  color:#d1fae5;
+  margin:0;
+  line-height:1.55;
+}
+.affiliate-commission-example {
+  background:#ecfdf5;
+  color:#064e3b;
+  border-color:#86efac;
+}
+.affiliate-commission-example strong,
+.affiliate-commission-example span,
+.affiliate-commission-example p {
+  color:#064e3b;
+}
+.affiliate-table {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  margin-top: 2rem;
+}
+.affiliate-table table { width: 100%; min-width: 760px; border-collapse: collapse; }
+.affiliate-table th, .affiliate-table td { padding: 1rem; border-bottom: 1px solid #e5e7eb; text-align: left; }
+.affiliate-table th { background: #111827; color: #fff; }
+.affiliate-table tr:last-child td { border-bottom: 0; }
+.affiliate-final { background: #071312; color: #fff; text-align: center; }
+.affiliate-final h2 { color: #fff; }
+.affiliate-final p { color: #cbd5e1; margin: 0 auto 1.5rem; }
+@media (max-width: 900px) {
+  .affiliate-grid { grid-template-columns: 1fr; }
+  .affiliate-commission-strip { grid-template-columns: 1fr; }
+  .affiliate-hero { padding: 4.5rem 1.25rem; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<main>
+  <section class="affiliate-hero">
+    <div class="affiliate-wrap">
+      <span class="affiliate-kicker">Ophyra Referral Partners</span>
+      <h1>Earn recurring revenue by helping businesses replace disconnected operations.</h1>
+      <p>
+        Ophyra partners introduce service, commerce and logistics businesses to a modular operations platform for clients,
+        teams, orders, contracts, inventory, delivery, tracking and daily execution. Approved affiliates can earn commission
+        on eligible paid Ophyra modules after a referred customer completes a confirmed payment.
+      </p>
+      <p><strong>Approved partners earn 30%-50% recurring monthly commission on every active referred customer.</strong></p>
+      <div class="affiliate-cta-row">
+        <a href="{{ path('signup') }}?redirect=/panel/afiliate-hub" class="affiliate-btn affiliate-btn-primary activate-aff" data-redirect="/panel/afiliate-hub">
+          Apply to Become a Partner
+        </a>
+        <a href="#program" class="affiliate-btn affiliate-btn-secondary">See How It Works</a>
+      </div>
+      <div class="affiliate-commission-strip" aria-label="Affiliate commission summary">
+        <div class="affiliate-commission-card">
+          <strong>30%-50%</strong>
+          <span>Recurring commission per active customer. Manual payout via PayPal or ACH. Admin-assigned rate.</span>
+        </div>
+        <div class="affiliate-commission-card affiliate-commission-example">
+          <strong>$96/mo</strong>
+          <span>Example: 10 customers x $24/month x 40% commission.</span>
+        </div>
+      </div>
+      <div class="affiliate-note" style="max-width: 820px;">
+        Applications are reviewed by Ophyra. Approval, commission rate and payout eligibility are managed by the admin team.
+      </div>
+    </div>
+  </section>
+
+  <section id="program" class="affiliate-section alt">
+    <div class="affiliate-wrap">
+      <h2>A partner program built around real monthly operations.</h2>
+      <p class="affiliate-lead">
+        Ophyra uses a reviewed referral program. Commission eligibility starts after platform approval and a confirmed
+        paid module purchase by a referred customer.
+      </p>
+
+      <div class="affiliate-grid">
+        <div class="affiliate-card">
+          <h3>1. Apply</h3>
+          <p>Create your account and complete your partner profile. Ophyra reviews each application before approving active promotion.</p>
+        </div>
+        <div class="affiliate-card">
+          <h3>2. Share your approved link</h3>
+          <p>Approved affiliates receive a tracked link and dashboard to follow clicks, referrals, customers and commissions.</p>
+        </div>
+        <div class="affiliate-card">
+          <h3>3. Earn while customers stay active</h3>
+          <p>Eligible commissions apply to approved paid modules according to the commission rate assigned by Ophyra.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="affiliate-section">
+    <div class="affiliate-wrap">
+      <h2>What affiliates are promoting.</h2>
+      <p class="affiliate-lead">
+        Ophyra helps businesses run the operational work behind sales: CRM, clients, team, basic payroll, orders,
+        contracts, signatures, business profile and dashboard visibility, with optional add-ons as the business grows.
+      </p>
+
+      <div class="affiliate-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>How it fits the program</th>
+              <th>Commission eligibility</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Ophyra Base</strong></td>
+              <td>The free starting profile for new business accounts.</td>
+              <td>Not commissionable because it is free.</td>
+            </tr>
+            <tr>
+              <td><strong>Inventory / Storage</strong></td>
+              <td>Add-on for stock, storage and inventory-heavy workflows.</td>
+              <td>Eligible when enabled by Ophyra.</td>
+            </tr>
+            <tr>
+              <td><strong>Store + Delivery & Tracking</strong></td>
+              <td>Add-on for store operations, delivery, fulfillment and tracking.</td>
+              <td>Eligible when enabled by Ophyra.</td>
+            </tr>
+            <tr>
+              <td><strong>AI Advisor</strong></td>
+              <td>Premium add-on for smarter guidance from operational data.</td>
+              <td>Eligible when enabled by Ophyra.</td>
+            </tr>
+            <tr>
+              <td><strong>Tickets + RSVP</strong></td>
+              <td>Add-on for ticket sales, RSVP and event registration workflows.</td>
+              <td>Eligible when enabled by Ophyra.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="affiliate-section alt">
+    <div class="affiliate-wrap">
+      <h2>Who this is for.</h2>
+      <p class="affiliate-lead">
+        Ophyra is a strong fit for partners who already advise or reach businesses with operational complexity.
+      </p>
+
+      <div class="affiliate-grid">
+        <div class="affiliate-card">
+          <h3>Business consultants and operators</h3>
+          <p>People who help local businesses improve systems, sales follow-up, fulfillment or client experience.</p>
+        </div>
+        <div class="affiliate-card">
+          <h3>Commerce and logistics communities</h3>
+          <p>Audiences around delivery, storage, product movement, local stores, distribution or service operations.</p>
+        </div>
+        <div class="affiliate-card">
+          <h3>Event and service networks</h3>
+          <p>Planners, production teams, agencies, studios and providers who understand how messy operations can get.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="affiliate-section">
+    <div class="affiliate-wrap">
+      <h2>Payouts are manual and transparent.</h2>
+      <p class="affiliate-lead">
+        Approved affiliates can provide payout information inside their account. Ophyra may pay through PayPal,
+        Bank Transfer / ACH, or another manual method depending on available information and approval status.
+      </p>
+
+      <div class="affiliate-grid">
+        <div class="affiliate-card">
+          <h3>No automatic Stripe Connect promise</h3>
+          <p>Payouts are reviewed and processed manually by Ophyra. The dashboard records payout history and proof.</p>
+        </div>
+        <div class="affiliate-card">
+          <h3>Legal and payout profile required</h3>
+          <p>Affiliates must provide accurate legal, company or personal details and payout instructions.</p>
+        </div>
+        <div class="affiliate-card">
+          <h3>Rates are assigned by admin</h3>
+          <p>Ophyra can assign approved commission rates such as 30%, 40% or 50% based on the partner relationship.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="affiliate-section affiliate-final">
+    <div class="affiliate-wrap">
+      <h2>Ready to apply?</h2>
+      <p class="affiliate-lead">
+        Apply to become an Ophyra referral partner and help businesses move away from scattered tools.
+      </p>
+      <a href="{{ path('signup') }}?redirect=/panel/afiliate-hub" class="affiliate-btn affiliate-btn-primary activate-aff" data-redirect="/panel/afiliate-hub">
+        Apply to Become a Partner
+      </a>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  const key = 'redirect_after_auth';
+  const target = '/panel/afiliate-hub';
+  document.querySelectorAll('a.activate-aff').forEach((el) => {
+    el.addEventListener('click', () => {
+      try { localStorage.setItem(key, target); } catch(e) {}
+      document.cookie = key + '=' + encodeURIComponent(target) + '; path=/; max-age=' + (60 * 60 * 24 * 30) + '; SameSite=Lax';
+    }, { capture: true });
+  });
+})();
+</script>
+{% endblock %}

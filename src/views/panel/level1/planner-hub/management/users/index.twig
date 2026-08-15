@@ -1,0 +1,245 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<h1 class="h3 mb-3">
+    <i class="align-middle" data-feather="users"></i>
+    {{ trans('planner_hub.my_users') }}
+</h1>
+
+{{ macros.breadcrumb2() }}
+
+<div class="card">
+    <div class="card-body">
+
+        <a href="{{ path(current_location ~ '/create') }}" class="btn btn-primary mb-3">
+            <i class="align-middle" data-feather="plus"></i> {{ trans('planner_hub.add_new_user') }}
+        </a>
+
+        <a href="{{ path('panel/planner-hub/management/orders/orders/create') }}" class="btn btn-dark mb-3">
+            <i data-feather="plus"></i>
+            {{ trans('planner_hub.create_new_estimate') }}
+        </a>
+
+        <ul class="nav nav-tabs mb-4" id="userTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="members-tab" data-bs-toggle="tab" data-bs-target="#members" type="button" role="tab" aria-controls="members" aria-selected="true">
+                    <i data-feather="users"></i> {{ trans('planner_hub.team_members') }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="clients-tab" data-bs-toggle="tab" data-bs-target="#clients" type="button" role="tab" aria-controls="clients" aria-selected="false">
+                    <i data-feather="briefcase"></i> {{ trans('planner_hub.clients') }}
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="userTabsContent">
+            <div class="tab-pane fade show active" id="members" role="tabpanel" aria-labelledby="members-tab">
+                <form method="get" class="row g-2 mb-4">
+                    <input type="hidden" name="active_tab" value="members">
+                    <div class="col-md-4">
+                        <input type="text" name="member_name" class="form-control" placeholder="{{ trans('planner_hub.search_by_name') }}" value="{{ filter_member_name }}">
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" name="member_email" class="form-control" placeholder="{{ trans('planner_hub.search_by_email') }}" value="{{ filter_member_email }}">
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button class="btn btn-dark flex-grow-1" type="submit">🔎 {{ trans('planner_hub.filter_team_members') }}</button>
+                        <button class="btn btn-outline-success" type="submit" name="export" value="members" onclick="this.form.format.value='csv'">⬇️ CSV</button>
+                        <button class="btn btn-outline-primary" type="submit" name="export" value="members" onclick="this.form.format.value='excel'">📊 Excel</button>
+                        <input type="hidden" name="format" value="csv">
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center align-middle" style="min-width: 768px;">
+                        <thead>
+                            <tr>
+                                <th>{{ trans('planner_hub.name') }}</th>
+                                <th>{{ trans('planner_hub.email') }}</th>
+                                <th>{{ trans('planner_hub.phone') }}</th>
+                                <th>{{ trans('planner_hub.role') }}</th>
+                                <th>{{ trans('planner_hub.hourly_rate') }}</th>
+                                <th>{{ trans('planner_hub.relationship') }}</th>
+                                <th>Contract</th>
+                                <th>{{ trans('planner_hub.chat_with_clients') }}</th>
+                                <th>{{ trans('planner_hub.resend_email') }}</th>
+                                <th>{{ trans('planner_hub.actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in team_members %}
+                                <tr>
+                                    <td>{{ member.name }} {{ member.lastname }}</td>
+                                    <td>{{ member.email }}</td>
+                                    <td>{{ member.phone }}</td>
+                                    <td>
+                                        {% if member.role_name %}
+                                            <span class="badge bg-info">{{ member.role_name }}</span>
+                                        {% else %}
+                                            <span class="text-muted">{{ trans('planner_hub.no_role') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if member.institution_hourly_rate %}
+                                            ${{ member.institution_hourly_rate|number_format(2) }}/hr
+                                        {% else %}
+                                            <span class="text-muted">{{ trans('planner_hub.not_set') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if member.institution_relationship == 'primary' %}
+                                            <span class="badge bg-success">{{ trans('planner_hub.primary') }}</span>
+                                        {% elseif member.institution_relationship == 'secondary' %}
+                                            <span class="badge bg-info">{{ trans('planner_hub.linked') }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if member.team_contract %}
+                                            <span class="badge bg-{{ member.team_contract.status in ['SIGNED','VALIDATED','MANUALLY_UPLOADED'] ? 'success' : (member.team_contract.status == 'REJECTED' ? 'danger' : 'warning') }}">
+                                                {{ member.team_contract.status }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">NOT_ASSIGNED</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="toggle_chat" value="{{ member.id }}">
+                                            <button class="btn btn-sm {{ member.allow_chat_with_clients ? 'btn-success' : 'btn-secondary' }}">
+                                                {{ member.allow_chat_with_clients ? ' ✅ ' ~ trans('planner_hub.active') : ' ❌ ' ~ trans('planner_hub.inactive') }}
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        {% if member.password_updated == 0 %}
+                                            <form method="post" class="d-inline">
+                                                <input type="hidden" name="resend_email" value="{{ member.id }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary" onclick="return confirm('{{ trans('planner_hub.resend_email_confirm') }} {{ member.email }}?')">
+                                                    📧 {{ trans('planner_hub.resend_email') }}
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <span class="text-muted">✅ Validated</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ path('panel/planner-hub/management/users/edit?id=' ~ member.id) }}" class="btn btn-sm btn-outline-warning">✏️ {{ trans('planner_hub.edit') }}</a>
+                                        <a href="{{ path('panel/planner-hub/management/users/contracts?id=' ~ member.id) }}" class="btn btn-sm btn-outline-primary">Contracts</a>
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="{{ member.id }}">
+                                            {% if member.password_updated == 0 %}
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('{{ trans('planner_hub.delete_user_confirm') }}')">🗑️ {{ trans('planner_hub.delete_user') }}</button>
+                                            {% else %}
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('{{ trans('planner_hub.delete_confirm') }}')">🗑️ {{ trans('planner_hub.delete_user') }}</button>
+                                            {% endif %}
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="10" class="text-muted">{{ trans('planner_hub.no_team_members') }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="clients" role="tabpanel" aria-labelledby="clients-tab">
+                <form method="get" class="row g-2 mb-4">
+                    <input type="hidden" name="active_tab" value="clients">
+                    <div class="col-md-4">
+                        <input type="text" name="client_name" class="form-control" placeholder="{{ trans('planner_hub.search_by_name') }}" value="{{ filter_client_name }}">
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" name="client_email" class="form-control" placeholder="{{ trans('planner_hub.search_by_email') }}" value="{{ filter_client_email }}">
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button class="btn btn-dark flex-grow-1" type="submit">🔎 {{ trans('planner_hub.filter_clients') }}</button>
+                        <button class="btn btn-outline-success" type="submit" name="export" value="clients" onclick="this.form.format.value='csv'">⬇️ CSV</button>
+                        <button class="btn btn-outline-primary" type="submit" name="export" value="clients" onclick="this.form.format.value='excel'">📊 Excel</button>
+                        <input type="hidden" name="format" value="csv">
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center align-middle" style="min-width: 768px;">
+                        <thead>
+                            <tr>
+                                <th>{{ trans('planner_hub.name') }}</th>
+                                <th>{{ trans('planner_hub.email') }}</th>
+                                <th>{{ trans('planner_hub.phone') }}</th>
+                                <th>{{ trans('planner_hub.resend_email') }}</th>
+                                <th>{{ trans('planner_hub.actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for client in clients %}
+                                <tr>
+                                    <td>{{ client.name }} {{ client.lastname }}</td>
+                                    <td>{{ client.email }}</td>
+                                    <td>{{ client.phone }}</td>
+                                    <td>
+                                        {% if client.password_updated == 0 %}
+                                            <form method="post" class="d-inline">
+                                                <input type="hidden" name="resend_email" value="{{ client.id }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary" onclick="return confirm('{{ trans('planner_hub.resend_email_confirm') }} {{ client.email }}?')">
+                                                    📧 {{ trans('planner_hub.resend_email') }}
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <span class="text-muted">✅ {{ trans('planner_hub.validated') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ path('panel/planner-hub/management/users/edit?id=' ~ client.id) }}" class="btn btn-sm btn-outline-warning">✏️ Edit</a>
+                                        {% if client.password_updated == 0 %}
+                                            <form method="post" class="d-inline">
+                                                <input type="hidden" name="delete_client" value="{{ client.id }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to completely delete this unvalidated client? This action cannot be undone.')">🗑️ Delete Client</button>
+                                            </form>
+                                        {% else %}
+                                            <form method="post" class="d-inline">
+                                                <input type="hidden" name="unlink_client" value="{{ client.id }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to remove this client from your list?')">❌ Unlink</button>
+                                            </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-muted">No clients found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('active_tab');
+    
+    if (activeTab === 'clients') {
+        const clientsTab = document.getElementById('clients-tab');
+        const clientsPane = document.getElementById('clients');
+        const membersTab = document.getElementById('members-tab');
+        const membersPane = document.getElementById('members');
+        
+        membersTab.classList.remove('active');
+        membersPane.classList.remove('show', 'active');
+        clientsTab.classList.add('active');
+        clientsPane.classList.add('show', 'active');
+    }
+});
+</script>
+
+{% endblock %}

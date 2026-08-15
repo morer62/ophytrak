@@ -1,0 +1,12 @@
+-- Prevents the same returned order from restoring inventory more than once.
+CREATE TABLE IF NOT EXISTS store_order_stock_returns (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    id_owner INT NOT NULL,
+    id_store_order INT NOT NULL,
+    restored_by INT UNSIGNED NULL,
+    restored_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_store_order_stock_return (id_owner, id_store_order),
+    KEY idx_store_order_stock_returns_order (id_store_order),
+    KEY idx_store_order_stock_returns_actor (restored_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

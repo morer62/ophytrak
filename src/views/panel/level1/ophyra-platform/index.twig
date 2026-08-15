@@ -1,0 +1,110 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set ophyra = level1_dashboard.ophyra %}
+<main class="container-fluid level1-core-detail">
+  <style>
+    .level1-core-detail { color:#0f172a; }
+    .core-detail-hero {
+      border-radius:24px;
+      padding:1.7rem;
+      color:#fff;
+      background:linear-gradient(135deg,#0f172a,#0f766e);
+      box-shadow:0 18px 46px rgba(15,23,42,.14);
+      margin-bottom:1.25rem;
+    }
+    .core-kicker { font-size:.78rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:#99f6e4; margin-bottom:.35rem; }
+    .level1-core-detail .core-detail-hero h1 { color:#fff !important; font-weight:900; letter-spacing:0; margin:0 0 .45rem; }
+    .level1-core-detail .core-detail-hero p { color:rgba(255,255,255,.84) !important; max-width:860px; margin:0; line-height:1.7; }
+    .core-card { border:0; border-radius:20px; box-shadow:0 12px 34px rgba(15,23,42,.08); height:100%; }
+    .metric-label { color:#64748b; font-weight:800; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; }
+    .metric-value { font-size:1.75rem; font-weight:900; line-height:1.1; }
+    .quick-card { display:block; height:100%; text-decoration:none; color:inherit; border:1px solid #e2e8f0; border-radius:18px; padding:1rem; background:#fff; transition:all .18s ease; }
+    .quick-card:hover { transform:translateY(-2px); box-shadow:0 14px 34px rgba(15,23,42,.08); }
+    .quick-card strong { display:block; font-weight:900; margin-bottom:.25rem; }
+    .quick-card span { color:#64748b; }
+  </style>
+
+  <section class="core-detail-hero">
+    <div class="core-kicker">Ophyra Platform</div>
+    <h1>Global platform control without operational customer noise.</h1>
+    <p>Use this nucleus for businesses, memberships, modules, global users, platform billing, CMS and system health. Operational clients from VNV Events or Avomeal stay out of the main Ophyra story unless shown as explicit global users.</p>
+  </section>
+
+  <section class="row g-3 mb-4">
+    {% set cards = [
+      {'label':'Businesses / tenants','value':ophyra.businesses},
+      {'label':'Active memberships','value':ophyra.active_memberships},
+      {'label':'Active modules','value':ophyra.active_modules},
+      {'label':'Pending module requests','value':ophyra.pending_modules},
+      {'label':'Renewals due','value':ophyra.renewals_due},
+      {'label':'Expired memberships','value':ophyra.expired_memberships},
+      {'label':'Global active users','value':ophyra.global_active_users},
+      {'label':'Ophyra CMS pages','value':ophyra.cms_pages}
+    ] %}
+    {% for card in cards %}
+      <div class="col-xl-3 col-md-6">
+        <div class="card core-card">
+          <div class="card-body">
+            <div class="metric-label">{{ card.label }}</div>
+            <div class="metric-value">{{ card.value|default(0) }}</div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </section>
+
+  <section class="row g-4">
+    <div class="col-lg-7">
+      <div class="card core-card">
+        <div class="card-body">
+          <h2 class="h4 fw-bold mb-3">Module Activation Map</h2>
+          <div class="row g-3">
+            {% set modules = [
+              {'label':'Base Profiles','value':ophyra.modules.base_profile|default(0)},
+              {'label':'Service Operations','value':ophyra.modules.service_operations|default(0)},
+              {'label':'Store + Logistics','value':ophyra.modules.store_logistics|default(0)},
+              {'label':'AI Advisor','value':ophyra.modules.ai_advisor|default(0)},
+              {'label':'Ticket Sales + RSVP','value':ophyra.modules.tickets_rsvp|default(0)},
+              {'label':'Advanced Storage','value':ophyra.modules.advanced_storage|default(0)}
+            ] %}
+            {% for module in modules %}
+              <div class="col-md-6">
+                <div class="p-3 rounded-4 bg-light border">
+                  <div class="metric-label">{{ module.label }}</div>
+                  <div class="metric-value">{{ module.value }}</div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card core-card">
+        <div class="card-body">
+          <h2 class="h4 fw-bold mb-3">Platform Actions</h2>
+          <div class="row g-2">
+            {% set actions = [
+              {'title':'Businesses / Global Users','body':'Review tenants, admins, team users and customer accounts.', 'url':'panel/subscriptions-manager'},
+              {'title':'Memberships & Modules','body':'Control activations and module state by business.', 'url':'panel/module-manager'},
+              {'title':'Platform Payments','body':'Review global SaaS payment records.', 'url':'panel/payments'},
+              {'title':'Custom Domains','body':'Approve public profile domain requests.', 'url':'panel/custom-domain-requests'},
+              {'title':'System Settings','body':'Global account and configuration tools.', 'url':'panel/settings'}
+            ] %}
+            {% for action in actions %}
+              <div class="col-12">
+                <a class="quick-card" href="{{ path(action.url) }}">
+                  <strong>{{ action.title }}</strong>
+                  <span>{{ action.body }}</span>
+                </a>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

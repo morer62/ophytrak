@@ -1,0 +1,96 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+<div class="module-success-wrap">
+    <div class="card ophyra-card module-success-card">
+        <div class="card-body">
+            <div class="module-success-icon">✓</div>
+            <p class="ophyra-page-kicker mb-2">{{ trans('billing.payment_confirmed')|default('Payment confirmed') }}</p>
+            <h1 class="h3 mb-3">{{ payment.module_name|default(moduleSlug) }} {{ trans('billing.module_activated')|default('module activated') }}</h1>
+            <p class="text-muted mb-4">{{ trans('billing.module_success_intro')|default('Your module is active and ready to use in your business workspace.') }}</p>
+
+            <div class="module-success-grid">
+                <div>
+                    <span>{{ trans('billing.amount_charged')|default('Amount charged') }}</span>
+                    <strong>{{ chargedAmountLabel }}</strong>
+                </div>
+                <div>
+                    <span>{{ trans('billing.payment_date')|default('Payment date') }}</span>
+                    <strong>{{ payment.payment_date|date('Y-m-d') }}</strong>
+                </div>
+                <div>
+                    <span>{{ trans('billing.next_renewal')|default('Next renewal') }}</span>
+                    <strong>{{ payment.module_renewal_at ?: payment.renewal }}</strong>
+                </div>
+                <div>
+                    <span>{{ trans('billing.module_status')|default('Module status') }}</span>
+                    <strong>{{ payment.module_status|default('ACTIVE') }}</strong>
+                </div>
+            </div>
+
+            <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
+                <a href="{{ path('panel/home') }}" class="btn btn-primary">{{ trans('billing.go_workspace')|default('Go to workspace') }}</a>
+                <a href="{{ path('panel/membership/manage?payment_currency=' ~ paymentCurrency) }}" class="btn btn-outline-secondary">{{ trans('billing.back_marketplace')|default('Back to Marketplace') }}</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .module-success-wrap {
+        display: grid;
+        min-height: 60vh;
+        place-items: center;
+    }
+
+    .module-success-card {
+        max-width: 760px;
+        width: 100%;
+    }
+
+    .module-success-icon {
+        align-items: center;
+        background: #16a34a;
+        border-radius: 50%;
+        color: #fff;
+        display: inline-flex;
+        font-size: 1.75rem;
+        font-weight: 800;
+        height: 56px;
+        justify-content: center;
+        margin-bottom: 1rem;
+        width: 56px;
+    }
+
+    .module-success-grid {
+        display: grid;
+        gap: .75rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .module-success-grid div {
+        background: #f8fafc;
+        border: 1px solid rgba(15, 23, 42, .08);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .module-success-grid span {
+        color: #64748b;
+        display: block;
+        font-size: .85rem;
+        margin-bottom: .35rem;
+    }
+
+    .module-success-grid strong {
+        color: #0f172a;
+        display: block;
+    }
+
+    @media (max-width: 575px) {
+        .module-success-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

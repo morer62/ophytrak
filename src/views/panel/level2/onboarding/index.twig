@@ -1,0 +1,309 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+<style>
+  .onboarding-shell{
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .onboarding-card{
+    border:1px solid #e5e7eb;
+    border-radius:8px;
+    background:#fff;
+    box-shadow:0 14px 34px rgba(15,23,42,.05);
+  }
+  .onboarding-hero{
+    background:linear-gradient(135deg,#0f172a,#0f766e);
+    color:#fff;
+    border-radius:8px;
+    padding:2rem;
+  }
+  .onboarding-hero p{
+    color:#dff4ef;
+    line-height:1.7;
+  }
+  .step-badge{
+    width:36px;
+    height:36px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:999px;
+    background:#ecfdf5;
+    color:#047857;
+    font-weight:800;
+    flex:0 0 auto;
+  }
+  .module-state-card{
+    border:1px solid #e5e7eb;
+    border-radius:8px;
+    padding:1rem;
+    height:100%;
+    background:#fff;
+  }
+  .module-state-card.recommended{
+    border-color:#9ee6c8;
+    background:#f6fffb;
+  }
+  .module-state-card.locked{
+    background:#fbfcfe;
+  }
+  .module-state-card p{
+    color:#64748b;
+    line-height:1.55;
+  }
+  .progress{
+    height:12px;
+    border-radius:999px;
+  }
+</style>
+
+{% set profile = profileData.profile ?? null %}
+{% set missingItems = profileData.missingProfileItems ?? [] %}
+
+<main class="container py-4 onboarding-shell">
+  <section class="onboarding-hero mb-4">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-8">
+        <p class="text-uppercase fw-bold mb-2" style="letter-spacing:.04em;">Welcome to {{ brand.name }}</p>
+        <h1 class="fw-bold mb-3">Build your logistics workspace in the right order.</h1>
+        <p class="fs-5 mb-0">
+          Your free Base Profile activates the business identity. Store, inventory, marketplace synchronization, package custody and delivery remain connected in one operational flow.
+        </p>
+      </div>
+      <div class="col-lg-4">
+        <div class="bg-white text-dark p-3 rounded-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong>Setup progress</strong>
+            <span class="fw-bold text-success">{{ progress }}%</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-success" style="width: {{ progress }}%"></div>
+          </div>
+          <p class="text-muted small mb-0 mt-2">You can continue to the dashboard anytime.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="row g-4 mb-4">
+    <div class="col-lg-7">
+      <div class="onboarding-card p-4 h-100">
+        <div class="d-flex gap-3 align-items-start">
+          <span class="step-badge">1</span>
+          <div class="flex-grow-1">
+            <h3 class="fw-bold mb-2">Complete your basic business profile</h3>
+            <p class="text-muted mb-3">
+              This is the public and operational identity of the business inside {{ brand.name }}.
+            </p>
+            {% if profileComplete %}
+              <span class="badge bg-success mb-3">Profile complete</span>
+            {% else %}
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                {% for item in missingItems %}
+                  <span class="badge bg-warning text-dark">{{ item }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <div class="d-flex flex-wrap gap-2">
+              <a href="{{ path('panel/planner-hub/institution-profile') }}" class="btn btn-dark fw-bold">
+                {{ profileComplete ? 'Review profile' : 'Complete profile' }}
+              </a>
+              {% if profileData.publicProfileUrl %}
+                <a href="{{ profileData.publicProfileUrl }}" target="_blank" class="btn btn-outline-dark fw-bold">View public profile</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="onboarding-card p-4 h-100">
+        <div class="d-flex gap-3 align-items-start">
+          <span class="step-badge">2</span>
+          <div class="flex-grow-1">
+            <h3 class="fw-bold mb-2">Define your operation type</h3>
+            <p class="text-muted mb-3">This standardizes recommendations without activating paid tools automatically.</p>
+            <form method="POST" class="d-grid gap-3">
+              <select class="form-select" name="business_nature" required>
+                {% set currentNature = profile.business_nature ?? '' %}
+                {% for value, label in {
+                  'logistics_delivery':'Logistics / delivery',
+                  'carrier_logistics':'Carrier / transport company',
+                  'commerce_operations':'Commerce / online store',
+                  'local_store':'Local store',
+                  'wholesale_distribution':'Wholesale distribution',
+                  'inventory_storage':'Warehouse / fulfillment',
+                  'food_catering_meal_prep':'Food / catering / meal prep',
+                  'other':'Other'
+                } %}
+                  <option value="{{ value }}" {% if currentNature == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+
+              <select class="form-select" name="business_operation_type" required>
+                {% set currentOperation = profile.business_operation_type ?? '' %}
+                {% for value, label in {
+                  'inventory_fulfillment':'Inventory and operations',
+                  'store_delivery_tracking':'Store, tracking and logistics'
+                } %}
+                  <option value="{{ value }}" {% if currentOperation == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+
+              <button class="btn btn-outline-success fw-bold">Save operation type</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="onboarding-card p-4 mb-4">
+    <div class="d-flex gap-3 align-items-start mb-4">
+      <span class="step-badge">3</span>
+      <div>
+        <h3 class="fw-bold mb-1">Understand the business workspace architecture</h3>
+        <p class="text-muted mb-0">
+          Base Profile is free. Store + Logistics is the operating core; Warehouse and Marketplace Connectors can be activated as the operation grows.
+        </p>
+      </div>
+    </div>
+
+    <h5 class="fw-bold mb-3">Your free Base Profile includes</h5>
+    <div class="row g-3 mb-4">
+      {% for item in ['Business profile','Public slug','Logo and contact information','Location','Business type','Basic public profile','Limited workspace access'] %}
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="module-state-card">
+            <div class="d-flex justify-content-between gap-2 mb-2">
+              <strong>{{ item }}</strong>
+              <span class="badge bg-success">Free</span>
+            </div>
+            <p class="small mb-0">Available without activating paid modules.</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <h5 class="fw-bold mb-3">Operating cores unlock daily work</h5>
+    <div class="row g-3 mb-4">
+      <div class="col-lg-12">
+        <div class="module-state-card locked">
+          <div class="d-flex justify-content-between gap-2 mb-2">
+            <strong>Store + Logistics</strong>
+            <span class="badge bg-light text-dark border">Paid core</span>
+          </div>
+          <p class="small mb-2">Products, store orders, fulfillment, delivery, tracking, store customers, Store Inventory, team work and reports.</p>
+          <a href="{{ path('panel/membership/modules/review?module_slug=store_delivery_tracking&payment_currency=' ~ preferredCurrency) }}" class="btn btn-sm btn-outline-dark">Review Store + Logistics</a>
+        </div>
+      </div>
+    </div>
+
+    <h5 class="fw-bold mb-3">Shared tools follow the active core</h5>
+    <div class="row g-3 mb-4">
+      {% for item in ['CRM','Clients / Customers','Team','Team Chat','Payroll / Hours','Tasks','Reports'] %}
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <div class="module-state-card locked">
+            <div class="d-flex justify-content-between gap-2 mb-2">
+              <strong>{{ item }}</strong>
+              <span class="badge bg-light text-dark border">Shared</span>
+            </div>
+            <p class="small mb-0">Available through active operating cores according to each module permission.</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <h5 class="fw-bold mb-3">Locked modules you can activate</h5>
+    <div class="row g-3">
+      {% for slug, addon in moduleCatalog %}
+        {% set isActive = addon.is_active %}
+        {% set isRecommended = addon.slug in recommendedAddons or addon.canonical_slug in recommendedAddons %}
+        {% set quote = addonQuotes[addon.slug] ?? null %}
+        <div class="col-lg-4 col-md-6">
+          <div class="module-state-card {{ isActive ? '' : (isRecommended ? 'recommended' : 'locked') }}">
+            <div class="d-flex justify-content-between gap-2 mb-2">
+              <strong>{{ addon.name }}</strong>
+              {% if isActive %}
+                <span class="badge bg-success">Active</span>
+              {% elseif addon.is_coming_soon|default(false) %}
+                <span class="badge bg-secondary">Coming Soon</span>
+              {% elseif isRecommended %}
+                <span class="badge bg-info text-dark">Recommended</span>
+              {% else %}
+                <span class="badge bg-light text-dark border">Locked</span>
+              {% endif %}
+            </div>
+            <p class="small mb-3">{{ addon.description ?: 'Optional paid module for growing operations.' }}</p>
+            {% if addon.unlocks is defined and addon.unlocks is not empty %}
+              <div class="d-flex flex-wrap gap-1 mb-3">
+                {% for unlock in addon.unlocks|slice(0, 4) %}
+                  <span class="badge bg-light text-dark border">{{ unlock }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <div class="d-flex justify-content-between align-items-center gap-2">
+              <span class="fw-bold">
+                {% if quote %}
+                  {{ quote.monthly_price_formatted }}/mo
+                {% else %}
+                  Coming Soon
+                {% endif %}
+              </span>
+              {% if isActive %}
+                <span class="text-success small fw-bold">Ready to use</span>
+              {% elseif addon.is_coming_soon|default(false) %}
+                <span class="text-muted small fw-bold">Not available yet</span>
+              {% else %}
+                <a href="{{ path('panel/membership/manage?addon=' ~ addon.slug ~ '&payment_currency=' ~ preferredCurrency) }}" class="btn btn-sm btn-outline-dark">Review</a>
+              {% endif %}
+            </div>
+            {% if quote and not isActive %}
+              <p class="small text-muted mt-2 mb-0">Estimated due today: {{ quote.formatted_amount_due }}</p>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="row g-4">
+    <div class="col-lg-4">
+      <div class="onboarding-card p-4 h-100">
+        <div class="d-flex gap-3 align-items-start">
+          <span class="step-badge">4</span>
+          <div>
+            <h4 class="fw-bold mb-2">Billing & payment methods</h4>
+            <p class="text-muted">Add a card when you are ready to activate paid modules. Your starter workspace stays separate from paid add-ons.</p>
+            <div class="d-grid gap-2">
+              <a href="{{ path('panel/cards') }}" class="btn btn-outline-dark fw-bold">Add payment method</a>
+              <a href="{{ path('panel/membership/manage?payment_currency=' ~ preferredCurrency) }}" class="btn btn-dark fw-bold">Open Billing & Modules</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="onboarding-card p-4 h-100">
+        <h4 class="fw-bold mb-2">Your next best action</h4>
+        <p class="text-muted mb-3">
+          Build just enough structure to start clean. You can come back to this guide after updating your profile or activating modules.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          {% if not profileComplete %}
+            <a href="{{ path('panel/planner-hub/institution-profile') }}" class="btn btn-success fw-bold">Complete profile first</a>
+          {% elseif recommendedAddons is not empty %}
+            <a href="{{ path('panel/membership/manage?addon=' ~ recommendedAddons[0] ~ '&payment_currency=' ~ preferredCurrency) }}" class="btn btn-success fw-bold">Review recommended module</a>
+          {% else %}
+            <a href="{{ path('panel/home') }}" class="btn btn-success fw-bold">Go to dashboard</a>
+          {% endif %}
+          <a href="{{ path('panel/home') }}" class="btn btn-outline-dark fw-bold">Continue to dashboard</a>
+          <a href="{{ path('support') }}" class="btn btn-outline-secondary fw-bold">Ask support</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

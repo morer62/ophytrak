@@ -1,0 +1,428 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<h1 class="h3 mb-4">🧠 {{ trans('planner_hub.task_assignment') }} #{{ order_id }}</h1>
+
+ {# Back según convención al listado de órdenes #}
+  <a href="{{ path('panel/planner-hub/management/orders/orders/team_comunication') }}?id={{ order_id }}" class="btn btn-outline-secondary mb-3">  
+    ← {{ trans('planner_hub.back_to_team_area') }}
+  </a>
+
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">📋 {{ trans('planner_hub.main_order') }} #{{ order_id }} - {{ trans('planner_hub.services_tasks') }}</h4>
+    </div>
+    <div class="card-body">
+        {% for service in services %}
+            <div class="card mb-3">
+                <div class="card-header fw-bold bg-light">{{ service.name }}</div>
+                <div class="card-body p-0">
+                    {% if service.tasks is empty %}
+                        <div class="alert alert-warning m-3">
+                            ❌ {{ trans('planner_hub.no_tasks_defined') }}
+                            <a href="{{ path('panel/planner-hub/management/orders/services/service-tasks/') }}?service_id={{ service.id_service }}" class="btn btn-sm btn-outline-primary ms-2">➕ {{ trans('planner_hub.create_tasks') }}</a>
+                        </div>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-striped" style="min-width: 768px;">
+                                <thead>
+                                    <tr>
+                                        <th>{{ trans('planner_hub.task') }}</th>
+                                        <th>{{ trans('planner_hub.current_assignee') }}</th>
+                                        <th>{{ trans('planner_hub.photos') }}</th>
+                                        <th>{{ trans('planner_hub.assign_change') }}</th>
+                                        <th>{{ trans('planner_hub.remove') }}</th>
+                                        <th>{{ trans('planner_hub.status') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for task in service.tasks %}
+                                        <tr>
+                                            <td>{{ task.task_name }}</td>
+                                            <td>
+                                                {% if task.assigned_user_name %}
+                                                    <span class="badge bg-success">{{ task.assigned_user_name }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ trans('planner_hub.unassigned') }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if task.id_task and task.photos|length > 0 %}
+                                                    <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#photoModal{{ task.id_task }}">
+                                                        📷 {{ task.photos|length }}
+                                                    </button>
+                                                {% elseif task.id_task %}
+                                                    <span class="text-muted small">{{ trans('planner_hub.no_photos') }}</span>
+                                                {% else %}
+                                                    <span class="text-muted small">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if members|length > 0 %}
+                                                    <form method="post" class="d-inline">
+                                                        <input type="hidden" name="order_id" value="{{ order_id }}">
+                                                        <input type="hidden" name="form_type" value="assign_single_task">
+                                                        <input type="hidden" name="task_description" value="{{ task.task_name }}">
+                                                        <input type="hidden" name="id_service" value="{{ service.id_service }}">
+                                                        <input type="hidden" name="task_source" value="main_order">
+                                                        <select name="id_user" class="form-select form-select-sm d-inline-block" style="width: auto;">
+                                                            <option value="">-- {{ trans('planner_hub.select_user') }} --</option>
+                                                            {% for member in members %}
+                                                                <option value="{{ member.id }}" {% if task.assigned_id_user == member.id %}selected{% endif %}>{{ member.name }} {{ member.lastname }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <button type="submit" class="btn btn-primary btn-sm">{{ trans('planner_hub.assign') }}</button>
+                                                    </form>
+                                                {% else %}
+                                                    <span class="text-muted small">{{ trans('planner_hub.no_members') }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if task.id_task %}
+                                                    <form method="post" class="d-inline" onsubmit="return confirm('{{ trans('planner_hub.remove_task_assignment') }}')">
+                                                        <input type="hidden" name="order_id" value="{{ order_id }}">
+                                                        <input type="hidden" name="form_type" value="remove_single_task">
+                                                        <input type="hidden" name="task_id" value="{{ task.id_task }}">
+                                                        <button type="submit" class="btn btn-danger btn-sm" style="color: black !important">⨉</button>
+                                                    </form>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if task.id_task %}
+                                                    <form method="post" class="d-inline">
+                                                        <input type="hidden" name="order_id" value="{{ order_id }}">
+                                                        <input type="hidden" name="form_type" value="toggle_done">
+                                                        <input type="hidden" name="task_id" value="{{ task.id_task }}">
+                                                        {% if task.is_done %}
+                                                            <button type="submit" class="btn btn-success btn-sm">✅ {{ trans('planner_hub.done') }}</button>
+                                                        {% else %}
+                                                            <button type="submit" class="btn btn-warning btn-sm">⏳ {{ trans('planner_hub.pending') }}</button>
+                                                        {% endif %}
+                                                    </form>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ trans('planner_hub.not_assigned') }}</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% if suborderServices|length > 0 %}
+    {% for suborder in suborders %}
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">📦 {{ trans('planner_hub.sub_order') }} #{{ suborder.id }} - {{ trans('planner_hub.services_tasks') }}</h4>
+            </div>
+            <div class="card-body">
+                {% for service in suborderServices %}
+                    {% if service.suborder_id == suborder.id %}
+                        <div class="card mb-3">
+                            <div class="card-header fw-bold bg-light">{{ service.name }}</div>
+                            <div class="card-body p-0">
+                                {% if service.tasks is empty %}
+                                    <div class="alert alert-warning m-3">
+                                        ❌ {{ trans('planner_hub.no_tasks_defined') }}
+                                        <a href="{{ path('panel/planner-hub/management/orders/services/service-tasks/') }}?service_id={{ service.id_service }}" class="btn btn-sm btn-outline-primary ms-2">➕ {{ trans('planner_hub.create_tasks') }}</a>
+                                    </div>
+                                {% else %}
+                                    <div class="table-responsive">
+                                        <table class="table table-striped" style="min-width: 768px;">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ trans('planner_hub.task') }}</th>
+                                                    <th>{{ trans('planner_hub.current_assignee') }}</th>
+                                                    <th>{{ trans('planner_hub.photos') }}</th>
+                                                    <th>{{ trans('planner_hub.assign_change') }}</th>
+                                                    <th>{{ trans('planner_hub.remove') }}</th>
+                                                    <th>{{ trans('planner_hub.status') }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for task in service.tasks %}
+                                                    <tr>
+                                                        <td>{{ task.task_name }}</td>
+                                                        <td>
+                                                            {% if task.assigned_user_name %}
+                                                                <span class="badge bg-success">{{ task.assigned_user_name }}</span>
+                                                            {% else %}
+                                                                <span class="badge bg-secondary">{{ trans('planner_hub.unassigned') }}</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            {% if task.id_task and task.photos|length > 0 %}
+                                                                <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#photoModal{{ task.id_task }}">
+                                                                    📷 {{ task.photos|length }}
+                                                                </button>
+                                                            {% elseif task.id_task %}
+                                                                <span class="text-muted small">{{ trans('planner_hub.no_photos') }}</span>
+                                                            {% else %}
+                                                                <span class="text-muted small">-</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            {% if members|length > 0 %}
+                                                                <form method="post" class="d-inline">
+                                                                    <input type="hidden" name="order_id" value="{{ order_id }}">
+                                                                    <input type="hidden" name="form_type" value="assign_single_task">
+                                                                    <input type="hidden" name="task_description" value="{{ task.task_name }}">
+                                                                    <input type="hidden" name="id_service" value="{{ service.id_service }}">
+                                                                    <input type="hidden" name="suborder_id" value="{{ suborder.id }}">
+                                                                    <input type="hidden" name="task_source" value="suborder">
+                                                                    <select name="id_user" class="form-select form-select-sm d-inline-block" style="width: auto;">
+                                                                        <option value="">-- {{ trans('planner_hub.select_user') }} --</option>
+                                                                        {% for member in members %}
+                                                                            <option value="{{ member.id }}" {% if task.assigned_id_user == member.id %}selected{% endif %}>{{ member.name }} {{ member.lastname }}</option>
+                                                                        {% endfor %}
+                                                                    </select>
+                                                                    <button type="submit" class="btn btn-primary btn-sm">{{ trans('planner_hub.assign') }}</button>
+                                                                </form>
+                                                            {% else %}
+                                                                <span class="text-muted small">{{ trans('planner_hub.no_members') }}</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            {% if task.id_task %}
+                                                                <form method="post" class="d-inline" onsubmit="return confirm('{{ trans('planner_hub.remove_task_assignment') }}')">
+                                                                    <input type="hidden" name="order_id" value="{{ order_id }}">
+                                                                    <input type="hidden" name="form_type" value="remove_single_task">
+                                                                    <input type="hidden" name="task_id" value="{{ task.id_task }}">
+                                                                    <button type="submit" class="btn btn-danger btn-sm" style="color: black !important">⨉</button>
+                                                                </form>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            {% if task.id_task %}
+                                                                <form method="post" class="d-inline">
+                                                                    <input type="hidden" name="order_id" value="{{ order_id }}">
+                                                                    <input type="hidden" name="form_type" value="toggle_done">
+                                                                    <input type="hidden" name="task_id" value="{{ task.id_task }}">
+                                                                    {% if task.is_done %}
+                                                                        <button type="submit" class="btn btn-success btn-sm">✅ {{ trans('planner_hub.done') }}</button>
+                                                                    {% else %}
+                                                                        <button type="submit" class="btn btn-warning btn-sm">⏳ {{ trans('planner_hub.pending') }}</button>
+                                                                    {% endif %}
+                                                                </form>
+                                                            {% else %}
+                                                                <span class="badge bg-secondary">{{ trans('planner_hub.not_assigned') }}</span>
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<h1 class="h3 mt-5">📝 {{ trans('planner_hub.additional_manual_tasks') }}</h1>
+<div class="table-responsive">
+    <table class="table table-bordered" style="min-width: 768px;">
+        <thead class="table-dark">
+            <tr>
+                <th>{{ trans('planner_hub.task_description') }}</th>
+                <th>{{ trans('planner_hub.assigned_member') }}</th>
+                <th>{{ trans('planner_hub.photos') }}</th>
+                <th>{{ trans('planner_hub.actions') }}</th>
+                <th>{{ trans('planner_hub.status') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in manualTasks %}
+                <tr>
+                    <td>{{ task.task_description }}</td>
+                    <td>
+                        {% set assigned = members | filter(m => m.id == task.id_user) | first %}
+                        {{ assigned.name }} {{ assigned.lastname }}
+                    </td>
+                    <td>
+                        {% if task.photos|length > 0 %}
+                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#photoModal{{ task.id }}">
+                                📷 {{ task.photos|length }}
+                            </button>
+                        {% else %}
+                            <span class="text-muted small">{{ trans('planner_hub.no_photos') }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="post">
+                            <input type="hidden" name="order_id" value="{{ order_id }}">
+                            <input type="hidden" name="form_type" value="manual_task_delete">
+                            <input type="hidden" name="delete_manual_task_id" value="{{ task.id }}">
+                            <button type="submit" class="btn btn-danger">
+                                <i data-feather="trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post">
+                            <input type="hidden" name="form_type" value="toggle_done">
+                            <input type="hidden" name="order_id" value="{{ order_id }}">
+                            <input type="hidden" name="task_id" value="{{ task.id }}">
+                            <button type="submit" class="btn btn-sm {{ task.is_done ? 'btn-success' : 'btn-warning' }}">
+                                {{ task.is_done ? '✅ ' ~ trans('planner_hub.done') : '⏳ ' ~ trans('planner_hub.pending') }}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- NUEVA TAREA -->
+<form method="post" class="mt-4">
+    <input type="hidden" name="order_id" value="{{ order_id }}">
+    <input type="hidden" name="form_type" value="manual_task_add">
+
+    <div class="row g-3 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label">{{ trans('planner_hub.task_description') }}</label>
+            <input type="text" name="description" class="form-control" placeholder="{{ trans('planner_hub.enter_task_description') }}" maxlength="100">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">{{ trans('planner_hub.assign_to') }}</label>
+            {% if members|length > 0 %}
+                <select name="id_user" class="form-select">
+                    <option value="">{{ trans('planner_hub.select_member') }}</option>
+                    {% for member in members %}
+                        <option value="{{ member.id }}">{{ member.name }} {{ member.lastname }}</option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <div class="alert alert-warning p-2 small mt-1">
+                    ⚠️ {{ trans('planner_hub.must_invite_members') }}
+                    <a href="{{ path('panel/planner-hub/management/orders/orders/staff', { id: order_id }) }}" class="alert-link">{{ trans('planner_hub.invite_members') }}</a>
+                    {{ trans('planner_hub.before_assigning_tasks') }}
+                </div>
+            {% endif %}
+        </div>
+
+
+
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                <i data-feather="plus"></i> {{ trans('planner_hub.add_task') }}
+            </button>
+        </div>
+    </div>
+</form>
+
+{# Modales para mostrar fotos de tareas #}
+{% for service in services %}
+    {% for task in service.tasks %}
+        {% if task.id_task %}
+        <div class="modal fade" id="photoModal{{ task.id_task }}" tabindex="-1" aria-labelledby="photoModalLabel{{ task.id_task }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="photoModalLabel{{ task.id_task }}">📷 {{ trans('planner_hub.photos_title') }} - {{ task.task_name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {% if task.photos|length > 0 %}
+                            <div class="row g-3">
+                                {% for photo in task.photos %}
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <img src="{{ photo.photo_url }}" class="card-img-top" alt="Task photo" style="height: 200px; object-fit: cover; cursor: pointer;" onclick="window.open('{{ photo.photo_url }}', '_blank')">
+                                            <div class="card-body p-2">
+                                                <small class="text-muted d-block">{{ photo.uploaded_at|date('M d, Y H:i') }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center">{{ trans('planner_hub.no_photos_uploaded') }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+
+{% for service in suborderServices %}
+    {% for task in service.tasks %}
+        {% if task.id_task %}
+        <div class="modal fade" id="photoModal{{ task.id_task }}" tabindex="-1" aria-labelledby="photoModalLabel{{ task.id_task }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="photoModalLabel{{ task.id_task }}">📷 {{ trans('planner_hub.photos_title') }} - {{ task.task_name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {% if task.photos|length > 0 %}
+                            <div class="row g-3">
+                                {% for photo in task.photos %}
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <img src="{{ photo.photo_url }}" class="card-img-top" alt="Task photo" style="height: 200px; object-fit: cover; cursor: pointer;" onclick="window.open('{{ photo.photo_url }}', '_blank')">
+                                            <div class="card-body p-2">
+                                                <small class="text-muted d-block">{{ photo.uploaded_at|date('M d, Y H:i') }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center">{{ trans('planner_hub.no_photos_uploaded') }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+
+{% for task in manualTasks %}
+    <div class="modal fade" id="photoModal{{ task.id }}" tabindex="-1" aria-labelledby="photoModalLabel{{ task.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="photoModalLabel{{ task.id }}">📷 {{ trans('planner_hub.photos_title') }} - {{ task.task_description }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {% if task.photos|length > 0 %}
+                            <div class="row g-3">
+                                {% for photo in task.photos %}
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <img src="{{ photo.photo_url }}" class="card-img-top" alt="Task photo" style="height: 200px; object-fit: cover; cursor: pointer;" onclick="window.open('{{ photo.photo_url }}', '_blank')">
+                                            <div class="card-body p-2">
+                                                <small class="text-muted d-block">{{ photo.uploaded_at|date('M d, Y H:i') }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center">{{ trans('planner_hub.no_photos_uploaded') }}</p>
+                        {% endif %}
+                    </div>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+
+{% endblock %}

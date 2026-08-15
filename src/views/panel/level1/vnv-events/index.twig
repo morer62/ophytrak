@@ -1,0 +1,527 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set vnv = level1_dashboard.vnv %}
+<main class="container-fluid level1-core-detail">
+  <style>
+    .level1-core-detail {
+      color: #0f172a;
+    }
+
+    .vnv-page {
+      border-radius: 22px;
+      padding: clamp(1rem, 2vw, 1.6rem);
+      background:
+        linear-gradient(180deg, rgba(248, 250, 252, .96), rgba(239, 246, 246, .94)),
+        #f8fafc;
+      border: 1px solid #dbe6e9;
+      box-shadow: 0 20px 54px rgba(15, 23, 42, .10);
+    }
+
+    .vnv-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 1rem;
+      align-items: start;
+      border-radius: 18px;
+      padding: clamp(1.25rem, 3vw, 2rem);
+      color: #f8fafc;
+      background:
+        radial-gradient(circle at 88% 10%, rgba(244, 114, 182, .22), transparent 32%),
+        linear-gradient(135deg, #23102a 0%, #34223e 48%, #153d39 100%);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .10);
+    }
+
+    .vnv-kicker {
+      color: #f9a8d4;
+      font-size: .78rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: .45rem;
+    }
+
+    .vnv-hero h1 {
+      max-width: 980px;
+      margin: 0 0 .55rem;
+      color: #fff;
+      font-weight: 900;
+      letter-spacing: 0;
+      line-height: 1.08;
+    }
+
+    .vnv-hero p {
+      max-width: 880px;
+      margin: 0;
+      color: rgba(255, 255, 255, .78);
+      line-height: 1.65;
+    }
+
+    .vnv-context-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .45rem;
+      min-height: 42px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, .18);
+      background: #fff;
+      color: #22162c;
+      font-weight: 900;
+      padding-inline: 1rem;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .vnv-context-btn:hover {
+      color: #22162c;
+      background: #fdf4ff;
+    }
+
+    .vnv-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: .8rem;
+      margin: 1rem 0 1.35rem;
+    }
+
+    .vnv-metric {
+      min-height: 94px;
+      border-radius: 14px;
+      padding: .95rem 1rem;
+      background: #fff;
+      border: 1px solid #dbe6e9;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+    }
+
+    .vnv-label {
+      color: #64748b;
+      font-size: .75rem;
+      text-transform: uppercase;
+      font-weight: 900;
+      letter-spacing: .04em;
+      margin-bottom: .2rem;
+    }
+
+    .vnv-value {
+      color: #142033;
+      font-size: 1.75rem;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .vnv-section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 1rem;
+      margin-bottom: .75rem;
+    }
+
+    .vnv-section-head h2 {
+      margin: 0;
+      color: #142033;
+      font-weight: 900;
+    }
+
+    .vnv-section-head p {
+      margin: .15rem 0 0;
+      color: #64748b;
+    }
+
+    .vnv-readonly-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      min-height: 34px;
+      padding: .45rem .7rem;
+      border-radius: 999px;
+      background: #eef2f7;
+      color: #475569;
+      font-size: .82rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .vnv-module-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: .8rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .vnv-module {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 120px;
+      color: #182235;
+      text-decoration: none;
+      padding: 1rem;
+      border-radius: 16px;
+      border: 1px solid #d6c9df;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, .98), rgba(253, 244, 255, .72));
+      box-shadow: 0 12px 26px rgba(72, 35, 91, .07);
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+
+    .vnv-module:hover {
+      color: #182235;
+      border-color: #a855f7;
+      transform: translateY(-2px);
+      box-shadow: 0 16px 34px rgba(72, 35, 91, .12);
+    }
+
+    .vnv-module-copy {
+      display: flex;
+      gap: .75rem;
+      min-width: 0;
+    }
+
+    .vnv-module-copy > i {
+      width: 22px;
+      height: 22px;
+      color: #6d5a83;
+      flex: 0 0 auto;
+      margin-top: .12rem;
+    }
+
+    .vnv-module strong {
+      display: block;
+      margin-bottom: .2rem;
+      color: #182235;
+      font-weight: 900;
+      line-height: 1.15;
+    }
+
+    .vnv-module span span {
+      display: block;
+      color: #5d6b82;
+      font-size: .85rem;
+      line-height: 1.38;
+    }
+
+    .vnv-module-cta {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      flex: 0 0 34px;
+      border-radius: 999px;
+      background: #34223e;
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(52, 34, 62, .18);
+    }
+
+    .vnv-module-cta i {
+      display: block;
+      width: 17px;
+      height: 17px;
+      color: #fff;
+      stroke-width: 2.6;
+    }
+
+    .vnv-content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, .85fr);
+      gap: 1rem;
+      align-items: stretch;
+    }
+
+    .vnv-panel {
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid #dbe6e9;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, .06);
+      padding: 1.1rem;
+      min-height: 100%;
+    }
+
+    .vnv-panel h2 {
+      color: #142033;
+      font-weight: 900;
+      margin-bottom: .9rem;
+    }
+
+    .vnv-table {
+      color: #142033;
+      min-width: 720px;
+    }
+
+    .vnv-table td,
+    .vnv-table th {
+      color: #142033;
+      border-color: #e2e8f0;
+    }
+
+    .vnv-table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 12px;
+    }
+
+    .vnv-table-scroll::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .vnv-table-scroll::-webkit-scrollbar-track {
+      background: #edf3f5;
+      border-radius: 999px;
+    }
+
+    .vnv-table-scroll::-webkit-scrollbar-thumb {
+      background: #9fb2c1;
+      border-radius: 999px;
+    }
+
+    .vnv-muted {
+      color: #64748b !important;
+    }
+
+    .vnv-insight {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .vnv-insight-card {
+      border-radius: 16px;
+      padding: 1.1rem;
+      color: #f8fafc;
+      background:
+        radial-gradient(circle at 92% 0%, rgba(94, 234, 212, .20), transparent 36%),
+        linear-gradient(135deg, #142033, #243447 58%, #123f3d);
+      min-height: 210px;
+    }
+
+    .vnv-insight-card h2 {
+      color: #fff;
+    }
+
+    .vnv-insight-card p {
+      color: rgba(255, 255, 255, .78);
+      line-height: 1.58;
+    }
+
+    .vnv-quick-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .75rem;
+    }
+
+    .vnv-action {
+      display: block;
+      min-height: 92px;
+      color: #142033;
+      text-decoration: none;
+      padding: .9rem;
+      border: 1px solid #dbe6e9;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, .05);
+    }
+
+    .vnv-action:hover {
+      color: #142033;
+      border-color: #14b8a6;
+      background: #f0fdfa;
+    }
+
+    .vnv-action strong {
+      display: block;
+      font-weight: 900;
+      margin-bottom: .25rem;
+    }
+
+    .vnv-action span {
+      color: #64748b;
+      font-size: .86rem;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 1199.98px) {
+      .vnv-metrics,
+      .vnv-module-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .vnv-content-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 767.98px) {
+      .vnv-page {
+        padding: .85rem;
+        border-radius: 18px;
+      }
+
+      .vnv-hero,
+      .vnv-section-head {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .vnv-metrics,
+      .vnv-module-grid,
+      .vnv-quick-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .vnv-panel {
+        padding: .9rem;
+      }
+
+      .vnv-table-scroll {
+        margin-inline: -.15rem;
+        padding-bottom: .25rem;
+      }
+
+      .vnv-table {
+        min-width: 680px;
+        font-size: .9rem;
+      }
+    }
+  </style>
+
+  <section class="vnv-page">
+    <div class="vnv-hero">
+      <div>
+        <div class="vnv-kicker">{{ trans('dashboard_home.vnv_events_operations') }}</div>
+        <h1>{{ trans('dashboard_home.vnv_detail_title') }}</h1>
+        <p>{{ trans('dashboard_home.vnv_detail_text')|replace({'%operation%': vnv.operation.label|default('VNV Events')}) }}</p>
+      </div>
+      <a href="{{ path('panel/home?operation=vnv_events') }}" class="vnv-context-btn">
+        <i data-feather="target"></i>
+        {{ trans('dashboard_home.set_vnv_context') }}
+      </a>
+    </div>
+
+    {% set metrics = [
+      {'label':trans('dashboard_home.upcoming_events'),'value':vnv.upcoming_events},
+      {'label':trans('dashboard_home.open_orders'),'value':vnv.open_orders},
+      {'label':trans('dashboard_home.monthly_sales'),'value':'$' ~ vnv.monthly_sales|default(0)|number_format(0)},
+      {'label':trans('dashboard_home.pending_payments'),'value':vnv.pending_payments},
+      {'label':trans('dashboard_home.event_clients'),'value':vnv.clients},
+      {'label':trans('dashboard_home.team_members'),'value':vnv.team_members},
+      {'label':trans('dashboard_home.pending_tasks'),'value':vnv.pending_tasks},
+      {'label':trans('dashboard_home.tickets_sold'),'value':vnv.tickets_sold|default(0)}
+    ] %}
+    <div class="vnv-metrics">
+      {% for metric in metrics %}
+        <div class="vnv-metric">
+          <div class="vnv-label">{{ metric.label }}</div>
+          <div class="vnv-value">{{ metric.value|default(0) }}</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="vnv-section-head">
+      <div>
+        <h2 class="h4">{{ trans('dashboard_home.vnv_work_modules') }}</h2>
+        <p>{{ trans('dashboard_home.vnv_work_modules_hint') }}</p>
+      </div>
+      <span class="vnv-readonly-chip">
+        <i data-feather="bar-chart-2"></i>
+        {{ trans('dashboard_home.metrics_are_read_only') }}
+      </span>
+    </div>
+
+    {% set modules = [
+      {'title':trans('ui.orders'),'body':trans('dashboard_home.vnv_module_orders'), 'icon':'shopping-cart', 'url':'panel/planner-hub/management/orders/orders'},
+      {'title':trans('dashboard_home.calendar'),'body':trans('dashboard_home.vnv_module_calendar'), 'icon':'calendar', 'url':'panel/planner-hub/management/orders/calendar'},
+      {'title':trans('dashboard_home.create_order'),'body':trans('dashboard_home.vnv_module_create_order'), 'icon':'plus-circle', 'url':'panel/planner-hub/management/orders/orders/create'},
+      {'title':trans('ui.payroll'),'body':trans('dashboard_home.vnv_module_payroll'), 'icon':'clock', 'url':'panel/planner-hub/management/payroll'},
+      {'title':trans('ui.team'),'body':trans('dashboard_home.vnv_module_team'), 'icon':'users', 'url':'panel/planner-hub/management/users'},
+      {'title':'Team Chat','body':'Coordinate clients, admins and team members from the VNV operation thread center.', 'icon':'message-circle', 'url':'panel/planner-hub/team/chat'},
+      {'title':trans('ui.clients'),'body':trans('dashboard_home.vnv_module_clients'), 'icon':'user-check', 'url':'panel/planner-hub/management/users?active_tab=clients'},
+      {'title':trans('ui.contracts'),'body':trans('dashboard_home.vnv_module_contracts'), 'icon':'file-text', 'url':'panel/planner-hub/management/orders/contracts'},
+      {'title':trans('dashboard_home.tickets_rsvp'),'body':trans('dashboard_home.vnv_module_tickets'), 'icon':'tag', 'url':'panel/event-invitations'}
+    ] %}
+    <div class="vnv-module-grid">
+      {% for module in modules %}
+        <a class="vnv-module" href="{{ path(module.url) }}">
+          <span class="vnv-module-copy">
+            <i data-feather="{{ module.icon }}"></i>
+            <span><strong>{{ module.title }}</strong><span>{{ module.body }}</span></span>
+          </span>
+          <span class="vnv-module-cta"><i data-feather="arrow-right"></i></span>
+        </a>
+      {% endfor %}
+    </div>
+
+    <div class="vnv-content-grid">
+      <div class="vnv-panel">
+        <h2 class="h4">{{ trans('dashboard_home.recent_event_orders') }}</h2>
+        <div class="vnv-table-scroll" aria-label="{{ trans('dashboard_home.recent_event_orders') }}">
+          <table class="table vnv-table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>{{ trans('ui.id')|upper }}</th>
+                <th>{{ trans('ui.orders') }}</th>
+                <th>{{ trans('dashboard_home.event_date') }}</th>
+                <th>{{ trans('ui.payments') }}</th>
+                <th>{{ trans('ui.status') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in vnv.recent_orders %}
+                <tr>
+                  <td>#{{ order.id }}</td>
+                  <td>
+                    {% if order.client_name|default('') %}
+                      {{ order.client_name }}
+                      {% if order.address|default('') %}<span class="vnv-muted d-block">{{ order.address }}</span>{% endif %}
+                    {% else %}
+                      {{ trans('dashboard_home.event_order') }} #{{ order.id }}
+                    {% endif %}
+                  </td>
+                  <td>{{ order.event_date|default('-') }}</td>
+                  <td>{{ order.payment_status|default('-') }}</td>
+                  <td>{{ order.status_workflow|default('-') }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="5" class="vnv-muted">{{ trans('dashboard_home.no_recent_event_orders') }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <aside class="vnv-insight">
+        <div class="vnv-insight-card">
+          <h2 class="h4 fw-bold mb-2">{{ trans('dashboard_home.vnv_ai_insight') }}</h2>
+          {% if vnv.ai_recommendation %}
+            <p class="mb-3">{{ vnv.ai_recommendation.recommendation_text }}</p>
+            {% if vnv.ai_recommendation.action_url %}
+              <a href="{{ path(vnv.ai_recommendation.action_url) }}" class="btn btn-light fw-bold">{{ vnv.ai_recommendation.action_label|default(trans('dashboard_home.open')) }}</a>
+            {% endif %}
+          {% else %}
+            <p class="mb-0">{{ trans('dashboard_home.no_ai_recommendation_operation') }}</p>
+          {% endif %}
+        </div>
+
+        {% set actions = [
+          {'title':trans('dashboard_home.order_payments'),'body':trans('dashboard_home.order_payments_text'), 'url':'panel/planner-hub/management/orders/orders'},
+          {'title':trans('dashboard_home.payroll_pending'),'body':trans('dashboard_home.payroll_pending_text'), 'url':'panel/planner-hub/team/payroll/pending'},
+          {'title':trans('dashboard_home.payroll_history'),'body':trans('dashboard_home.payroll_history_text'), 'url':'panel/planner-hub/team/payroll/paid'},
+          {'title':trans('ui.crm'),'body':trans('dashboard_home.crm_text'), 'url':'panel/planner-hub/management/crm'},
+          {'title':'Team Chat','body':'Open live conversations with clients and internal operators.', 'url':'panel/planner-hub/team/chat'},
+          {'title':trans('ui.warehouse'),'body':trans('dashboard_home.inventory_storage_text'), 'url':'panel/planner-hub/management/storage'},
+          {'title':trans('dashboard_home.ai_workspace'),'body':trans('dashboard_home.ai_workspace_text'), 'url':'panel/planner-hub/management/chatia'}
+        ] %}
+        <div class="vnv-quick-actions">
+          {% for action in actions %}
+            <a class="vnv-action" href="{{ path(action.url) }}">
+              <strong>{{ action.title }}</strong>
+              <span>{{ action.body }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </aside>
+    </div>
+  </section>
+</main>
+{% endblock %}

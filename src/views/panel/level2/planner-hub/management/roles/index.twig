@@ -1,0 +1,106 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+
+<h2 class="mb-4">🔐 {{ trans('planner_hub.manage_roles_permissions') }}</h2>
+{{ macros.breadcrumb2() }}
+
+<div class="row">
+    <!-- Roles List -->
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">{{ trans('planner_hub.roles') }}</h5>
+                <ul class="list-group">
+                    {% for role in roles %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex flex-column">
+                                <a href="?role_id={{ role.id }}">{{ role.name }}</a>
+                                {% if selected_role and selected_role.id == role.id %}
+                                    <span class="badge bg-primary mt-1">{{ trans('planner_hub.selected') }}</span>
+                                {% endif %}
+                            </div>
+                            {% if role.id_owner != 0 %}
+                                <form method="post" onsubmit="return confirm('{{ trans('planner_hub.confirm_delete_role') }}')">
+                                    <input type="hidden" name="delete_role_id" value="{{ role.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">🗑</button>
+                                </form>
+                            {% endif %}
+                        </li>
+                    {% else %}
+                        <li class="list-group-item text-muted">{{ trans('planner_hub.no_roles_defined') }}</li>
+                    {% endfor %}
+                </ul>
+
+                {% if max_custom_roles_reached %}
+                    <div class="alert alert-warning mt-3 small">
+                        ⚠️ {{ trans('planner_hub.max_custom_roles_reached') }}
+                    </div>
+                {% else %}
+                    <form method="post" class="mt-3">
+                        <input type="text" name="new_role" class="form-control" placeholder="{{ trans('planner_hub.new_role_name_placeholder') }}" required>
+                        <button class="btn btn-dark w-100 mt-2" type="submit">➕ {{ trans('planner_hub.add_role') }}</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Permissions Form -->
+    <div class="col-md-8">
+        {% if selected_role %}
+            <form method="post">
+                <input type="hidden" name="role_id" value="{{ selected_role.id }}">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ trans('planner_hub.edit_permissions_for') }} <strong>{{ selected_role.name }}</strong></h5>
+
+                        {% for module, perms in permissions_grouped %}
+                            <h6 class="mt-4 text-uppercase">{{ module }}</h6>
+                            {% set module_lower = module|lower %}
+                            {% if module_lower == 'crm' %}
+                                <p class="text-muted small mb-2">{{ trans('planner_hub.module_crm_desc') }}</p>
+                            {% elseif module_lower == 'orders' %}
+                                <p class="text-muted small mb-2">{{ trans('planner_hub.module_orders_desc') }}</p>
+                            {% elseif module_lower == 'payroll' %}
+                                <p class="text-muted small mb-2">{{ trans('planner_hub.module_payroll_desc') }}</p>
+                            {% elseif module_lower == 'storage' %}
+                                <p class="text-muted small mb-2">{{ trans('planner_hub.module_storage_desc') }}</p>
+                            {% elseif module_lower == 'users' %}
+                                <p class="text-muted small mb-2">{{ trans('planner_hub.module_users_desc') }}</p>
+                            {% endif %}
+                            <div class="row">
+                                {% for perm in perms %}
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ perm.id }}"
+                                                id="perm{{ perm.id }}"
+                                                {% if perm.id in role_permission_ids %}checked{% endif %}
+                                                {% if selected_role.id_owner == 0 %}disabled{% endif %}>
+                                            <label class="form-check-label" for="perm{{ perm.id }}">
+                                                {{ perm.label }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+
+                        {% if selected_role.id_owner == 0 %}
+                            <div class="alert alert-warning mt-4">
+                                ⚠️ {{ trans('planner_hub.system_role_cannot_edit') }}
+                            </div>
+                        {% else %}
+                            <button class="btn btn-success mt-4">💾 {{ trans('planner_hub.save_permissions') }}</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        {% else %}
+            <div class="alert alert-info">{{ trans('planner_hub.select_role_to_edit') }}</div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

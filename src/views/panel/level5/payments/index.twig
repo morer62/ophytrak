@@ -1,0 +1,10 @@
+﻿{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+<main class="container mt-4">
+    <div class="alert alert-info rounded-4 shadow-sm border-0">
+        Payment management has moved to Payment Methods.
+        <a href="{{ path('panel/cards') }}" class="alert-link">Open Payment Methods</a>
+    </div>
+</main>
+{% endblock %}

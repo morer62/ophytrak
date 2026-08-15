@@ -1,0 +1,269 @@
+{% extends "templates/base.twig" %}
+
+{% block styles %}
+<style>
+  .legal-shell{
+    color:#0f172a;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(38,166,154,.20), transparent 32%),
+      linear-gradient(180deg,#f5fffc 0%,#ffffff 42%,#f7fafc 100%);
+  }
+  .legal-nav{
+    border-bottom:1px solid rgba(15,23,42,.08);
+    background:rgba(255,255,255,.88);
+    backdrop-filter:blur(14px);
+  }
+  .legal-brand{
+    display:inline-flex;
+    align-items:center;
+    gap:.75rem;
+    color:#0f172a;
+    font-weight:900;
+    text-decoration:none;
+  }
+  .legal-brand img{
+    width:142px;
+    height:auto;
+    display:block;
+  }
+  .legal-nav-links{
+    display:flex;
+    align-items:center;
+    gap:.65rem;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  .legal-nav-links a,
+  .legal-back-link,
+  .legal-support-link{
+    border:1px solid rgba(15,23,42,.10);
+    border-radius:999px;
+    color:#123c37;
+    background:#fff;
+    font-weight:850;
+    padding:.55rem .9rem;
+    text-decoration:none;
+    transition:background .18s ease, border-color .18s ease, transform .18s ease;
+  }
+  .legal-nav-links a:hover,
+  .legal-back-link:hover,
+  .legal-support-link:hover{
+    background:#ecfdf8;
+    border-color:rgba(38,166,154,.36);
+    color:#087a52;
+    transform:translateY(-1px);
+  }
+  .legal-hero{
+    position:relative;
+    overflow:hidden;
+    padding:5rem 0 3.5rem;
+  }
+  .legal-hero-card{
+    position:relative;
+    border:1px solid rgba(38,166,154,.18);
+    border-radius:32px;
+    background:
+      linear-gradient(135deg,rgba(255,255,255,.94),rgba(237,253,248,.92)),
+      radial-gradient(circle at 90% 12%, rgba(38,166,154,.24), transparent 30%);
+    box-shadow:0 30px 80px rgba(15,23,42,.10);
+    padding:clamp(2rem,5vw,4rem);
+  }
+  .legal-kicker{
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    border:1px solid rgba(38,166,154,.34);
+    border-radius:999px;
+    color:#087a52;
+    background:#ecfdf8;
+    font-weight:900;
+    font-size:.82rem;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    padding:.48rem .8rem;
+    margin-bottom:1.1rem;
+  }
+  .legal-hero h1{
+    color:#0f172a;
+    font-size:clamp(2.4rem,5vw,4.6rem);
+    font-weight:950;
+    line-height:1.02;
+    letter-spacing:-.04em;
+    max-width:860px;
+    margin:0;
+  }
+  .legal-hero p{
+    color:#516070;
+    font-size:1.08rem;
+    line-height:1.75;
+    max-width:820px;
+    margin:1rem 0 0;
+  }
+  .legal-page{
+    max-width:980px;
+    line-height:1.78;
+    padding-bottom:4rem;
+  }
+  .legal-panel{
+    border:1px solid rgba(15,23,42,.08);
+    border-radius:28px;
+    background:#fff;
+    box-shadow:0 18px 54px rgba(15,23,42,.07);
+    padding:clamp(1.4rem,4vw,2.5rem);
+  }
+  .legal-callout{
+    border:1px solid rgba(38,166,154,.22);
+    border-left:5px solid #13b8a6;
+    border-radius:20px;
+    background:#effdfa;
+    padding:1rem 1.1rem;
+    margin-bottom:1.7rem;
+  }
+  .legal-callout strong{
+    color:#0f172a;
+    display:block;
+    font-weight:900;
+    margin-bottom:.35rem;
+  }
+  .legal-callout p{
+    color:#465568;
+    margin:0;
+  }
+  .legal-section{
+    border-top:1px solid rgba(15,23,42,.08);
+    padding-top:1.45rem;
+    margin-top:1.45rem;
+  }
+  .legal-section h2{
+    color:#0f172a;
+    font-size:1.28rem;
+    font-weight:900;
+    margin:0 0 .55rem;
+  }
+  .legal-section p{
+    color:#465568;
+    margin:0;
+  }
+  .legal-footer{
+    border-top:1px solid rgba(38,166,154,.18);
+    background:#061a18;
+    color:rgba(255,255,255,.72);
+    padding:.9rem 0;
+  }
+  .legal-footer-inner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    flex-wrap:wrap;
+    font-size:.92rem;
+  }
+  .legal-footer strong{
+    color:#fff;
+  }
+  .legal-footer a{
+    color:#9df3e7;
+    font-weight:850;
+    text-decoration:none;
+    margin-left:.9rem;
+  }
+  .legal-footer a:hover{
+    color:#fff;
+  }
+  @media (max-width: 720px){
+    .legal-nav .container,
+    .legal-footer-inner{
+      text-align:center;
+      justify-content:center;
+    }
+    .legal-nav-links{
+      justify-content:center;
+      margin-top:1rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<main class="legal-shell">
+  <nav class="legal-nav py-3">
+    <div class="container d-flex align-items-center justify-content-between flex-wrap">
+      <a class="legal-brand" href="{{ path('planner-hub') }}">
+        <img src="{{ asset_for('assets/images/planner-hub-logo-positive.png') }}" alt="OphyraApp">
+      </a>
+      <div class="legal-nav-links">
+        <a href="{{ path('planner-hub') }}">{{ trans('common.home') }}</a>
+        <a href="{{ path('privacy-policy') }}">{{ trans('common.privacy') }}</a>
+        <a href="{{ path('support') }}">{{ trans('legal_privacy.contact_title') }} / {{ trans('legal_terms.support_cta') }}</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="legal-hero">
+    <div class="container">
+      <a class="legal-back-link mb-4 d-inline-flex" href="{{ path('planner-hub') }}">← {{ trans('public_home.back_to_home') }}</a>
+      <div class="legal-hero-card">
+        <span class="legal-kicker">{{ trans('common.terms') }}</span>
+        <h1>{{ trans('legal_terms.title') }}</h1>
+        <p>{{ trans('legal_terms.effective_date') }}</p>
+        <p>{{ trans('legal_terms.intro') }}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="container legal-page">
+    <article class="legal-panel">
+      <div class="legal-callout">
+        <strong>{{ trans('legal_terms.no_refund_callout_title') }}</strong>
+        <p>{{ trans('legal_terms.no_refund_callout_body') }}</p>
+      </div>
+
+      {% for key in [
+        'agreement',
+        'service_scope',
+        'eligibility',
+        'business_responsibility',
+        'user_content',
+        'prohibited_conduct',
+        'fees_payments',
+        'subscriptions_cancellation',
+        'no_refunds',
+        'third_party_payments',
+        'contracts_and_orders',
+        'privacy_data',
+        'google_data',
+        'intellectual_property',
+        'dmca',
+        'availability',
+        'disclaimers',
+        'liability',
+        'indemnity',
+        'termination',
+        'governing_law',
+        'changes',
+        'contact'
+      ] %}
+        <section class="legal-section">
+          <h2>{{ trans('legal_terms.sections.' ~ key ~ '.title') }}</h2>
+          <p>{{ trans('legal_terms.sections.' ~ key ~ '.body') }}</p>
+        </section>
+      {% endfor %}
+
+      <div class="text-center mt-4">
+        <a href="{{ path('support') }}" class="legal-support-link">{{ trans('legal_terms.support_cta') }}</a>
+      </div>
+    </article>
+  </section>
+</main>
+
+<footer class="legal-footer">
+  <div class="container legal-footer-inner">
+    <span><strong>Ophyra App</strong> - {{ trans('common.all_rights_reserved') }}</span>
+    <nav aria-label="Legal links">
+      <a href="{{ path('privacy-policy') }}">{{ trans('common.privacy') }}</a>
+      <a href="{{ path('terms_and_conditions') }}">{{ trans('common.terms') }}</a>
+      <a href="{{ path('support') }}">{{ trans('legal_privacy.contact_title') }} / {{ trans('legal_terms.support_cta') }}</a>
+    </nav>
+  </div>
+</footer>
+{% endblock %}

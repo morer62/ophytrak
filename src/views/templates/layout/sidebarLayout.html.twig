@@ -1,0 +1,52 @@
+﻿<nav id="sidebar" class="sidebar js-sidebar">
+  <div class="sidebar-content js-simplebar">
+    <a class="sidebar-brand" href="{{ path('panel/home') }}">
+      {% if product_mode == 'ophytrack' %}<img src="{{ asset_for(brand.logo) }}" alt="OPHYTRACK" style="width:190px;max-width:100%;height:auto"><small style="display:block;margin-top:8px;color:#9fb4c9">{{ trans('sidebar.welcome') }} {{ user.name }}</small>{% else %}<span class="align-middle">{{ trans('sidebar.welcome') }} {{user.name}}</span>{% endif %}
+    </a>
+
+    {% if user.level in [1, 2] %}
+      <div class="ophyra-sidebar-search">
+        <form class="ophyra-global-search" action="{{ path('panel/home') }}" method="get" data-ophyra-command-search>
+          <i data-feather="search"></i>
+          <input type="search" name="q" autocomplete="off" placeholder="{{ trans('nav.search_placeholder') }}" data-ophyra-command-input>
+          <div class="ophyra-search-results" data-ophyra-command-results>
+            <div class="ophyra-search-hint">{{ trans('nav.search_hint') }}</div>
+          </div>
+        </form>
+      </div>
+    {% endif %}
+
+    <ul class="sidebar-nav">
+      {% if user.level != 2 %}
+        <li class="sidebar-header">{{ trans('sidebar.select_option') }}</li>
+
+        <li class="sidebar-item">
+          <a class="sidebar-link" href="{{ path('panel/home') }}">
+            <i class="align-middle" data-feather="home"></i>
+            <span class="align-middle">{{ trans('sidebar.home') }}</span>
+          </a>
+        </li>
+      {% endif %}
+
+      {#<li class="sidebar-item active">
+        <a data-bs-target="#dashboards" data-bs-toggle="collapse" class="sidebar-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-sliders align-middle"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg> <span class="align-middle">Dashboards</span>
+        </a>
+        <ul id="dashboards" class="sidebar-dropdown list-unstyled collapse show" data-bs-parent="#sidebar">
+          <li class="sidebar-item"><a class="sidebar-link" href="/">Analytics</a></li>
+          <li class="sidebar-item"><a class="sidebar-link" href="/dashboard-ecommerce">E-Commerce <span class="sidebar-badge badge bg-primary">Pro</span></a></li>
+          <li class="sidebar-item"><a class="sidebar-link" href="/dashboard-crypto">Crypto <span class="sidebar-badge badge bg-primary">Pro</span></a></li>
+        </ul>
+      </li>#}
+
+      {% if product_mode == 'ophytrack' and user.level in [1, 2, 4, 5] %}
+      {% include 'templates/layout/sidebars/ophytrack-' ~ user.level ~ '.twig' ignore missing %}
+      {% elseif isMobileApp %}
+      {% include 'templates/layout/sidebars/mobile.twig' %}
+      {% else %}
+      {% include 'templates/layout/sidebars/' ~ user.level ~ '.twig' %}
+      {% endif %}
+    </ul>
+  </div>
+</nav>
+

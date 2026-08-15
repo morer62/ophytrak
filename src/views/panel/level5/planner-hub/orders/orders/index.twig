@@ -1,0 +1,176 @@
+﻿{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<style>
+.client-orders-hero {
+    border-radius: 22px;
+    padding: 24px;
+    background: radial-gradient(circle at top right, rgba(31,169,154,.2), transparent 38%), linear-gradient(135deg, #10263a 0%, #15394a 48%, #1c8078 100%);
+    color: #fff;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, .16);
+    margin-bottom: 1.25rem;
+}
+.client-orders-hero h1 { color: #fff; font-weight: 900; }
+.client-orders-hero p { color: rgba(255,255,255,.82); max-width: 860px; margin-bottom: 0; }
+.client-orders-kicker { color: #99f6e4; text-transform: uppercase; letter-spacing: .08em; font-weight: 900; font-size: .78rem; }
+.client-orders-card { border: 1px solid rgba(20,34,52,.12); border-radius: 18px; box-shadow: 0 18px 45px rgba(15,23,42,.08); overflow: hidden; }
+.client-orders-card .table thead th { background: #10263a; color: #fff; border-color: #10263a; }
+.client-orders-actions .btn { min-height: 42px; font-weight: 800; }
+</style>
+
+<section class="client-orders-hero">
+    <p class="client-orders-kicker mb-2">{{ trans('client_service_orders.kicker') }}</p>
+    <h1>{{ portalView == 'documents' ? trans('ui.contracts_files') : trans('client_service_orders.title') }}</h1>
+    <p>{{ trans('client_service_orders.subtitle') }}</p>
+</section>
+
+{{ macros.breadcrumb2() }}
+<a href="{{ path('panel/') }}" class="btn btn-sm btn-light mb-3">{{ trans('client_service_orders.back_home') }}</a>
+
+<nav class="nav nav-pills gap-2 mb-3" aria-label="{{ trans('client_service_orders.portal_sections') }}">
+    <a class="nav-link {{ portalView == 'orders' ? 'active' : '' }}" href="{{ path('panel/planner-hub/orders/orders?view=orders') }}">{{ trans('client_service_orders.sidebar_service_orders') }}</a>
+    <a class="nav-link {{ portalView == 'documents' ? 'active' : '' }}" href="{{ path('panel/planner-hub/orders/orders?view=documents') }}">{{ trans('ui.contracts_files') }}</a>
+</nav>
+{% if portalView == 'documents' %}
+    <div class="alert alert-info">{{ trans('client_service_orders.documents_explanation') }}</div>
+{% endif %}
+
+<section class="card client-orders-card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered text-center align-middle" style="min-width: 900px;">
+                <thead>
+                <tr>
+                    <th>{{ trans('planner_hub.id') }}</th>
+                    {% if portalView == 'orders' %}
+                        <th>{{ trans('planner_hub.event_date') }}</th>
+                        <th>{{ trans('planner_hub.start_end') }}</th>
+                        <th>{{ trans('planner_hub.address') }}</th>
+                    {% endif %}
+                    <th>{{ trans('planner_hub.company') }}</th>
+                    {% if portalView == 'orders' %}<th>{{ trans('planner_hub.payment_link_btn') }}</th>{% endif %}
+                    <th>{{ trans('planner_hub.created') }}</th>
+                    <th>{{ trans('planner_hub.actions') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td style="min-width: 120px;"><strong>vnv-341{{ order.id }}</strong></td>
+                    {% if portalView == 'orders' %}
+                        <td style="min-width: 160px;">{{ order.event_date|date("l, M j") }}</td>
+                        <td style="min-width: 160px;">{{ order.start_time|date("g:i A") }} - {{ order.end_time|date("g:i A") }}</td>
+                        <td style="min-width: 240px;"><small>{{ order.address }}</small></td>
+                    {% endif %}
+                    <td style="min-width: 160px;">
+                        {% if order.institution %}
+                            <button class="btn btn-sm btn-outline-primary show-institution-btn" data-institution='{{ order.institution|json_encode|e('html_attr') }}' data-owner-id="{{ order.id_owner }}" data-team='{{ order.team_contacts_json|default('[]')|e('html_attr') }}'>
+                                {{ trans('client_service_orders.view_business') }} {{ order.institution.company_name }}
+                            </button><br>
+                            <a href="{{ path('panel/chat') }}?to={{ order.id_owner }}" class="btn btn-sm btn-outline-success mt-2">
+                                {{ trans('client_service_orders.message_business') }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">{{ trans('client_service_orders.not_available') }}</span>
+                        {% endif %}
+                    </td>
+                    {% if portalView == 'orders' %}<td style="min-width: 200px;">
+                        {% set token = order.contract_token ?? '' %}
+                        {% set payment_url = app_url ~ '/order-access?token=' ~ token %}
+                        {% if token %}
+                            <a href="{{ payment_url }}" target="_blank" class="btn btn-outline-primary btn-sm mb-1" title="{{ payment_url }}">{{ trans('client_service_orders.payment_link') }}</a><br>
+                        {% else %}
+                            <span class="text-muted">{{ trans('planner_hub.no_link_available') }}</span>
+                        {% endif %}
+                    </td>{% endif %}
+                    <td style="min-width: 160px;">{{ order.created_at|date("Y-m-d H:i") }}</td>
+                    <td style="min-width: 220px;">
+                        <div class="btn-group client-orders-actions" role="group">
+                            <a href="{{ path('/panel/planner-hub/orders/orders/files') }}?id={{ order.id }}" class="btn btn-sm btn-secondary">{{ trans('client_service_orders.files') }}</a>
+                            {% if portalView == 'orders' %}<a href="{{ path('/panel/planner-hub/orders/orders/suborders') }}?id={{ order.id }}" class="btn btn-sm btn-info">{{ trans('client_service_orders.sub_orders') }}</a>{% endif %}
+                            <a href="{{ path('/panel/planner-hub/orders/orders/print') }}?id={{ order.id }}" class="btn btn-sm btn-dark">{{ trans('client_service_orders.print') }}</a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="{{ portalView == 'documents' ? 4 : 8 }}">{{ trans('planner_hub.no_orders_found') }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<div class="modal fade" id="institutionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ trans('planner_hub.institution_info') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ trans('planner_hub.close') }}"></button>
+            </div>
+            <div class="modal-body" id="institutionBody">
+                {{ trans('planner_hub.loading') }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const lblCompany = {{ trans('planner_hub.company_name')|json_encode|raw }};
+    const lblPhone = {{ trans('planner_hub.phone')|json_encode|raw }};
+    const lblEmail = {{ trans('planner_hub.email')|json_encode|raw }};
+    const lblAddress = {{ trans('planner_hub.address')|json_encode|raw }};
+    const lblPaymentMethods = {{ trans('planner_hub.payment_methods')|json_encode|raw }};
+    const lblStartChat = {{ trans('client_service_orders.start_chat')|json_encode|raw }};
+    const lblAssignedTeam = {{ trans('client_service_orders.assigned_team')|json_encode|raw }};
+    const lblTeamMember = {{ trans('client_service_orders.team_member')|json_encode|raw }};
+    const lblNotAvailable = {{ trans('client_service_orders.not_available')|json_encode|raw }};
+
+    function showInstitutionModal(data, ownerId, team) {
+        const teamHtml = team && team.length
+            ? `
+                <div class="pt-3 mt-3 border-top">
+                    <strong>${lblAssignedTeam}</strong>
+                    <div class="d-grid gap-2 mt-2">
+                        ${team.map(member => `
+                            <a href="{{ path('panel/chat') }}?to=${member.id}" class="btn btn-outline-secondary text-start">
+                                ${member.name || member.email || lblTeamMember}
+                                ${member.email ? `<span class="d-block small text-muted">${member.email}</span>` : ''}
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            `
+            : '';
+        const html = `
+            <strong>${lblCompany}</strong> ${data.company_name || lblNotAvailable}<br>
+            <strong>${lblPhone}</strong> ${data.phone || lblNotAvailable}<br>
+            <strong>${lblEmail}</strong> ${data.email || lblNotAvailable}<br>
+            <strong>${lblAddress}</strong> ${[data.address_line1, data.city, data.state, data.zip, data.country].filter(Boolean).join(', ') || lblNotAvailable}<br>
+            <strong>${lblPaymentMethods}</strong> ${data.payment_method_accepted || lblNotAvailable}<br><br>
+            <a href="{{ path('panel/chat') }}?to=${ownerId}" class="btn btn-outline-success">${lblStartChat}</a>
+            ${teamHtml}
+        `;
+        document.getElementById("institutionBody").innerHTML = html;
+        new bootstrap.Modal(document.getElementById('institutionModal')).show();
+    }
+
+    document.querySelectorAll('.show-institution-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const data = JSON.parse(this.dataset.institution);
+            let team = [];
+            try {
+                team = JSON.parse(this.dataset.team || '[]');
+            } catch (e) {
+                team = [];
+            }
+            showInstitutionModal(data, this.dataset.ownerId, team);
+        });
+    });
+</script>
+{% endblock %}

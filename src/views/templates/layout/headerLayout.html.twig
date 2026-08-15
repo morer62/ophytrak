@@ -1,0 +1,647 @@
+<nav class="navbar navbar-expand navbar-light navbar-bg">
+  <a class="sidebar-toggle js-sidebar-toggle"><i class="hamburger align-self-center"></i></a>
+
+  <div class="navbar-collapse collapse show" style="display: flex !important;">
+    <ul class="navbar-nav navbar-align" style="display: flex !important; width: 100%; justify-content: flex-end;">
+      {% if user.level in [1, 2] %}
+        {% set headerActive = active_module_slugs|default(activeModuleSlugs|default([])) %}
+        {% set headerHasServices = user.level == 1 ? true : ('services' in headerActive or 'service_operations' in headerActive) %}
+        {% set headerHasStore = user.level == 1 ? true : ('store_delivery_tracking' in headerActive or 'store_logistics' in headerActive) %}
+        <li class="nav-item me-auto ophyra-command-header">
+          <form class="ophyra-global-search" action="{{ path('panel/home') }}" method="get" data-ophyra-command-search>
+            <i data-feather="search"></i>
+            <input type="search" name="q" autocomplete="off" placeholder="{{ trans('nav.search_placeholder') }}" data-ophyra-command-input>
+            <div class="ophyra-search-results" data-ophyra-command-results>
+              <div class="ophyra-search-hint">{{ trans('nav.search_hint') }}</div>
+            </div>
+          </form>
+          <script>
+            document.addEventListener('DOMContentLoaded', function () {
+              const searchForms = Array.from(document.querySelectorAll('[data-ophyra-command-search]'));
+              if (!searchForms.length) return;
+
+              const knowledge = [
+                {% if product_mode == 'ophytrack' %}
+                { label: 'OPHYTRACK Dashboard', group: 'Logistics', url: '{{ path('panel/home')|e('js') }}', icon: 'grid', terms: 'dashboard home logistics tracking panel' },
+                { label: '{{ trans('nav.store_orders')|e('js') }}', group: 'Logistics', url: '{{ path('panel/planner-hub/store/orders/home')|e('js') }}', icon: 'package', terms: 'orders pedidos paquetes package tracking etiquetas qr' },
+                { label: '{{ trans('nav.products')|e('js') }}', group: 'Store', url: '{{ path('panel/planner-hub/store/products/home')|e('js') }}', icon: 'box', terms: 'products productos inventory catalog items sku' },
+                { label: '{{ trans('nav.delivery')|e('js') }}', group: 'Logistics', url: '{{ path('panel/planner-hub/store/orders/home?status=OUT_FOR_DELIVERY')|e('js') }}', icon: 'truck', terms: 'delivery entrega driver route tracking mapa' },
+                { label: '{{ trans('nav.warehouse')|e('js') }}', group: 'Operations', url: '{{ path('panel/planner-hub/management/storage')|e('js') }}', icon: 'archive', terms: 'warehouse almacen storage stock inventory qr' },
+                { label: 'Marketplaces', group: 'Integrations', url: '{{ path('panel/planner-hub/marketplace-connectors')|e('js') }}', icon: 'refresh-cw', terms: 'shopee mercado libre tiktok sync connector' },
+                { label: '{{ trans('nav.customers')|e('js') }}', group: 'People', url: '{{ path('panel/planner-hub/management/users?active_tab=clients&context=store')|e('js') }}', icon: 'users', terms: 'clients customers clientes recipients destinatarios' },
+                { label: '{{ trans('nav.team')|e('js') }}', group: 'People', url: '{{ path('panel/planner-hub/management/users?context=store')|e('js') }}', icon: 'user-check', terms: 'team carrier driver delivery transportadora equipo' },
+                { label: '{{ trans('nav.inbox')|e('js') }}', group: 'Communication', url: '{{ path('panel/planner-hub/team/chat?context=store')|e('js') }}', icon: 'message-circle', terms: 'chat messages mensajes cliente equipo' },
+                {% elseif user.level == 1 %}
+                { label: 'Platform Home', group: 'Command Center', badge: 'Ophyra', tone: 'platform', url: '{{ path('panel/home')|e('js') }}', icon: 'command', terms: 'home dashboard platform command center ophyra inicio panel' },
+                { label: 'Platform Dashboard', group: 'Ophyra Platform', badge: 'Ophyra', tone: 'platform', url: '{{ path('panel/ophyra-platform')|e('js') }}', icon: 'shield', terms: 'platform dashboard ophyra admin metrics global resumen' },
+                { label: 'Businesses / Global Users', group: 'Ophyra Platform', badge: 'Ophyra', tone: 'platform', url: '{{ path('panel/subscriptions-manager')|e('js') }}', icon: 'users', terms: 'business businesses users global usuarios clientes owners subscriptions cuentas empresas' },
+                { label: 'Memberships & Modules', group: 'Ophyra Platform', badge: 'Ophyra', tone: 'platform', url: '{{ path('panel/module-manager')|e('js') }}', icon: 'sliders', terms: 'memberships modules modulos membrecias planes billing activate subscriptions' },
+                { label: 'Renewal Queue', group: 'Ophyra Revenue Ops', badge: 'Billing', tone: 'platform', url: '{{ path('panel/membership-renewal-queue')|e('js') }}', icon: 'refresh-cw', terms: 'renewals expired due today past due failed payment cobrar vencidas queue cola renovaciones' },
+                { label: 'Membership Reports', group: 'Ophyra Revenue Ops', badge: 'Reports', tone: 'platform', url: '{{ path('panel/membership-reports')|e('js') }}', icon: 'bar-chart-2', terms: 'reports membership mrr courtesy value failed payments expired no card reportes membrecias' },
+                { label: 'User Hygiene', group: 'Ophyra Revenue Ops', badge: 'Safety', tone: 'platform', url: '{{ path('panel/user-hygiene')|e('js') }}', icon: 'shield-off', terms: 'spam cleanup suspicious captcha signup abuse hygiene usuarios basura limpiar cuarentena' },
+                { label: 'Platform Payments', group: 'Ophyra Platform', badge: 'Ophyra', tone: 'platform', url: '{{ path('panel/payments')|e('js') }}', icon: 'credit-card', terms: 'payments pagos platform stripe cash billing transactions' },
+                { label: 'CMS / Domain Requests', group: 'Ophyra Platform', badge: 'Ophyra', tone: 'platform', url: '{{ path('panel/custom-domain-requests')|e('js') }}', icon: 'globe', terms: 'cms domain domains dominios requests website public pages seo' },
+                { label: 'Growth Hub', group: 'Ophyra Platform', badge: 'Ophyra', tone: 'platform', url: '{{ path('panel/growth-hub')|e('js') }}', icon: 'trending-up', terms: 'growth hub seo aeo geo content articles pages blog image foto generar contenido' },
+                { label: 'Platform Settings', group: 'Ophyra Platform', badge: 'Ophyra', tone: 'platform', url: '{{ path('panel/settings')|e('js') }}', icon: 'settings', terms: 'settings configuracion account profile language idioma security' },
+                { label: 'VNV Dashboard', group: 'VNV Events', badge: 'VNV', tone: 'vnv', url: '{{ path('panel/vnv-events')|e('js') }}', icon: 'calendar', terms: 'vnv events dashboard eventos event operations home' },
+                { label: 'Event Orders', group: 'VNV Events', badge: 'VNV', tone: 'vnv', url: '{{ path('panel/planner-hub/management/orders/orders')|e('js') }}', icon: 'shopping-cart', terms: 'orders ordenes event service service orders eventos booking cotizacion estimate invoice' },
+                { label: 'Event Clients', group: 'VNV Events', badge: 'VNV', tone: 'vnv', url: '{{ path('panel/planner-hub/management/users?active_tab=clients')|e('js') }}', icon: 'user-check', terms: 'clients clientes customers contacts event clients crm personas' },
+                { label: 'VNV Team', group: 'VNV Events', badge: 'VNV', tone: 'vnv', url: '{{ path('panel/planner-hub/management/users')|e('js') }}', icon: 'users', terms: 'team equipo staff employees empleados members workers usuarios' },
+                { label: 'VNV Team Chat', group: 'VNV Events', badge: 'VNV', tone: 'vnv', url: '{{ path('panel/planner-hub/team/chat')|e('js') }}', icon: 'message-circle', terms: 'chat messages mensajes inbox conversations equipo clientes admin' },
+                { label: 'Contracts', group: 'VNV Events', badge: 'VNV', tone: 'vnv', url: '{{ path('panel/planner-hub/management/orders/contracts')|e('js') }}', icon: 'file-text', terms: 'contracts contratos files signed signatures documentos ordenes' },
+                { label: 'CRM', group: 'VNV Events', badge: 'VNV', tone: 'vnv', url: '{{ path('panel/planner-hub/management/crm')|e('js') }}', icon: 'target', terms: 'crm leads pipeline clientes seguimiento ventas opportunities calendario calendar' },
+                { label: 'Tickets / RSVP', group: 'VNV Events', badge: 'VNV', tone: 'vnv', url: '{{ path('panel/event-invitations')|e('js') }}', icon: 'calendar', terms: 'tickets rsvp invitations invitaciones events guest guests calendario' },
+                { label: 'VNV AI Workspace', group: 'VNV Events', badge: 'VNV', tone: 'vnv', url: '{{ path('panel/planner-hub/management/chatia')|e('js') }}', icon: 'cpu', terms: 'ai advisor ia chatia assistant ideas content resumen' },
+                { label: 'VNV CMS / Profile', group: 'VNV Events', badge: 'VNV', tone: 'vnv', url: '{{ path('panel/planner-hub/institution-profile')|e('js') }}', icon: 'map-pin', terms: 'profile perfil cms public business vnv website logo location address' },
+                { label: 'Avomeal Dashboard', group: 'Avomeal Store', badge: 'Avomeal', tone: 'avomeal', url: '{{ path('panel/avomeal')|e('js') }}', icon: 'shopping-bag', terms: 'avomeal dashboard store meals comida casera tienda food home' },
+                { label: 'Products / Meals', group: 'Avomeal Store', badge: 'Avomeal', tone: 'avomeal', url: '{{ path('panel/planner-hub/store/products/home?operation=avomeal')|e('js') }}', icon: 'box', terms: 'products meals productos comidas menu catalog catalogo item avomeal' },
+                { label: 'Meal Categories', group: 'Avomeal Store', badge: 'Avomeal', tone: 'avomeal', url: '{{ path('panel/planner-hub/store/categories/home?operation=avomeal')|e('js') }}', icon: 'tag', terms: 'categories categorias meal menu product groups atributos' },
+                { label: 'Orders / Fulfillment', group: 'Avomeal Store', badge: 'Avomeal', tone: 'avomeal', url: '{{ path('panel/planner-hub/store/orders/home?operation=avomeal')|e('js') }}', icon: 'truck', terms: 'orders store orders pedidos fulfillment preparation delivery qr label cocina preparacion envio' },
+                { label: 'Store Payments', group: 'Avomeal Store', badge: 'Avomeal', tone: 'avomeal', url: '{{ path('panel/planner-hub/store/payments/home?operation=avomeal')|e('js') }}', icon: 'dollar-sign', terms: 'payments pagos store avomeal sales comprobante proof revenue' },
+                { label: 'Avomeal Team', group: 'Avomeal Store', badge: 'Avomeal', tone: 'avomeal', url: '{{ path('panel/planner-hub/management/users?operation=avomeal')|e('js') }}', icon: 'users', terms: 'team avomeal delivery drivers preparation staff empleados equipo' },
+                { label: 'Avomeal Chat', group: 'Avomeal Store', badge: 'Avomeal', tone: 'avomeal', url: '{{ path('panel/planner-hub/team/chat?operation=avomeal')|e('js') }}', icon: 'message-circle', terms: 'chat avomeal messages clientes delivery team' },
+                { label: 'Avomeal Payroll', group: 'Avomeal Store', badge: 'Avomeal', tone: 'avomeal', url: '{{ path('panel/planner-hub/management/payroll?operation=avomeal')|e('js') }}', icon: 'clock', terms: 'payroll hours reloj time avomeal empleados nomina' },
+                { label: 'Meal Plans', group: 'Avomeal Store', badge: 'Avomeal', tone: 'avomeal', url: '{{ path('panel/planner-hub/store/subscriptions/home?operation=avomeal')|e('js') }}', icon: 'repeat', terms: 'subscriptions meal plans planes semanales weekly recurring buyers suscripciones' },
+                { label: 'Coupons', group: 'Avomeal Store', badge: 'Avomeal', tone: 'avomeal', url: '{{ path('panel/planner-hub/store/coupons/home?operation=avomeal')|e('js') }}', icon: 'percent', terms: 'coupons descuentos promos promocodes discounts avomeal' },
+                { label: 'Warehouse', group: 'Shared Add-ons', badge: 'Shared', tone: 'shared', url: '{{ path('panel/planner-hub/management/storage')|e('js') }}', icon: 'archive', terms: 'warehouse almacen storage inventario almacenamiento qr items containers stock' },
+                { label: 'VNV Store Products', group: 'Shared Add-ons', badge: 'VNV', tone: 'vnv', url: '{{ path('panel/planner-hub/store/products/home?operation=vnv_events')|e('js') }}', icon: 'package', terms: 'vnv store products tienda productos rentals inventory catalog' },
+                { label: 'Payroll', group: 'Shared Add-ons', badge: 'Shared', tone: 'shared', url: '{{ path('panel/planner-hub/management/payroll')|e('js') }}', icon: 'clock', terms: 'payroll hours reloj time staff nomina pagos equipo' },
+                { label: 'Marketplace Connectors', group: 'Shared Add-ons', badge: 'Shared', tone: 'shared', url: '{{ path('panel/planner-hub/marketplace-connectors')|e('js') }}', icon: 'share-2', terms: 'marketplace connectors integrations mercado libre tiktok shopify sync' },
+                { label: 'Referrals / Affiliates', group: 'Platform Tools', badge: 'Ophyra', tone: 'platform', url: '{{ path('panel/afiliate-hub')|e('js') }}', icon: 'share-2', terms: 'affiliate referral afiliados referidos commission program' },
+                { label: 'Affiliate Payouts', group: 'Platform Tools', badge: 'Ophyra', tone: 'platform', url: '{{ path('panel/planner-hub/management/commissions/pending')|e('js') }}', icon: 'dollar-sign', terms: 'commission commissions payouts pagos afiliados pending' },
+                { label: 'Forum Management', group: 'Platform Tools', badge: 'Ophyra', tone: 'platform', url: '{{ path('panel/forum')|e('js') }}', icon: 'message-square', terms: 'forum community comunidad posts moderation' },
+                { label: 'Payment Setup', group: 'Platform Tools', badge: 'Ophyra', tone: 'platform', url: '{{ path('panel/planner-hub/settings/payment-providers')|e('js') }}', icon: 'credit-card', terms: 'payment setup stripe square paypal providers settings pagos configuracion' },
+                { label: 'Email Setup', group: 'Platform Tools', badge: 'Ophyra', tone: 'platform', url: '{{ path('panel/planner-hub/settings/smtp')|e('js') }}', icon: 'mail', terms: 'email smtp mail sendgrid mailgun brevo notifications correo' },
+                {% else %}
+                { label: '{{ trans('nav.dashboard')|e('js') }}', group: '{{ trans('nav.dashboard_group')|e('js') }}', url: '{{ path('panel/home')|e('js') }}', icon: 'grid', terms: 'home inicio command center panel status next action' },
+                { label: '{{ trans('nav.start_guide')|e('js') }}', group: '{{ trans('nav.dashboard_group')|e('js') }}', url: '{{ path('panel/onboarding')|e('js') }}', icon: 'compass', terms: 'setup onboarding guide ayuda configurar empezar' },
+                { label: '{{ trans('nav.services')|e('js') }}', group: '{{ trans('nav.workspaces')|e('js') }}', url: '{{ path(headerHasServices ? 'panel/planner-hub/management' : 'panel/planner-hub/no-access?module=service_operations&required=services')|e('js') }}', icon: 'calendar', terms: 'services servicios service orders clients contracts tasks payroll hours eventos ordenes contratos tareas' },
+                { label: '{{ trans('nav.service_orders')|e('js') }}', group: '{{ trans('nav.services')|e('js') }}', url: '{{ path(headerHasServices ? 'panel/planner-hub/management/orders/orders?context=service' : 'panel/planner-hub/no-access?module=service_operations&required=services')|e('js') }}', icon: 'calendar', terms: 'service order orders orden ordenes servicios estimate evento booking' },
+                { label: '{{ trans('nav.customers')|e('js') }}', group: '{{ trans('nav.people')|e('js') }}', url: '{{ path(headerHasServices ? 'panel/planner-hub/management/users?active_tab=clients' : 'panel/planner-hub/no-access?module=shared_operational_tools&required=services')|e('js') }}', icon: 'users', terms: 'customers clients clientes contactos buyers usuarios client clien' },
+                { label: '{{ trans('nav.team')|e('js') }}', group: '{{ trans('nav.people')|e('js') }}', url: '{{ path(headerHasServices ? 'panel/planner-hub/management/users' : 'panel/planner-hub/no-access?module=shared_operational_tools&required=services')|e('js') }}', icon: 'user-check', terms: 'team staff employee employees equipo empleado miembros usuarios worker' },
+                { label: '{{ trans('nav.inbox')|e('js') }}', group: '{{ trans('nav.people')|e('js') }}', url: '{{ path(headerHasServices ? 'panel/planner-hub/team/chat' : 'panel/planner-hub/no-access?module=shared_operational_tools&required=services')|e('js') }}', icon: 'message-circle', terms: 'chat inbox messages mensajes conversaciones cliente equipo admin' },
+                { label: '{{ trans('nav.store_logistics')|e('js') }}', group: '{{ trans('nav.workspaces')|e('js') }}', url: '{{ path(headerHasStore ? 'panel/planner-hub/store/orders/home' : 'panel/planner-hub/no-access?module=store_logistics&required=store_delivery_tracking')|e('js') }}', icon: '{{ headerHasStore ? 'truck' : 'lock' }}', terms: 'store logistics tienda logistica delivery delivery orders pedidos compras fulfillment' },
+                { label: '{{ trans('nav.products')|e('js') }}', group: '{{ trans('nav.store_logistics')|e('js') }}', url: '{{ path(headerHasStore ? 'panel/planner-hub/store/products/home' : 'panel/planner-hub/no-access?module=store_logistics&required=store_delivery_tracking')|e('js') }}', icon: '{{ headerHasStore ? 'package' : 'lock' }}', terms: 'products productos catalog catalogo items meals menu comidas atributos categorias store inventory' },
+                { label: '{{ trans('nav.store_orders')|e('js') }}', group: '{{ trans('nav.store_logistics')|e('js') }}', url: '{{ path(headerHasStore ? 'panel/planner-hub/store/orders/home' : 'panel/planner-hub/no-access?module=store_logistics&required=store_delivery_tracking')|e('js') }}', icon: '{{ headerHasStore ? 'shopping-cart' : 'lock' }}', terms: 'store orders pedidos tienda compras purchase delivery label qr order' },
+                { label: '{{ trans('nav.fulfillment')|e('js') }}', group: '{{ trans('nav.store_logistics')|e('js') }}', url: '{{ path(headerHasStore ? 'panel/planner-hub/store/orders/home' : 'panel/planner-hub/no-access?module=store_logistics&required=store_delivery_tracking')|e('js') }}', icon: '{{ headerHasStore ? 'check-square' : 'lock' }}', terms: 'fulfillment preparation preparacion preparar ready listo tareas store' },
+                { label: '{{ trans('nav.delivery')|e('js') }}', group: '{{ trans('nav.store_logistics')|e('js') }}', url: '{{ path(headerHasStore ? 'panel/planner-hub/store/orders/home?status=OUT_FOR_DELIVERY' : 'panel/planner-hub/no-access?module=store_logistics&required=store_delivery_tracking')|e('js') }}', icon: '{{ headerHasStore ? 'navigation' : 'lock' }}', terms: 'delivery entrega driver mapa tracking gps location ubicacion ruta' },
+                { label: '{{ trans('nav.reports')|e('js') }}', group: '{{ trans('nav.insights')|e('js') }}', url: '{{ path(headerHasServices ? 'panel/planner-hub/management/payments' : (headerHasStore ? 'panel/planner-hub/store/reports/sales' : 'panel/planner-hub/no-access?module=shared_operational_tools&required=services,store_delivery_tracking'))|e('js') }}', icon: 'bar-chart-2', terms: 'reports reportes analytics ventas pagos sales payments history historico' },
+                { label: '{{ trans('nav.public_profile')|e('js') }}', group: '{{ trans('nav.business')|e('js') }}', url: '{{ path('panel/planner-hub/institution-profile')|e('js') }}', icon: 'briefcase', terms: 'public profile perfil publico business company store front page marca logo direccion' },
+                { label: '{{ trans('nav.modules_billing')|e('js') }}', group: '{{ trans('nav.business')|e('js') }}', url: '{{ path('panel/membership/manage')|e('js') }}', icon: 'shopping-bag', terms: 'modules billing modulos facturacion marketplace activar pagar planes subscription' },
+                { label: '{{ trans('nav.payment_methods')|e('js') }}', group: '{{ trans('nav.business')|e('js') }}', url: '{{ path('panel/cards')|e('js') }}', icon: 'credit-card', terms: 'cards tarjetas payment methods metodos pago billing wallet' },
+                { label: '{{ trans('nav.settings')|e('js') }}', group: '{{ trans('nav.business')|e('js') }}', url: '{{ path('panel/settings')|e('js') }}', icon: 'settings', terms: 'settings configuracion account cuenta language idioma password perfil' }
+                {% endif %}
+              ];
+
+              const labels = {
+                empty: '{{ trans('nav.search_empty')|e('js') }}',
+                hint: '{{ trans('nav.search_hint')|e('js') }}'
+              };
+
+              function normalize(value) {
+                return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+              }
+
+              function distance(a, b) {
+                if (!a || !b) return 99;
+                if (Math.abs(a.length - b.length) > 3) return 99;
+                const dp = Array.from({ length: a.length + 1 }, function (_, i) {
+                  return Array.from({ length: b.length + 1 }, function (_, j) { return i === 0 ? j : (j === 0 ? i : 0); });
+                });
+                for (let i = 1; i <= a.length; i++) {
+                  for (let j = 1; j <= b.length; j++) {
+                    const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                    dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+                  }
+                }
+                return dp[a.length][b.length];
+              }
+
+              function scoreItem(item, query) {
+                const haystack = normalize([item.label, item.group, item.terms].join(' '));
+                const label = normalize(item.label);
+                const words = haystack.split(' ').filter(Boolean);
+                const qWords = normalize(query).split(' ').filter(Boolean);
+                if (!qWords.length) return 0;
+                let score = 0;
+                qWords.forEach(function (word) {
+                  if (label.startsWith(word)) score += 80;
+                  if (haystack.includes(word)) score += 45;
+                  words.forEach(function (candidate) {
+                    if (candidate.startsWith(word)) score += 20;
+                    const d = distance(word, candidate);
+                    if (d <= 1) score += 32;
+                    else if (d === 2 && word.length >= 5) score += 18;
+                  });
+                });
+                return score;
+              }
+
+              function iconSvg(name) {
+                if (window.feather && feather.icons[name]) return feather.icons[name].toSvg({ width: 18, height: 18 });
+                return '';
+              }
+
+              searchForms.forEach(function (search) {
+                const input = search.querySelector('[data-ophyra-command-input]');
+                const results = search.querySelector('[data-ophyra-command-results]');
+                if (!input || !results) return;
+
+                let activeIndex = -1;
+                let currentMatches = [];
+
+              function render(matches) {
+                activeIndex = -1;
+                currentMatches = matches;
+                if (!input.value.trim()) {
+                  results.innerHTML = '<div class="ophyra-search-hint">' + labels.hint + '</div>';
+                  search.classList.add('is-open');
+                  return;
+                }
+                if (!matches.length) {
+                  results.innerHTML = '<div class="ophyra-search-empty">' + labels.empty + '</div>';
+                  search.classList.add('is-open');
+                  return;
+                }
+                results.innerHTML = matches.map(function (item, index) {
+                  const badge = item.badge ? '<span class="ophyra-search-badge ' + (item.tone || 'shared') + '">' + item.badge + '</span>' : '';
+                  return '<a class="ophyra-search-result" href="' + item.url + '" data-search-index="' + index + '"><span class="ophyra-search-result-icon">' + iconSvg(item.icon) + '</span><span><strong>' + item.label + badge + '</strong><span>' + item.group + '</span></span></a>';
+                }).join('');
+                search.classList.add('is-open');
+              }
+
+              function runSearch() {
+                const query = input.value;
+                const matches = knowledge.map(function (item) {
+                  return Object.assign({}, item, { score: scoreItem(item, query) });
+                }).filter(function (item) {
+                  return item.score > 0;
+                }).sort(function (a, b) {
+                  return b.score - a.score;
+                }).slice(0, 8);
+                render(matches);
+              }
+
+              input.addEventListener('input', runSearch);
+              input.addEventListener('focus', runSearch);
+              input.addEventListener('keydown', function (event) {
+                const items = Array.from(results.querySelectorAll('.ophyra-search-result'));
+                if (event.key === 'Escape') {
+                  search.classList.remove('is-open');
+                  return;
+                }
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                  event.preventDefault();
+                  if (!items.length) return;
+                  activeIndex = event.key === 'ArrowDown'
+                    ? Math.min(activeIndex + 1, items.length - 1)
+                    : Math.max(activeIndex - 1, 0);
+                  items.forEach(function (item, index) { item.classList.toggle('is-active', index === activeIndex); });
+                  return;
+                }
+                if (event.key === 'Enter' && currentMatches.length) {
+                  event.preventDefault();
+                  window.location.href = currentMatches[Math.max(activeIndex, 0)].url;
+                }
+              });
+
+              document.addEventListener('click', function (event) {
+                if (!search.contains(event.target)) search.classList.remove('is-open');
+              });
+              });
+            });
+          </script>
+          {% if user.level == 2 %}
+          <div class="dropdown">
+            <button class="btn ophyra-create-btn dropdown-toggle" type="button" id="ophyraCreateDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              {{ trans('nav.create') }}
+            </button>
+            <div class="dropdown-menu dropdown-menu-end ophyra-create-menu" aria-labelledby="ophyraCreateDropdown">
+              {% if headerHasServices %}
+                <div class="dropdown-header">{{ trans('nav.quick_create') }}</div>
+                {% if headerHasServices %}
+                  <a class="dropdown-item" href="{{ path('panel/planner-hub/management/users?active_tab=clients&context=service') }}">{{ trans('nav.create_client') }}</a>
+                  <a class="dropdown-item" href="{{ path('panel/planner-hub/management/orders/orders/create?context=service') }}">{{ trans('nav.create_service_order') }}</a>
+                {% endif %}
+                <a class="dropdown-item" href="{{ path('panel/planner-hub/management/users') }}">{{ trans('nav.invite_team_member') }}</a>
+              {% else %}
+                <div class="dropdown-header">{{ trans('nav.setup_needed') }}</div>
+                <a class="dropdown-item" href="{{ path('panel/onboarding') }}">{{ trans('nav.open_start_guide') }}</a>
+                <a class="dropdown-item" href="{{ path('panel/membership/manage') }}">{{ trans('nav.choose_workspace') }}</a>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+        </li>
+      {% endif %}
+
+      <li class="nav-item dropdown" style="display: block !important;">
+        <a class="nav-icon dropdown-toggle" href="#" id="alertsDropdown" data-bs-toggle="dropdown" style="display: inline-block !important;">
+          <div class="position-relative">
+            <i class="align-middle" data-feather="bell" style="width: 20px; height: 20px;">🔔</i>
+            {% if notifications_count > 0 %}
+              <span class="indicator">{{ notifications_count }}</span>
+            {% endif %}
+          </div>
+        </a>
+        
+        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end py-0" aria-labelledby="alertsDropdown">
+          {% if notifications|length > 0 %}
+            <div class="dropdown-menu-header">{{ notifications_count }} {{ notifications_count == 1 ? trans('common.new_notification') : trans('common.new_notifications') }}</div>
+            <div class="list-group">
+              {% for notification in notifications %}
+                <a href="{{ notification.link }}" class="list-group-item notification-item" data-notification-id="{{ notification.id }}">
+                  <div class="row g-0 align-items-center">
+                    <div class="col-2">
+                      <i class="text-primary" data-feather="bell"></i>
+                    </div>
+                    <div class="col-10">
+                      <div class="text-dark">{{ notification.mensaje }}</div>
+                      <div class="text-muted small mt-1">{{ notification.timestamp|date('M j, g:i A') }}</div>
+                    </div>
+                  </div>
+                </a>
+              {% endfor %}
+            </div>
+            <div class="dropdown-menu-footer">
+              <a href="{{ path('panel/notifications') }}" class="text-muted">{{ trans('common.show_all_notifications') }}</a>
+            </div>
+          {% else %}
+            <div class="dropdown-menu-header">{{ trans('common.no_new_notifications') }}</div>
+            <div class="list-group">
+              <div class="list-group-item text-center text-muted py-3">
+                <i data-feather="check-circle" class="text-success mb-2"></i>
+                <div>{{ trans('common.all_caught_up') }}</div>
+              </div>
+            </div>
+            <div class="dropdown-menu-footer">
+              <a href="{{ path('panel/notifications') }}" class="text-muted">{{ trans('common.view_all_notifications') }}</a>
+            </div>
+          {% endif %}
+        </div>
+      </li>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          // Limitar el handler solo a enlaces del dropdown, no a tarjetas de la lista
+          const notificationItems = document.querySelectorAll('.dropdown-menu .notification-item, a.notification-item');
+          
+          notificationItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+              e.preventDefault(); // Prevenir la navegación inmediata
+              
+              const notificationId = this.getAttribute('data-notification-id');
+              const notificationLink = this.getAttribute('href');
+              
+              if (notificationId) {
+                // Marcar como leída y luego redirigir
+                markNotificationAsReadAndRedirect(notificationId, notificationLink);
+              } else {
+                // Si no hay ID, navegar normalmente
+                window.location.href = notificationLink;
+              }
+            });
+          });
+        });
+
+        function getMarkReadRoute() {
+          // Detectar el nivel actual basado en la URL
+          const currentPath = window.location.pathname;
+          
+          // Obtener la URL base del proyecto
+          
+          if (currentPath.includes('/level1/')) {
+            return baseUrl + '/panel/level1/notifications/mark-read';
+          } else if (currentPath.includes('/level2/')) {
+            return baseUrl + '/panel/level2/notifications/mark-read';
+          } else if (currentPath.includes('/level3/')) {
+            return baseUrl + '/panel/level3/notifications/mark-read';
+          } else if (currentPath.includes('/level4/')) {
+            return baseUrl + '/panel/level4/notifications/mark-read';
+          } else if (currentPath.includes('/level5/')) {
+            return baseUrl + '/panel/level5/notifications/mark-read';
+          } else {
+            // Ruta por defecto
+            return baseUrl + '/panel/notifications/mark-read';
+          }
+        }
+
+        function markNotificationAsReadAndRedirect(notificationId, redirectUrl) {
+          // Obtener la ruta correcta según el nivel
+          let route = getMarkReadRoute();
+
+          fetch(route, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ notification_id: notificationId })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              // Ocultar inmediatamente la notificación del dropdown
+              const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+              if (notificationElement) {
+                notificationElement.style.display = 'none';
+              }
+              
+              // Actualizar el contador en el header
+              updateHeaderNotificationCount();
+              
+              // Si no quedan notificaciones visibles, actualizar el contenido del dropdown
+              updateDropdownContent();
+              
+              // Redirigir inmediatamente después de marcar como leída
+              if (redirectUrl) {
+                window.location.href = redirectUrl;
+              }
+            } else {
+              // Si falla marcar como leída, aún así redirigir
+              if (redirectUrl) {
+                window.location.href = redirectUrl;
+              }
+            }
+          })
+          .catch(error => {
+            console.error('Error marking notification as read:', error);
+            // Si hay error, aún así redirigir
+            if (redirectUrl) {
+              window.location.href = redirectUrl;
+            }
+          });
+        }
+
+        function markNotificationAsRead(notificationId) {
+          // Obtener la ruta correcta según el nivel
+          let route = getMarkReadRoute();
+
+          fetch(route, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ notification_id: notificationId })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              // Ocultar inmediatamente la notificación del dropdown
+              const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+              if (notificationElement) {
+                notificationElement.style.display = 'none';
+              }
+              
+              // Actualizar el contador en el header
+              updateHeaderNotificationCount();
+              
+              // Si no quedan notificaciones visibles, actualizar el contenido del dropdown
+              updateDropdownContent();
+            }
+          })
+          .catch(error => {
+            console.error('Error marking notification as read:', error);
+          });
+        }
+
+        function updateHeaderNotificationCount() {
+          const indicator = document.querySelector('#alertsDropdown .indicator');
+          if (indicator) {
+            const currentCount = parseInt(indicator.textContent) || 0;
+            if (currentCount > 0) {
+              indicator.textContent = currentCount - 1;
+              if (currentCount - 1 === 0) {
+                indicator.style.display = 'none';
+              }
+            }
+          }
+        }
+
+        function updateDropdownContent() {
+          // Contar notificaciones visibles
+          const visibleNotifications = document.querySelectorAll('.notification-item:not([style*="display: none"])');
+          const dropdownHeader = document.querySelector('.dropdown-menu-header');
+          const listGroup = document.querySelector('.dropdown-menu .list-group');
+          
+          if (visibleNotifications.length === 0) {
+            // No quedan notificaciones, mostrar mensaje de "no notifications"
+            if (dropdownHeader) {
+              dropdownHeader.textContent = '{{ trans('common.no_new_notifications')|e('js') }}';
+            }
+            if (listGroup) {
+              listGroup.innerHTML = `
+                <div class="list-group-item text-center text-muted py-3">
+                  <i data-feather="check-circle" class="text-success mb-2"></i>
+                  <div>{{ trans('common.all_caught_up')|e('html') }}</div>
+                </div>
+              `;
+              // Re-inicializar los iconos de feather
+              if (typeof feather !== 'undefined') {
+                feather.replace();
+              }
+            }
+          } else {
+            // Actualizar el contador en el header
+            if (dropdownHeader) {
+              const notificationLabel = visibleNotifications.length === 1
+                ? '{{ trans('common.new_notification')|e('js') }}'
+                : '{{ trans('common.new_notifications')|e('js') }}';
+              dropdownHeader.textContent = `${visibleNotifications.length} ${notificationLabel}`;
+            }
+          }
+        }
+      </script>
+
+      <script>
+        // Selector de idioma en el header del panel
+        document.addEventListener('DOMContentLoaded', function() {
+          const languageDropdown = document.getElementById('languageDropdownHeader');
+          const languageMenu = document.getElementById('languageDropdownMenuHeader');
+          
+          if (languageDropdown && languageMenu) {
+            
+            // Manejar selección de idioma
+            languageMenu.querySelectorAll('.dropdown-item').forEach(item => {
+              item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const locale = this.getAttribute('data-locale');
+                if (!locale) return;
+                
+                // Guardar en localStorage y cookie inmediatamente
+                try {
+                  localStorage.setItem('app_locale', locale);
+                  document.cookie = 'app_locale=' + locale + '; path=/; max-age=' + (365 * 24 * 60 * 60) + '; SameSite=Lax';
+                } catch(e) {
+                  console.warn('Error guardando en localStorage/cookie:', e);
+                }
+                
+                // Enviar al servidor via AJAX y mantener al usuario en la misma pagina.
+                fetch('{{ app_url|default("") }}/api/change-language', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                  },
+                  body: 'locale=' + encodeURIComponent(locale)
+                })
+                .then(response => response.json())
+                .then(data => {
+                  if (data.success) {
+                    // Recargar la página para aplicar el nuevo idioma
+                    window.location.reload();
+                  } else {
+                    console.error('Error cambiando idioma:', data.message || 'Error desconocido');
+                    alert('{{ trans('common.language_change_error')|e('js') }}');
+                  }
+                })
+                .catch(error => {
+                  console.error('Error en la petición:', error);
+                  // Aún así recargar si localStorage se guardó correctamente
+                  window.location.reload();
+                });
+              });
+            });
+          }
+        });
+      </script>
+
+
+      <li class="nav-item dropdown" style="display: block !important;">
+        <a class="nav-icon dropdown-toggle" href="#" id="chatUnreadDropdown" data-bs-toggle="dropdown" title="{{ trans('messages_hub.unread_messages') }}" style="display: inline-block !important;">
+          <div class="position-relative">
+            <i class="align-middle" data-feather="message-circle" style="width: 20px; height: 20px;"></i>
+            {% if chat_unread_count|default(0) > 0 %}
+              <span class="indicator" data-chat-unread-indicator>{{ chat_unread_count }}</span>
+            {% else %}
+              <span class="indicator" data-chat-unread-indicator style="display:none;">0</span>
+            {% endif %}
+          </div>
+        </a>
+        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end py-0" aria-labelledby="chatUnreadDropdown" data-chat-unread-menu>
+          <div class="dropdown-menu-header" data-chat-unread-header>
+            {% if chat_unread_count|default(0) > 0 %}
+              {{ chat_unread_count }} {{ trans('messages_hub.unread_messages') }}
+            {% else %}
+              {{ trans('messages_hub.no_unread_messages') }}
+            {% endif %}
+          </div>
+          <div class="list-group" data-chat-unread-list>
+            {% if chat_unread_threads|default([])|length > 0 %}
+              {% for unreadThread in chat_unread_threads %}
+                <a href="{{ path(chat_unread_base_route ~ '?thread=' ~ unreadThread.id) }}" class="list-group-item chat-unread-item" data-chat-thread-id="{{ unreadThread.id }}">
+                  <div class="row g-0 align-items-center">
+                    <div class="col-2"><i class="text-success" data-feather="message-circle"></i></div>
+                    <div class="col-10">
+                      <div class="text-dark fw-bold">{{ trans('messages_hub.new_unread_message') }}</div>
+                      <div class="text-dark small">{{ trans('messages_hub.unread_from') }} {{ unreadThread.partner_name ?: unreadThread.partner_email ?: (trans('messages_hub.user_fallback') ~ ' ' ~ unreadThread.partner_id) }}</div>
+                      {% if unreadThread.last_unread_message %}
+                        <div class="text-muted small mt-1">{{ unreadThread.last_unread_message|slice(0, 70) }}{% if unreadThread.last_unread_message|length > 70 %}...{% endif %}</div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </a>
+              {% endfor %}
+            {% else %}
+              <div class="list-group-item text-center text-muted py-3" data-chat-unread-empty>
+                <i data-feather="check-circle" class="text-success mb-2"></i>
+                <div>{{ trans('messages_hub.no_unread_messages') }}</div>
+              </div>
+            {% endif %}
+          </div>
+          <div class="dropdown-menu-footer">
+            <a href="{{ path(chat_unread_base_route|default('panel/planner-hub/team/chat')) }}" class="text-muted">{{ trans('messages_hub.open_conversation') }}</a>
+          </div>
+        </div>
+      </li>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const list = document.querySelector('[data-chat-unread-list]');
+          const header = document.querySelector('[data-chat-unread-header]');
+          const indicator = document.querySelector('[data-chat-unread-indicator]');
+          if (!list || !header || !indicator) return;
+
+          const labels = {
+            unreadMessages: '{{ trans('messages_hub.unread_messages')|e('js') }}',
+            noUnreadMessages: '{{ trans('messages_hub.no_unread_messages')|e('js') }}',
+            newUnreadMessage: '{{ trans('messages_hub.new_unread_message')|e('js') }}',
+            unreadFrom: '{{ trans('messages_hub.unread_from')|e('js') }}',
+            userFallback: '{{ trans('messages_hub.user_fallback')|e('js') }}'
+          };
+
+          function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>'"]/g, function (char) {
+              return {'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;'}[char];
+            });
+          }
+
+          function renderUnreadThreads(threads) {
+            const count = Array.isArray(threads) ? threads.length : 0;
+            indicator.textContent = String(count);
+            indicator.style.display = count > 0 ? '' : 'none';
+            header.textContent = count > 0 ? `${count} ${labels.unreadMessages}` : labels.noUnreadMessages;
+
+            if (count === 0) {
+              list.innerHTML = `<div class="list-group-item text-center text-muted py-3" data-chat-unread-empty><i data-feather="check-circle" class="text-success mb-2"></i><div>${escapeHtml(labels.noUnreadMessages)}</div></div>`;
+              if (typeof feather !== 'undefined') feather.replace();
+              return;
+            }
+
+            list.innerHTML = threads.map(function (thread) {
+              const partner = thread.partner_name || thread.partner_email || `${labels.userFallback} ${thread.partner_id}`;
+              const rawPreview = String(thread.last_unread_message || '');
+              const preview = rawPreview ? `<div class="text-muted small mt-1">${escapeHtml(rawPreview.slice(0, 70))}${rawPreview.length > 70 ? '...' : ''}</div>` : '';
+              return `<a href="${escapeHtml(thread.link)}" class="list-group-item chat-unread-item" data-chat-thread-id="${escapeHtml(thread.id)}"><div class="row g-0 align-items-center"><div class="col-2"><i class="text-success" data-feather="message-circle"></i></div><div class="col-10"><div class="text-dark fw-bold">${escapeHtml(labels.newUnreadMessage)}</div><div class="text-dark small">${escapeHtml(labels.unreadFrom)} ${escapeHtml(partner)}</div>${preview}</div></div></a>`;
+            }).join('');
+            if (typeof feather !== 'undefined') feather.replace();
+          }
+
+          async function refreshChatUnread() {
+            try {
+              const response = await fetch('{{ path('api/chat/unread') }}', {
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
+              });
+              if (!response.ok) return;
+              const data = await response.json();
+              if (data && data.success) renderUnreadThreads(data.data || []);
+            } catch (error) {}
+          }
+
+          window.addEventListener('focus', refreshChatUnread);
+          window.setInterval(refreshChatUnread, 20000);
+        });
+      </script>
+      {% set _locales = supported_locales is defined and supported_locales is not empty ? supported_locales : ['en', 'es', 'pt', 'fr'] %}
+      {% set _current_locale = locale is defined ? locale : 'en' %}
+      <li class="nav-item dropdown" style="display: block !important;">
+        <a class="nav-icon dropdown-toggle" href="#" id="languageDropdownHeader" data-bs-toggle="dropdown" title="{{ trans('common.language') }}" style="display: inline-block !important;">
+          <i class="align-middle" data-feather="globe" style="width: 20px; height: 20px;">🌐</i>
+        </a>
+        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdownHeader" id="languageDropdownMenuHeader">
+          {% for loc in _locales %}
+            <a class="dropdown-item {% if _current_locale == loc %}active{% endif %}" href="#" data-locale="{{ loc }}">
+              {{ getLocaleName(loc) }}
+              {% if _current_locale == loc %} ✓{% endif %}
+            </a>
+          {% endfor %}
+        </div>
+      </li>
+
+      {% if not isMobileApp %}
+      <li class="nav-item dropdown">
+        <a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown"><i class="align-middle" data-feather="settings" style="width: 20px; height: 20px;">⚙️</i></a>
+
+        <a class="nav-link dropdown-toggle d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
+          <img src="{{ asset_for('template/img/avatars/profile.png') }}" class="avatar img-fluid rounded me-1" alt="Charles Hall" />
+          <span class="text-dark">{{ user.email }}</span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-end">
+          {#<div class="dropdown-divider"></div>#}
+          <a class="dropdown-item" href="{{ path('logout') }}">{{ trans('common.logout') }}</a>
+        </div>
+      </li>
+      {% endif %}
+
+    </ul>
+  </div>
+</nav>

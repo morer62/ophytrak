@@ -1,0 +1,986 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set storeStatusLabels = {
+    'NEW': trans('store_status.new'),
+    'CONFIRMED': trans('store_status.confirmed'),
+    'PROCESSING': trans('store_status.processing'),
+    'IN_PREPARATION': trans('store_status.in_preparation'),
+    'READY': trans('store_status.ready'),
+    'READY_FOR_DELIVERY': trans('store_status.ready_for_delivery'),
+    'OUT_FOR_DELIVERY': trans('store_status.out_for_delivery'),
+    'DELIVERY_ATTEMPTED': trans('store_status.delivery_attempted'),
+    'RETURNED_TO_BUSINESS': trans('store_status.returned_to_business'),
+    'REDELIVERY_SCHEDULED': trans('store_status.redelivery_scheduled'),
+    'DELIVERED': trans('store_status.delivered'),
+    'COMPLETED': trans('store_status.completed'),
+    'CANCELLED': trans('store_status.cancelled'),
+    'RETURN_REQUESTED': trans('store_status.return_requested'),
+    'RETURN_APPROVED': trans('store_status.return_approved'),
+    'RETURN_REJECTED': trans('store_status.return_rejected'),
+    'RETURNED': trans('store_status.returned'),
+    'CLOSED': trans('store_status.closed')
+} %}
+{% set paymentStatusLabels = {
+    'PENDING': trans('store_payment_status.pending'),
+    'PAID': trans('store_payment_status.paid'),
+    'FAILED': trans('store_payment_status.failed'),
+    'REFUNDED': trans('store_payment_status.refunded')
+} %}
+{% set storeTaskTypeLabels = {
+    'PREPARATION': trans('store_task_types.preparation'),
+    'DELIVERY': trans('store_task_types.delivery'),
+    'FULFILLMENT': trans('store_task_types.fulfillment'),
+    'ASSISTANCE': trans('store_task_types.assistance'),
+    'CUSTOMER_SUPPORT': trans('store_task_types.customer_support'),
+    'OTHER': trans('store_task_types.other')
+} %}
+{% set storeTaskStatusLabels = {
+    'PENDING': trans('store_task_statuses.pending'),
+    'IN_PROGRESS': trans('store_task_statuses.in_progress'),
+    'WAITING_REVIEW': trans('store_task_statuses.waiting_review'),
+    'COMPLETED': trans('store_task_statuses.completed'),
+    'CANCELED': trans('store_task_statuses.canceled')
+} %}
+<div class="container-fluid">
+    <nav class="mb-3 small text-muted">
+        <a href="{{ path('panel/home') }}" class="text-decoration-none">{{ trans('nav.dashboard') }}</a>
+        <span class="mx-2">/</span>
+        <a href="{{ path('panel/planner-hub/store/orders/home') }}" class="text-decoration-none">{{ trans('nav.store_logistics') }}</a>
+        <span class="mx-2">/</span>
+        <span>{{ trans('nav.store_orders') }}</span>
+    </nav>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
+            <div>
+                <p class="text-uppercase fw-bold text-success small mb-1">{{ trans('nav.store_logistics_overview') }}</p>
+                <h2 class="h4 fw-bold mb-1">{{ trans('nav.store_logistics') }}</h2>
+                <p class="text-muted mb-0">{{ trans('nav.store_overview_text') }}</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ path('panel/planner-hub/store/products/home') }}" class="btn btn-outline-dark">{{ trans('nav.products') }}</a>
+                <a href="{{ path('panel/planner-hub/store/orders/home?context=fulfillment') }}" class="btn btn-outline-dark">{{ trans('nav.fulfillment') }}</a>
+                <a href="{{ path('panel/planner-hub/store/orders/home?context=delivery') }}" class="btn btn-outline-dark">{{ trans('nav.delivery') }}</a>
+                <a href="{{ path('panel/planner-hub/store/reports/sales') }}" class="btn btn-outline-dark">{{ trans('nav.store_reports') }}</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h1 class="h3 mb-1">{{ trans('store_orders.title') }}</h1>
+            <p class="text-muted mb-0">{{ trans('store_orders.subtitle') }}</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ path('panel/planner-hub/store/orders/manual') }}" class="btn btn-success">{{ trans('store_orders.create_order') }}</a>
+            <a href="{{ path('panel/planner-hub/store/products/create') }}" class="btn btn-outline-success">{{ trans('nav.add_product') }}</a>
+            <div class="dropdown">
+                <button class="btn btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown">{{ trans('nav.more_actions') }}</button>
+                <div class="dropdown-menu dropdown-menu-end">
+                    <a class="dropdown-item" href="{{ path('panel/planner-hub/store/orders/import') }}">{{ trans('store_orders.csv_import') }}</a>
+                    <a class="dropdown-item" href="{{ path('panel/planner-hub/store/reports/sales') }}">{{ trans('store_orders.sales_report') }}</a>
+                    <a class="dropdown-item" href="{{ path('panel/planner-hub/store/orders/history') }}">{{ trans('store_report.history') }}</a>
+                    {% if public_profile_url %}<a class="dropdown-item" href="{{ public_profile_url }}" target="_blank">{{ trans('store_orders.business_profile') }}</a>{% endif %}
+                    {% if public_store_url %}<a class="dropdown-item" href="{{ public_store_url }}" target="_blank">{{ trans('store_orders.storefront') }}</a>{% endif %}
+                    <a class="dropdown-item" href="{{ path('panel/planner-hub/store/carts/home') }}">{{ trans('store_orders.view_abandoned_carts') }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="nav nav-pills store-lifecycle-tabs mb-4" role="tablist">
+                <a class="nav-link {{ lifecycleTab == 'active' ? 'active' : '' }}" href="{{ path('panel/planner-hub/store/orders/home?tab=active') }}">{{ trans('store_orders.active_orders') }} <span class="badge rounded-pill">{{ lifecycleCounts.active }}</span></a>
+                <a class="nav-link {{ lifecycleTab == 'incidents' ? 'active' : '' }}" href="{{ path('panel/planner-hub/store/orders/home?tab=incidents') }}">{{ trans('store_orders.incidents') }} <span class="badge rounded-pill">{{ lifecycleCounts.incidents }}</span></a>
+                <a class="nav-link {{ lifecycleTab == 'closed' ? 'active' : '' }}" href="{{ path('panel/planner-hub/store/orders/home?tab=closed') }}">{{ trans('store_orders.closed_orders') }} <span class="badge rounded-pill">{{ lifecycleCounts.closed }}</span></a>
+            </div>
+            <form method="get" class="row g-3">
+                <input type="hidden" name="tab" value="{{ lifecycleTab }}">
+                <div class="col-md-2">
+                    <label class="form-label">{{ trans('store_orders.week_start') }}</label>
+                    <input type="date" name="week_start" class="form-control" value="{{ filters.week_start }}">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">{{ trans('store_orders.week_end') }}</label>
+                    <input type="date" name="week_end" class="form-control" value="{{ filters.week_end }}">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">{{ trans('store_orders.payment_status') }}</label>
+                    <select name="payment_status" class="form-select">
+                        <option value="">{{ trans('ui.all') }}</option>
+                        <option value="PENDING" {% if filters.payment_status == 'PENDING' %}selected{% endif %}>{{ paymentStatusLabels.PENDING }}</option>
+                        <option value="PAID" {% if filters.payment_status == 'PAID' %}selected{% endif %}>{{ paymentStatusLabels.PAID }}</option>
+                        <option value="FAILED" {% if filters.payment_status == 'FAILED' %}selected{% endif %}>{{ paymentStatusLabels.FAILED }}</option>
+                        <option value="REFUNDED" {% if filters.payment_status == 'REFUNDED' %}selected{% endif %}>{{ paymentStatusLabels.REFUNDED }}</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">{{ trans('store_orders.order_status') }}</label>
+                    <select name="status" class="form-select">
+                        <option value="">{{ trans('ui.all') }}</option>
+                        {% for statusCode, statusLabel in storeStatusLabels %}
+                            <option value="{{ statusCode }}" {% if filters.status == statusCode %}selected{% endif %}>{{ statusLabel }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">{{ trans('store_report.customer_email') }}</label>
+                    <input type="text" name="email" class="form-control" value="{{ filters.email }}" placeholder="{{ trans('store_orders.search_by_email') }}">
+                </div>
+
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">{{ trans('store_orders.filter') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if carrierCustodyRequests|length %}
+    <div class="alert alert-warning border-0 shadow-sm mb-4 carrier-request-alert">
+        <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap"><div><strong>{{ trans('store_orders.carrier_requests_title') }}</strong><div>{{ trans('store_orders.carrier_requests_help') }}</div></div><span class="badge bg-danger fs-6">{{ carrierCustodyRequests|length }}</span></div>
+        {% for request in carrierCustodyRequests %}
+        <div class="bg-white rounded-3 p-3 mt-3 d-flex justify-content-between align-items-center gap-3 flex-wrap">
+            <div><strong>{{ request.package_code }}</strong> · {{ request.carrier_name }}<div class="small text-muted">{{ request.name }} {{ request.lastname }} ({{ request.email }}) · {{ request.created_at|date('M j, Y g:i A') }}</div></div>
+            <form method="post" class="d-flex gap-2"><input type="hidden" name="action" value="carrier_custody_decision"><input type="hidden" name="request_id" value="{{ request.id }}"><button class="btn btn-outline-danger" name="decision" value="REJECT">{{ trans('ui.reject') }}</button><button class="btn btn-success" name="decision" value="APPROVE">{{ trans('ui.accept') }}</button></form>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if isCarrierOrganization %}
+    <div class="card border-0 shadow-sm mb-4"><div class="card-body"><div class="mb-3"><span class="badge bg-warning text-dark">{{ trans('store_logistics.carrier_workspace') }}</span><h2 class="h5 fw-bold mt-2 mb-1">{{ trans('store_logistics.carrier_admin_board') }}</h2><p class="text-muted mb-0">{{ trans('store_logistics.carrier_admin_help') }}</p></div><div class="row g-3">{% for package in carrierPackages %}<div class="col-xl-4 col-md-6"><div class="border rounded-4 p-3 h-100"><div class="driver-package-code fw-bold text-success">{{ package.package_code }}</div><div>{{ package.seller_name }} · {{ package.custody_status|replace({'_':' '}) }}</div><div class="small text-muted my-2">{{ package.current_location_label }}</div><form method="post" class="row g-2"><input type="hidden" name="action" value="carrier_assign_employee"><input type="hidden" name="package_id" value="{{ package.id }}"><div class="col-12"><select class="form-select form-select-sm" name="employee_id" required><option value="">{{ trans('store_logistics.assign_carrier_employee') }}</option>{% for member in teamUsers %}<option value="{{ member.id_user }}">{{ member.name }} {{ member.lastname }} ({{ member.email }})</option>{% endfor %}</select></div><div class="col-7"><select class="form-select form-select-sm" name="carrier_role"><option value="PICKUP">Pickup</option><option value="HUB_RECEIVING">Hub</option><option value="SORTING">Sorting</option><option value="DELIVERY">Delivery</option><option value="SUPERVISOR">Supervisor</option></select></div><div class="col-5"><button class="btn btn-sm btn-success w-100">{{ trans('ui.assign') }}</button></div></form></div></div>{% else %}<div class="col-12 text-muted">{{ trans('store_logistics.no_carrier_packages') }}</div>{% endfor %}</div></div></div>
+    {% endif %}
+
+    <div class="card border-0 shadow-sm mb-4 package-finder-card">
+        <div class="card-body p-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-lg-7">
+                    <span class="badge rounded-pill text-bg-success mb-2">{{ trans('store_orders.package_control') }}</span>
+                    <h2 class="h5 fw-bold mb-1">{{ trans('store_orders.find_package') }}</h2>
+                    <p class="text-muted mb-3">{{ trans('store_orders.find_package_help') }}</p>
+                    <form method="get" class="input-group input-group-lg">
+                        <input type="hidden" name="tab" value="{{ lifecycleTab }}">
+                        <span class="input-group-text bg-white">⌕</span>
+                        <input class="form-control" name="package" value="{{ packageQuery }}" placeholder="OPH-123-456-01" autocomplete="off" required>
+                        <button class="btn btn-primary px-4">{{ trans('store_orders.locate_package') }}</button>
+                    </form>
+                </div>
+                <div class="col-lg-5">
+                    <div class="package-finder-tip">{{ trans('store_orders.package_identifier_tip') }}</div>
+                </div>
+            </div>
+
+            {% if packageSearch %}
+                <div class="package-result mt-4">
+                    <div class="d-flex flex-wrap justify-content-between gap-3 border-bottom pb-3 mb-3">
+                        <div><small class="text-muted d-block">{{ trans('store_orders.package_identifier') }}</small><strong class="fs-4 font-monospace">{{ packageSearch.package_code }}</strong></div>
+                        <div><small class="text-muted d-block">{{ trans('store_report.order') }}</small><strong>#{{ packageSearch.id_store_order }}</strong></div>
+                        <div><small class="text-muted d-block">{{ trans('store_report.customer') }}</small><strong>{{ packageSearch.guest_name ?: packageSearch.guest_email }}</strong></div>
+                        <div><small class="text-muted d-block">{{ trans('store_orders.package_current_location') }}</small><span class="badge bg-primary fs-6">{{ packageSearch.current_location_label }}</span></div>
+                    </div>
+                    <div class="row g-4">
+                        <div class="col-lg-5">
+                            <h3 class="h6 fw-bold">{{ trans('store_orders.order_details') }}</h3>
+                            <dl class="row small mb-0">
+                                <dt class="col-5">{{ trans('ui.status') }}</dt><dd class="col-7">{{ storeStatusLabels[packageSearch.current_status]|default(packageSearch.current_status) }}</dd>
+                                <dt class="col-5">{{ trans('store_report.payment') }}</dt><dd class="col-7">{{ paymentStatusLabels[packageSearch.payment_status]|default(packageSearch.payment_status) }}</dd>
+                                <dt class="col-5">{{ trans('store_orders.shipping_address') }}</dt><dd class="col-7">{{ packageSearch.shipping_address_1 }} {{ packageSearch.shipping_address_2 }}, {{ packageSearch.shipping_city }} {{ packageSearch.shipping_state }} {{ packageSearch.shipping_zip }}</dd>
+                                <dt class="col-5">{{ trans('store_orders.last_activity') }}</dt><dd class="col-7">{{ packageSearch.last_event_at|date('M j, Y g:i A') }}</dd>
+                                {% if packageSearch.latest_location %}<dt class="col-5">GPS</dt><dd class="col-7"><a href="https://www.google.com/maps?q={{ packageSearch.latest_location.latitude }},{{ packageSearch.latest_location.longitude }}" target="_blank" rel="noopener">{{ trans('store_orders.view_last_gps') }}</a><br><small class="text-muted">{{ packageSearch.latest_location.recorded_at|date('M j, Y g:i A') }}</small></dd>{% endif %}
+                            </dl>
+                        </div>
+                        <div class="col-lg-7">
+                            <h3 class="h6 fw-bold">{{ trans('store_orders.package_history') }}</h3>
+                            <div class="package-timeline">
+                                {% for event in packageSearch.events %}
+                                    <div class="package-event"><span class="package-event-dot"></span><div><strong>{{ event.status_to ? storeStatusLabels[event.status_to]|default(event.status_to) : event.event_type }}</strong><div class="small text-muted">{{ event.location_label }} · {{ event.created_at|date('M j, Y g:i A') }}</div>{% if event.name or event.notes %}<div class="small">{{ event.name }} {{ event.lastname }}{% if event.notes %} — {{ event.notes }}{% endif %}</div>{% endif %}</div></div>
+                                {% else %}<p class="text-muted small">{{ trans('store_orders.no_package_events') }}</p>{% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% elseif packageSearchAttempted %}
+                <div class="alert alert-warning mt-4 mb-0">{{ trans('store_orders.package_not_found') }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <style>.store-lifecycle-tabs{gap:.6rem}.store-lifecycle-tabs .nav-link{border:1px solid #dbe4ea;color:#0f5b5c;font-weight:700;border-radius:999px}.store-lifecycle-tabs .nav-link.active{background:linear-gradient(135deg,#0d6669,#14a38b);color:#fff}.store-lifecycle-tabs .badge{background:rgba(15,91,92,.12);color:inherit}.store-lifecycle-tabs .active .badge{background:rgba(255,255,255,.2)}.package-finder-card{background:linear-gradient(135deg,#f7fffd,#eef7fb)}.package-finder-tip{border:1px dashed #8bb9b4;border-radius:14px;padding:1rem;background:#fff;color:#48666a}.package-result{background:#fff;border:1px solid #dcebea;border-radius:18px;padding:1.25rem}.package-timeline{max-height:310px;overflow:auto;padding-left:.25rem}.package-event{display:flex;gap:.75rem;position:relative;padding:0 0 1.15rem 1rem;border-left:2px solid #cde3df}.package-event:last-child{padding-bottom:0}.package-event-dot{position:absolute;left:-7px;top:3px;width:12px;height:12px;border-radius:50%;background:#119982;box-shadow:0 0 0 4px #e5f6f2}</style>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            {% if orders|length > 0 %}
+                {% include 'panel/level2/planner-hub/store/orders/home/compact-table.twig' %}
+                {% if false %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th class="text-nowrap">ID</th>
+                                <th class="text-nowrap">{{ trans('ui.date') }}</th>
+                                <th>{{ trans('store_report.customer') }}</th>
+                                <th>{{ trans('store_orders.shipping_address') }}</th>
+                                <th class="text-nowrap">{{ trans('store_orders.pricing') }}</th>
+                                <th class="text-nowrap">{{ trans('store_orders.coupon') }}</th>
+                                <th class="text-nowrap">{{ trans('ui.details') }}</th>
+                                <th class="text-end text-nowrap">{{ trans('store_orders.meals') }}</th>
+                                <th class="text-end text-nowrap">{{ trans('ui.total') }}</th>
+                                <th class="text-nowrap">{{ trans('store_report.payment') }}</th>
+                                <th class="text-nowrap">{{ trans('ui.status') }}</th>
+                                <th class="text-nowrap">{{ trans('store_orders.delivery') }}</th>
+                                <th class="text-end text-nowrap">{{ trans('ui.actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for o in orders %}
+                                <tr>
+                                    <td class="text-muted">#{{ o.id }}</td>
+                                    <td class="text-muted small text-nowrap">
+                                        {{ o.created_at|date('M j, Y') }}<br>
+                                        <span class="text-muted">{{ o.created_at|date('g:i A') }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">{{ o.guest_name ?: '-' }}</div>
+                                        <div class="small text-muted">{{ o.guest_email ?: '-' }}</div>
+                                        {% if o.id_user %}
+                                            <a href="{{ path('panel/chat?to=' ~ o.id_user) }}" class="btn btn-sm btn-outline-success mt-2">{{ trans('store_orders.message_customer') }}</a>
+                                        {% endif %}
+                                    </td>
+                                    <td class="small">{{ o.shipping_address_display ?: '-' }}</td>
+                                    <td class="text-uppercase small text-muted">
+                                        {{ o.pricing_mode ?: 'PAYG' }}
+                                    </td>
+                                    <td class="small">
+                                        {% if o.coupon_code %}
+                                            <span class="badge bg-info text-dark">{{ o.coupon_code }}</span>
+                                            {% if (o.coupon_discount ?: 0) > 0 %}
+                                                <div class="text-muted mt-1">- ${{ o.coupon_discount|number_format(2, '.', ',') }}</div>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center text-md-start">
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-primary px-3"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#orderItemsModal"
+                                                data-order-id="{{ o.id }}"
+                                                data-order-date="{{ o.created_at|date('M j, Y g:i A') }}"
+                                                data-order-customer="{{ o.guest_name ?: '-' }}"
+                                                data-order-email="{{ o.guest_email ?: '-' }}"
+                                                data-order-phone="{{ o.guest_phone ?: '-' }}"
+                                                data-order-shipping="{{ o.shipping_address_display ?: '-' }}"
+                                                data-order-status="{{ o.status }}"
+                                                data-order-payment="{{ o.payment_status }}"
+                                                data-order-coupon-code="{{ o.coupon_code ?: '' }}"
+                                                data-order-coupon-discount="{{ (o.coupon_discount ?: 0)|number_format(2, '.', ',') }}"
+                                                data-order-total="{{ o.total|number_format(2, '.', ',') }}"
+                                                data-items="{{ o.items_modal_json|e('html_attr') }}">
+                                            {{ trans('store_orders.view_details') }}
+                                        </button>
+                                    </td>
+                                    <td class="text-end">{{ o.meals_count }}</td>
+                                    <td class="text-end">${{ o.total|number_format(2, '.', ',') }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            {% if o.payment_status == 'PAID' %}
+                                                <span class="badge bg-success">{{ paymentStatusLabels[o.payment_status]|default(o.payment_status) }}</span>
+                                            {% elseif o.payment_status == 'FAILED' %}
+                                                <span class="badge bg-danger">{{ paymentStatusLabels[o.payment_status]|default(o.payment_status) }}</span>
+                                            {% elseif o.payment_status == 'REFUNDED' %}
+                                                <span class="badge bg-secondary">{{ paymentStatusLabels[o.payment_status]|default(o.payment_status) }}</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">{{ paymentStatusLabels[o.payment_status]|default(o.payment_status) }}</span>
+                                            {% endif %}
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#editPaymentModal"
+                                                    data-order-id="{{ o.id }}"
+                                                    data-payment-status="{{ o.payment_status }}"
+                                                    data-payment-remaining="{{ o.remaining_balance|number_format(2, '.', '') }}">
+                                                {{ trans('ui.edit') }}
+                                            </button>
+                                        </div>
+                                        <div class="small mt-1">{{ trans('store_orders.paid_total') }}: ${{ o.paid_total|number_format(2, '.', ',') }} · {{ trans('store_orders.remaining_balance') }}: ${{ o.remaining_balance|number_format(2, '.', ',') }}</div>
+                                        {% if o.latest_payment %}
+                                            <div class="small text-muted mt-2">
+                                                {{ o.latest_payment.payment_method|default('payment')|replace({'_':' '})|title }}
+                                                {% if o.latest_payment.external_reference %}<br>Ref: {{ o.latest_payment.external_reference }}{% endif %}
+                                                {% if o.latest_payment.proof_url %}<br><a href="{{ o.latest_payment.proof_url }}" target="_blank">{{ trans('store_report.view_payment_proof') }}</a>{% endif %}
+                                            </div>
+                                        {% endif %}
+                                        {% if o.payment_status == 'PENDING' and o.guest_email %}
+                                            <form method="post" class="mt-2">
+                                                <input type="hidden" name="action" value="resend_payment_link">
+                                                <input type="hidden" name="order_id" value="{{ o.id }}">
+                                                <button class="btn btn-sm btn-outline-primary">{{ trans('store_orders.resend_payment_link') }}</button>
+                                            </form>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            {% set statusBadge = o.status in ['DELIVERED', 'COMPLETED'] ? 'bg-success' : (o.status in ['CANCELLED', 'RETURN_REJECTED'] ? 'bg-danger' : (o.status in ['DELIVERY_ATTEMPTED', 'RETURNED_TO_BUSINESS', 'RETURN_REQUESTED'] ? 'bg-warning text-dark' : (o.status in ['OUT_FOR_DELIVERY', 'READY_FOR_DELIVERY', 'REDELIVERY_SCHEDULED'] ? 'bg-primary' : 'bg-info text-dark'))) %}
+                                            <span class="badge {{ statusBadge }}">{{ storeStatusLabels[o.status]|default(o.status) }}</span>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#editStatusModal"
+                                                    data-order-id="{{ o.id }}"
+                                                    data-status="{{ o.status }}">
+                                                Edit
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="small">
+                                        {% if o.assignment_required %}
+                                            <div class="alert alert-warning py-2 px-2 mb-2 assignment-alert">
+                                                <strong>{{ trans('store_orders.assignment_needed') }}</strong>
+                                                <button type="button" class="btn btn-sm btn-warning d-block mt-2" data-bs-toggle="modal" data-bs-target="#assignDeliveryModal" data-order-id="{{ o.id }}" data-delivery-user-id="{{ o.delivery_user_id }}" data-kitchen-user-id="{{ o.kitchen_user_id }}" data-allow-close="{{ o.allow_team_close_delivery }}" data-allow-chat="{{ o.allow_chat_with_client }}">{{ trans('store_orders.assign_now') }}</button>
+                                            </div>
+                                        {% endif %}
+                                        <div><strong>{{ trans('store_orders.preparation_user') }}:</strong> <span class="badge {{ o.kitchen_user_id ? 'bg-success' : 'bg-secondary' }}">{{ o.preparation_assignee_name ?: trans('store_orders.unassigned') }}</span></div>
+                                        {% if o.kitchen_user_id %}
+                                            <a href="{{ path('panel/chat?to=' ~ o.kitchen_user_id) }}" class="btn btn-sm btn-outline-success mt-1">{{ trans('store_orders.message_preparation') }}</a>
+                                        {% endif %}
+                                        <div class="mt-2"><strong>{{ trans('store_orders.delivery_user') }}:</strong> <span class="badge {{ o.delivery_user_id ? 'bg-success' : 'bg-secondary' }}">{{ o.delivery_assignee_name ?: trans('store_orders.unassigned') }}</span></div>
+                                        {% if o.delivery_user_id %}
+                                            <a href="{{ path('panel/chat?to=' ~ o.delivery_user_id) }}" class="btn btn-sm btn-outline-success mt-1">{{ trans('store_orders.message_driver') }}</a>
+                                        {% endif %}
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-secondary mt-1"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#assignDeliveryModal"
+                                                data-order-id="{{ o.id }}"
+                                                data-delivery-user-id="{{ o.delivery_user_id }}"
+                                                data-kitchen-user-id="{{ o.kitchen_user_id }}"
+                                                data-allow-close="{{ o.allow_team_close_delivery }}"
+                                                data-allow-chat="{{ o.allow_chat_with_client }}">
+                                            {{ trans('store_orders.operations') }}
+                                        </button>
+                                        {% if o.latest_location and o.delivery_tracking_active %}
+                                            <a class="d-block mt-1" target="_blank" href="https://www.google.com/maps?q={{ o.latest_location.latitude }},{{ o.latest_location.longitude }}">{{ trans('store_orders.latest_location') }}</a>
+                                            <span class="text-muted">{{ o.latest_location.recorded_at|date('M j, g:i A') }}</span>
+                                        {% endif %}
+                                        {% if o.delivery_photo_url %}<a class="d-block mt-1" target="_blank" href="{{ o.delivery_photo_url }}">{{ trans('store_history.delivery_proof') }}</a>{% endif %}
+                                        <span class="d-block text-muted mt-1">{{ o.store_tasks|length }} {{ trans('store_orders.work_items') }}</span>
+                                        {% for task in o.store_tasks %}
+                                            <span class="d-block mt-1">{{ storeTaskTypeLabels[task.task_type]|default(task.task_type|replace({'_':' '})) }}: {{ storeTaskStatusLabels[task.status]|default(task.status|replace({'_':' '})) }}</span>
+                                            {% if task.id_user and task.assigned_at %}
+                                                <small class="d-block text-muted">{{ (task.name ~ ' ' ~ task.lastname)|trim }} · {{ task.assigned_at|date('M j, Y g:i A') }}{% if task.assigned_by %} · {{ trans('store_orders.assigned_by') }} {{ (task.assigned_by_name ~ ' ' ~ task.assigned_by_lastname)|trim }}{% endif %}</small>
+                                            {% endif %}
+                                            {% if task.id_user %}
+                                                <a class="d-block mt-1" href="{{ path('panel/chat?to=' ~ task.id_user) }}">{{ trans('store_orders.message') }} {{ (task.name ~ ' ' ~ task.lastname)|trim ?: task.email }}</a>
+                                            {% endif %}
+                                            {% if task.status == 'WAITING_REVIEW' %}
+                                                <form method="post" class="mt-1"><input type="hidden" name="action" value="complete_task"><input type="hidden" name="order_id" value="{{ o.id }}"><input type="hidden" name="task_id" value="{{ task.id }}"><button class="btn btn-sm btn-success">{{ trans('store_orders.approve_delivery') }}</button></form>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-primary mb-1" data-bs-toggle="modal" data-bs-target="#createTaskModal" data-order-id="{{ o.id }}">{{ trans('store_orders.add_task') }}</button>
+                                        <a href="{{ path('store/order-access?token=' ~ o.public_token) }}" target="_blank" class="btn btn-sm btn-outline-dark">
+                                            {{ trans('store_orders.view_public') }}
+                                        </a>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-success mt-1 print-store-label-btn"
+                                                data-order-id="{{ o.id }}"
+                                                data-tracking-code="OPH-{{ o.id }}"
+                                                data-order-date="{{ o.created_at|date('Y-m-d H:i') }}"
+                                                data-customer="{{ o.guest_name ?: trans('store_report.customer') }}"
+                                                data-email="{{ o.guest_email ?: '' }}"
+                                                data-destination-address="{{ o.shipping_address_1 ?: '' }}"
+                                                data-destination-address2="{{ o.shipping_address_2 ?: '' }}"
+                                                data-destination-city="{{ o.shipping_city ?: '' }}"
+                                                data-destination-state="{{ o.shipping_state ?: '' }}"
+                                                data-destination-postal="{{ o.shipping_zip ?: '' }}"
+                                                data-destination-country="{{ o.shipping_country ?: '' }}"
+                                                data-instructions="{{ o.shipping_instructions ?: '' }}"
+                                                data-sender-name="{{ businessProfile.company_name|default('Ophyra') }}"
+                                                data-sender-address="{{ businessProfile.address_line1|default('') }}"
+                                                data-sender-city="{{ businessProfile.city|default('') }}"
+                                                data-sender-state="{{ businessProfile.state|default('') }}"
+                                                data-sender-postal="{{ businessProfile.zip|default('') }}"
+                                                data-sender-country="{{ businessProfile.country|default('') }}"
+                                                data-carrier-name="{{ o.delivery_assignee_name ?: trans('store_orders.label_logistics') }}"
+                                                data-total="${{ o.total|number_format(2, '.', ',') }}"
+                                                data-url="{{ path('store/order-access?token=' ~ o.public_token) }}">
+                                            {{ trans('store_orders.print_label') }}
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <h5 class="mb-2">{{ trans('store_orders.no_orders_found') }}</h5>
+                    <p class="text-muted">{{ trans('nav.no_store_orders_help') }}</p>
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <a href="{{ path('panel/planner-hub/store/orders/manual') }}" class="btn btn-success">{{ trans('nav.create_first_store_order') }}</a>
+                        <a href="{{ path('panel/planner-hub/store/products/create') }}" class="btn btn-outline-success">{{ trans('nav.add_products') }}</a>
+                        {% if public_profile_url %}<a href="{{ public_profile_url }}" target="_blank" class="btn btn-outline-dark">{{ trans('nav.storefront_setup') }}</a>{% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Order details modal -->
+    <div class="modal fade" id="orderItemsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ trans('store_orders.order_products') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#detailsPrep" type="button">{{ trans('store_orders.prep') }}</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#detailsDelivery" type="button">{{ trans('store_orders.delivery') }}</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#detailsClient" type="button">{{ trans('store_orders.client') }}</button></li>
+                    </ul>
+                    <div class="tab-content border border-top-0 p-3">
+                        <div class="tab-pane fade show active" id="detailsPrep">
+                            <div class="small mb-2"><strong>{{ trans('store_report.order') }} #</strong> <span id="orderMetaId">-</span></div>
+                            <div class="small mb-2"><strong>{{ trans('ui.date') }}</strong> <span id="orderItemsDate"></span></div>
+                            <div class="small mb-2"><strong>{{ trans('ui.status') }}</strong> <span id="orderMetaStatus"></span></div>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle">
+                                    <thead>
+                                    <tr>
+                                        <th>{{ trans('store_orders.product') }}</th>
+                                        <th class="text-end">{{ trans('store_orders.qty') }}</th>
+                                        <th class="text-end">{{ trans('store_orders.unit_price') }}</th>
+                                        <th class="text-end">{{ trans('ui.total') }}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="orderItemsTableBody">
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-3">{{ trans('store_orders.no_products_found') }}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="detailsDelivery">
+                            <div class="small mb-2"><strong>{{ trans('store_orders.shipping_address') }}:</strong> <span id="orderMetaShipping">-</span></div>
+                            <div class="small mb-2"><strong>{{ trans('store_report.payment') }}:</strong> <span id="orderMetaPayment">-</span></div>
+                            <div class="small mb-2"><strong>{{ trans('store_orders.coupon') }}:</strong> <span id="orderMetaCoupon">-</span></div>
+                            <div class="small mb-2"><strong>{{ trans('ui.total') }}:</strong> $<span id="orderMetaTotal">0.00</span></div>
+                        </div>
+                        <div class="tab-pane fade" id="detailsClient">
+                            <div class="small mb-2"><strong>{{ trans('store_orders.name') }}:</strong> <span id="orderItemsCustomer">-</span></div>
+                            <div class="small mb-2"><strong>{{ trans('store_orders.email') }}:</strong> <span id="orderItemsEmail">-</span></div>
+                            <div class="small"><strong>{{ trans('store_orders.phone') }}:</strong> <span id="orderMetaPhone">-</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ trans('ui.close') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editPaymentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" enctype="multipart/form-data">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ trans('store_orders.update_payment_status') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="action" value="update_payment_status">
+                        <input type="hidden" name="order_id" id="editPaymentOrderId">
+                        <div class="mb-3">
+                            <label class="form-label">{{ trans('store_orders.payment_status') }}</label>
+                            <select name="payment_status" id="editPaymentSelect" class="form-select">
+                                <option value="PENDING">{{ paymentStatusLabels.PENDING }}</option>
+                                <option value="PAID">{{ paymentStatusLabels.PAID }}</option>
+                                <option value="FAILED">{{ paymentStatusLabels.FAILED }}</option>
+                                <option value="REFUNDED">{{ paymentStatusLabels.REFUNDED }}</option>
+                            </select>
+                        </div>
+                        <div id="manualPaymentDetails">
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('store_orders.payment_received_amount') }}</label>
+                                <input type="number" name="manual_payment_amount" id="manualPaymentAmount" class="form-control" min="0.01" step="0.01">
+                                <div class="form-text">{{ trans('store_orders.remaining_balance') }}: $<span id="manualPaymentRemaining">0.00</span></div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('store_orders.payment_proof') }}</label>
+                                <input type="file" name="manual_payment_proof" class="form-control" accept="image/jpeg,image/png,image/webp,application/pdf">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('store_orders.manual_payment_method') }}</label>
+                                <select name="manual_payment_method" class="form-select">
+                                    <option value="cash">{{ trans('store_orders.payment_method_cash') }}</option>
+                                    <option value="bank_transfer">{{ trans('store_orders.payment_method_bank_transfer') }}</option>
+                                    <option value="zelle">Zelle</option>
+                                    <option value="other">{{ trans('store_orders.payment_method_other') }}</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('store_orders.manual_payment_reference') }}</label>
+                                <input name="manual_payment_reference" id="manualPaymentReference" class="form-control" maxlength="190" placeholder="{{ trans('store_orders.manual_payment_reference_help') }}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('store_orders.manual_payment_notes') }}</label>
+                                <textarea name="manual_payment_notes" class="form-control" rows="3" maxlength="1000"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ trans('ui.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ trans('ui.save') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editStatusModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ trans('store_orders.update_order_status') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="action" value="update_status">
+                        <input type="hidden" name="order_id" id="editStatusOrderId">
+                        <div class="mb-3">
+                            <label class="form-label">{{ trans('store_orders.order_status') }}</label>
+                            <select name="status" id="editStatusSelect" class="form-select">
+                                {% for statusCode, statusLabel in storeStatusLabels %}
+                                    <option value="{{ statusCode }}">{{ statusLabel }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ trans('ui.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ trans('ui.save') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="assignDeliveryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" id="assignOperationsForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ trans('store_import.badge') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="action" value="assign_delivery">
+                        <input type="hidden" name="async" value="1">
+                        <input type="hidden" name="order_id" id="assignDeliveryOrderId">
+                        <div id="assignOperationsFeedback" class="alert d-none" role="alert"></div>
+                        <details id="assignOperationsDebug" class="d-none mb-3">
+                            <summary class="small fw-semibold">Technical response details</summary>
+                            <pre class="small bg-dark text-light p-2 mt-2 rounded" style="max-height:260px;overflow:auto;white-space:pre-wrap" id="assignOperationsDebugText"></pre>
+                        </details>
+                        <div class="mb-3">
+                            <label class="form-label">{{ trans('store_orders.preparation_user') }}</label>
+                            <select class="form-select" name="kitchen_user_id" id="assignKitchenUserSelect">
+                                <option value="">{{ trans('store_orders.unassigned') }}</option>
+                                <option value="{{ managerUserId }}">{{ trans('store_orders.assign_to_me') }} — {{ managerUserName }}</option>
+                                {% for u in teamUsers %}
+                                    <option value="{{ u.id_user }}">{{ (u.name ~ ' ' ~ u.lastname)|trim }}{% if u.email %} ({{ u.email }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ trans('store_orders.delivery_user') }}</label>
+                            <select class="form-select" name="delivery_user_id" id="assignDeliveryUserSelect">
+                                <option value="">{{ trans('store_orders.unassigned') }}</option>
+                                <option value="{{ managerUserId }}">{{ trans('store_orders.assign_to_me') }} — {{ managerUserName }}</option>
+                                {% for u in teamUsers %}
+                                    <option value="{{ u.id_user }}">{{ (u.name ~ ' ' ~ u.lastname)|trim }}{% if u.email %} ({{ u.email }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% if teamUsers is empty %}
+                            <div class="alert alert-info">
+                                {{ trans('store_orders.no_team_members_assignment') }}
+                                <a class="btn btn-sm btn-outline-primary d-block mt-2" href="{{ path('panel/planner-hub/management/users/create') }}">{{ trans('store_orders.add_team_member') }}</a>
+                            </div>
+                        {% endif %}
+                        <button type="button" class="btn btn-sm btn-outline-success mb-3" id="assignBothToMe">{{ trans('store_orders.assign_both_to_me') }}</button>
+                        <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="allow_team_close_delivery" id="assignAllowClose"><label class="form-check-label" for="assignAllowClose">{{ trans('store_orders.allow_close_delivery') }}</label></div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" name="allow_chat_with_client" id="assignAllowChat"><label class="form-check-label" for="assignAllowChat">{{ trans('store_orders.allow_customer_chat') }}</label></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ trans('ui.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary" id="assignOperationsSubmit">{{ trans('ui.save') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="createTaskModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog"><div class="modal-content"><form method="post">
+            <div class="modal-header"><h5 class="modal-title">{{ trans('store_orders.add_work_item') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" name="action" value="create_task"><input type="hidden" name="order_id" id="createTaskOrderId">
+                <label class="form-label">{{ trans('store_orders.assigned_team_member') }}</label><select name="id_user" class="form-select mb-3"><option value="">{{ trans('store_orders.unassigned') }}</option>{% for u in teamUsers %}<option value="{{ u.id_user }}">{{ (u.name ~ ' ' ~ u.lastname)|trim }}</option>{% endfor %}</select>
+                <label class="form-label">{{ trans('store_orders.work_type') }}</label><select name="task_type" class="form-select mb-3">
+                    {% for typeCode, typeLabel in storeTaskTypeLabels %}
+                        <option value="{{ typeCode }}">{{ typeLabel }}</option>
+                    {% endfor %}
+                </select>
+                <label class="form-label">{{ trans('store_orders.task_title') }}</label><input name="title" class="form-control mb-3" required maxlength="180">
+                <label class="form-label">{{ trans('store_orders.instructions') }}</label><textarea name="instructions" class="form-control mb-3" rows="3"></textarea>
+                <div class="form-check"><input class="form-check-input" type="checkbox" name="requires_location" id="createRequiresLocation"><label class="form-check-label" for="createRequiresLocation">{{ trans('store_orders.require_location') }}</label></div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" name="allow_assignee_complete" id="createAllowComplete" checked><label class="form-check-label" for="createAllowComplete">{{ trans('store_orders.allow_assignee_complete') }}</label></div>
+            </div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">{{ trans('ui.cancel') }}</button><button class="btn btn-primary">{{ trans('store_orders.create_task') }}</button></div>
+        </form></div></div>
+    </div>
+
+    <div class="modal fade" id="storeLabelModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ trans('store_orders.store_order_label') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="storeLabelPreview" class="border rounded-4 p-4 bg-white"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ trans('ui.close') }}</button>
+                    <button type="button" class="btn btn-success" id="printStoreLabelBtn">{{ trans('store_orders.print_label') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="{{ asset_for('assets/js/storeShippingLabel.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const modalEl = document.getElementById('orderItemsModal');
+            if (modalEl) {
+                modalEl.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    if (!button) return;
+
+                    const customer = button.getAttribute('data-order-customer') || '-';
+                    const email = button.getAttribute('data-order-email') || '-';
+                    const phone = button.getAttribute('data-order-phone') || '-';
+                    const date = button.getAttribute('data-order-date') || '';
+                    const orderId = button.getAttribute('data-order-id') || '';
+                    const shipping = button.getAttribute('data-order-shipping') || '-';
+                    const orderStatus = button.getAttribute('data-order-status') || '-';
+                    const payment = button.getAttribute('data-order-payment') || '-';
+                    const couponCode = button.getAttribute('data-order-coupon-code') || '';
+                    const couponDiscount = button.getAttribute('data-order-coupon-discount') || '0.00';
+                    const total = button.getAttribute('data-order-total') || '0.00';
+                    const itemsJson = button.getAttribute('data-items') || '[]';
+                    document.getElementById('orderItemsCustomer').textContent = customer;
+                    document.getElementById('orderItemsEmail').textContent = email;
+                    document.getElementById('orderItemsDate').textContent = date;
+                    document.getElementById('orderMetaPhone').textContent = phone;
+                    document.getElementById('orderMetaId').textContent = orderId;
+                    document.getElementById('orderMetaShipping').textContent = shipping;
+                    document.getElementById('orderMetaStatus').textContent = orderStatus;
+                    document.getElementById('orderMetaPayment').textContent = payment;
+                    document.getElementById('orderMetaCoupon').textContent = couponCode ? (couponCode + ' (-$' + couponDiscount + ')') : '-';
+                    document.getElementById('orderMetaTotal').textContent = total;
+
+                    let items = [];
+                    try {
+                        items = JSON.parse(itemsJson);
+                    } catch (e) {
+                        items = [];
+                    }
+
+                    const tbody = document.getElementById('orderItemsTableBody');
+                    tbody.innerHTML = '';
+
+                    if (!items.length) {
+                        const tr = document.createElement('tr');
+                        const td = document.createElement('td');
+                        td.colSpan = 4;
+                        td.className = 'text-center text-muted py-3';
+                        td.textContent = '{{ trans('store_orders.no_products_found') }}';
+                        tr.appendChild(td);
+                        tbody.appendChild(tr);
+                        return;
+                    }
+
+                    items.forEach(function (item) {
+                        const tr = document.createElement('tr');
+
+                        const tdName = document.createElement('td');
+                        tdName.textContent = item.name || '-';
+
+                        const tdQty = document.createElement('td');
+                        tdQty.className = 'text-end';
+                        tdQty.textContent = item.quantity ?? 0;
+
+                        const tdUnit = document.createElement('td');
+                        tdUnit.className = 'text-end';
+                        tdUnit.textContent = '$' + Number(item.unit_price ?? 0).toFixed(2);
+
+                        const tdTotal = document.createElement('td');
+                        tdTotal.className = 'text-end';
+                        tdTotal.textContent = '$' + Number(item.line_total ?? 0).toFixed(2);
+
+                        tr.appendChild(tdName);
+                        tr.appendChild(tdQty);
+                        tr.appendChild(tdUnit);
+                        tr.appendChild(tdTotal);
+                        tbody.appendChild(tr);
+                    });
+                });
+            }
+
+            const paymentModal = document.getElementById('editPaymentModal');
+            if (paymentModal) {
+                const paymentSelect = document.getElementById('editPaymentSelect');
+                const manualDetails = document.getElementById('manualPaymentDetails');
+                const manualReference = document.getElementById('manualPaymentReference');
+                const syncManualPaymentFields = function () {
+                    const isPaid = paymentSelect && paymentSelect.value === 'PAID';
+                    if (manualDetails) manualDetails.classList.toggle('d-none', !isPaid);
+                    if (manualReference) manualReference.required = Boolean(isPaid);
+                };
+                if (paymentSelect) paymentSelect.addEventListener('change', syncManualPaymentFields);
+                paymentModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    if (!button) return;
+                    const orderId = button.getAttribute('data-order-id') || '';
+                    const status = button.getAttribute('data-payment-status') || 'PENDING';
+                    const remaining = parseFloat(button.getAttribute('data-payment-remaining') || '0');
+                    const idInput = document.getElementById('editPaymentOrderId');
+                    const select = document.getElementById('editPaymentSelect');
+                    if (idInput) idInput.value = orderId;
+                    if (select) select.value = status || 'PENDING';
+                    const amount = document.getElementById('manualPaymentAmount');
+                    const remainingLabel = document.getElementById('manualPaymentRemaining');
+                    if (amount) { amount.value = remaining.toFixed(2); amount.max = remaining.toFixed(2); }
+                    if (remainingLabel) remainingLabel.textContent = remaining.toFixed(2);
+                    syncManualPaymentFields();
+                });
+            }
+
+            const statusModal = document.getElementById('editStatusModal');
+            if (statusModal) {
+                statusModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    if (!button) return;
+                    const orderId = button.getAttribute('data-order-id') || '';
+                    const status = button.getAttribute('data-status') || 'NEW';
+                    const idInput = document.getElementById('editStatusOrderId');
+                    const select = document.getElementById('editStatusSelect');
+                    if (idInput) idInput.value = orderId;
+                    if (select) select.value = status || 'NEW';
+                });
+            }
+
+            const manualLogisticsModal = document.getElementById('manualLogisticsModal');
+            if (manualLogisticsModal) {
+                const manualStatus = document.getElementById('manualLogisticsStatus');
+                const manualPhoto = document.getElementById('manualDeliveryPhoto');
+                const manualPhotoGroup = document.getElementById('manualDeliveryPhotoGroup');
+                const manualSubmit = document.getElementById('manualLogisticsSubmit');
+                const syncManualDeliveryPhoto = function () {
+                    const selected = manualStatus ? manualStatus.value : '';
+                    const needsPhoto = ['DELIVERED', 'RETURNED_TO_BUSINESS'].includes(selected);
+                    if (manualPhoto) manualPhoto.required = needsPhoto;
+                    if (manualPhotoGroup) manualPhotoGroup.classList.toggle('d-none', !needsPhoto);
+                    if (manualSubmit) manualSubmit.classList.toggle('d-none', !selected);
+                };
+                if (manualStatus) manualStatus.addEventListener('change', syncManualDeliveryPhoto);
+                manualLogisticsModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    if (!button) return;
+                    document.getElementById('manualLogisticsOrderId').value = button.getAttribute('data-order-id') || '';
+                    if (manualStatus) manualStatus.value = '';
+                    if (manualPhoto) manualPhoto.value = '';
+                    const feedback = document.getElementById('manualLogisticsFeedback');
+                    const debugBox = document.getElementById('manualLogisticsDebug');
+                    if (feedback) feedback.className = 'alert d-none';
+                    if (debugBox) debugBox.classList.add('d-none');
+                    syncManualDeliveryPhoto();
+                });
+                const manualForm = document.getElementById('manualLogisticsForm');
+                if (manualForm) manualForm.addEventListener('submit', async function (event) {
+                    event.preventDefault();
+                    const feedback = document.getElementById('manualLogisticsFeedback');
+                    const debugBox = document.getElementById('manualLogisticsDebug');
+                    const debugText = document.getElementById('manualLogisticsDebugText');
+                    if (!manualStatus || !manualStatus.value) return;
+                    if (manualSubmit) manualSubmit.disabled = true;
+                    if (feedback) { feedback.className = 'alert alert-info'; feedback.textContent = 'Saving logistics update...'; }
+                    if (debugBox) debugBox.classList.add('d-none');
+                    try {
+                        const response = await fetch(window.location.href, {method:'POST',headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'},body:new FormData(manualForm),credentials:'same-origin'});
+                        const rawResponse = await response.text();
+                        let payload = null;
+                        try { payload = JSON.parse(rawResponse.trim()); } catch (ignored) {
+                            const start = rawResponse.lastIndexOf('{"success"');
+                            if (start >= 0) try { payload = JSON.parse(rawResponse.slice(start).trim()); } catch (ignoredAgain) {}
+                        }
+                        if (!response.ok || !payload || !payload.success) {
+                            const error = new Error(payload && payload.message ? payload.message : 'The server returned an invalid response.');
+                            error.diagnostic = ['HTTP status: '+response.status+' '+response.statusText,'Response URL: '+response.url,'Content-Type: '+(response.headers.get('content-type')||'(not provided)'),payload&&payload.request_id?'Request ID: '+payload.request_id:'',payload&&payload.debug?'Server debug:\n'+JSON.stringify(payload.debug,null,2):'','Raw response:\n'+(rawResponse||'[empty response]')].filter(Boolean).join('\n\n');
+                            throw error;
+                        }
+                        if (feedback) { feedback.className = 'alert alert-success'; feedback.textContent = payload.message; }
+                        setTimeout(function(){ window.location.replace(window.location.pathname + window.location.search); }, 450);
+                    } catch (error) {
+                        if (feedback) { feedback.className = 'alert alert-danger'; feedback.textContent = error.message || 'Unable to update logistics status.'; }
+                        if (debugBox && debugText) { debugText.textContent = error.diagnostic || String(error.stack || error); debugBox.classList.remove('d-none'); debugBox.open = true; }
+                        if (manualSubmit) manualSubmit.disabled = false;
+                    }
+                });
+            }
+
+            const assignDeliveryModal = document.getElementById('assignDeliveryModal');
+            if (assignDeliveryModal) {
+                assignDeliveryModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    if (!button) return;
+                    const orderId = button.getAttribute('data-order-id') || '';
+                    const deliveryId = button.getAttribute('data-delivery-user-id') || '';
+                    const kitchenId = button.getAttribute('data-kitchen-user-id') || '';
+                    const idInput = document.getElementById('assignDeliveryOrderId');
+                    const select = document.getElementById('assignDeliveryUserSelect');
+                    const kitchenSelect = document.getElementById('assignKitchenUserSelect');
+                    if (idInput) idInput.value = orderId;
+                    if (select) select.value = deliveryId;
+                    if (kitchenSelect) kitchenSelect.value = kitchenId;
+                    document.getElementById('assignAllowClose').checked = button.getAttribute('data-allow-close') === '1';
+                    document.getElementById('assignAllowChat').checked = button.getAttribute('data-allow-chat') === '1';
+                });
+                document.getElementById('assignBothToMe')?.addEventListener('click', function () {
+                    document.getElementById('assignKitchenUserSelect').value = '{{ managerUserId }}';
+                    document.getElementById('assignDeliveryUserSelect').value = '{{ managerUserId }}';
+                });
+                const assignmentForm = document.getElementById('assignOperationsForm');
+                if (assignmentForm) assignmentForm.addEventListener('submit', async function (event) {
+                    event.preventDefault();
+                    const submit = document.getElementById('assignOperationsSubmit');
+                    const feedback = document.getElementById('assignOperationsFeedback');
+                    const debugBox = document.getElementById('assignOperationsDebug');
+                    const debugText = document.getElementById('assignOperationsDebugText');
+                    if (submit) submit.disabled = true;
+                    if (debugBox) debugBox.classList.add('d-none');
+                    if (debugText) debugText.textContent = '';
+                    if (feedback) {
+                        feedback.className = 'alert alert-info';
+                        feedback.textContent = 'Saving responsibilities...';
+                    }
+                    try {
+                        const response = await fetch(window.location.href, {
+                            method: 'POST',
+                            headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json'},
+                            body: new FormData(assignmentForm),
+                            credentials: 'same-origin'
+                        });
+                        const contentType = response.headers.get('content-type') || '(not provided)';
+                        const rawResponse = await response.text();
+                        let payload = null;
+                        try {
+                            payload = JSON.parse(rawResponse.trim());
+                        } catch (parseError) {
+                            const jsonStart = rawResponse.lastIndexOf('{"success"');
+                            if (jsonStart >= 0) {
+                                try { payload = JSON.parse(rawResponse.slice(jsonStart).trim()); } catch (ignored) {}
+                            }
+                        }
+                        if (!response.ok || !payload || !payload.success) {
+                            const diagnostic = [
+                                'HTTP status: ' + response.status + ' ' + response.statusText,
+                                'Response URL: ' + response.url,
+                                'Content-Type: ' + contentType,
+                                payload && payload.request_id ? 'Request ID: ' + payload.request_id : '',
+                                payload && payload.debug ? 'Server debug:\n' + JSON.stringify(payload.debug, null, 2) : '',
+                                'Raw response:\n' + (rawResponse || '[empty response]')
+                            ].filter(Boolean).join('\n\n');
+                            const requestError = new Error(payload && payload.message ? payload.message : 'The server returned a non-JSON or invalid response.');
+                            requestError.diagnostic = diagnostic;
+                            throw requestError;
+                        }
+                        if (feedback) {
+                            feedback.className = 'alert alert-success';
+                            feedback.textContent = payload.message;
+                        }
+                        setTimeout(function () {
+                            window.location.replace(window.location.pathname + window.location.search);
+                        }, 450);
+                    } catch (error) {
+                        if (feedback) {
+                            feedback.className = 'alert alert-danger';
+                            feedback.textContent = error.message || 'The responsibilities could not be saved.';
+                        }
+                        if (debugBox && debugText) {
+                            debugText.textContent = error.diagnostic || String(error.stack || error);
+                            debugBox.classList.remove('d-none');
+                            debugBox.open = true;
+                        }
+                        if (submit) submit.disabled = false;
+                    }
+                });
+                {% if assignmentRequiredOrderId %}
+                const requiredButton = document.querySelector('[data-bs-target="#assignDeliveryModal"][data-order-id="{{ assignmentRequiredOrderId }}"]');
+                if (requiredButton) bootstrap.Modal.getOrCreateInstance(assignDeliveryModal).show(requiredButton);
+                {% endif %}
+            }
+            const createTaskModal = document.getElementById('createTaskModal');
+            if (createTaskModal) createTaskModal.addEventListener('show.bs.modal', function (event) {
+                document.getElementById('createTaskOrderId').value = event.relatedTarget.getAttribute('data-order-id') || '';
+            });
+
+            const shippingLabelText = {
+                sender: {{ trans('store_orders.label_sender')|json_encode|raw }},
+                recipient: {{ trans('store_orders.label_recipient')|json_encode|raw }},
+                orderNumber: {{ trans('store_orders.label_order_number')|json_encode|raw }},
+                orderDate: {{ trans('store_orders.label_order_date')|json_encode|raw }},
+                instructions: {{ trans('store_orders.label_instructions')|json_encode|raw }},
+                packageHandledBy: {{ trans('store_orders.label_package_handled_by')|json_encode|raw }},
+                logistics: {{ trans('store_orders.label_logistics')|json_encode|raw }},
+                customer: {{ trans('store_report.customer')|json_encode|raw }}
+            };
+            document.querySelectorAll('.print-store-label-btn').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const publicUrl = new URL(this.dataset.url || '/', window.location.origin).href;
+                    const preview = document.getElementById('storeLabelPreview');
+                    OphyraShippingLabel.render(preview, { ...this.dataset, url: publicUrl, recipientName: this.dataset.customer }, shippingLabelText);
+                    new bootstrap.Modal(document.getElementById('storeLabelModal')).show();
+                });
+            });
+
+            const printStoreLabelBtn = document.getElementById('printStoreLabelBtn');
+            if (printStoreLabelBtn) {
+                printStoreLabelBtn.addEventListener('click', function () {
+                    OphyraShippingLabel.print(document.getElementById('storeLabelPreview'), {{ trans('store_orders.store_order_label')|json_encode|raw }});
+                });
+            }
+
+        });
+    </script>
+{% endblock %}

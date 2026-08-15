@@ -1,0 +1,76 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="mt-4">
+    <div class="container">
+
+        <h1 class="h3">{{ trans('planner_hub.order_menu') }}</h1>
+        {{ macros.breadcrumb2() }}
+
+        {% if stripe_connected %}
+            <p class="text-center mb-4">
+                <a href="{{ path('panel/planner-hub/management/payments') }}" class="text-decoration-none" style="color: #28a745; font-weight: 600;">
+                    💳 {{ trans('planner_hub.view_payment_history') }}
+                </a>
+            </p>
+        {% endif %}
+
+        <div class="d-flex justify-content-between mb-3">
+            <a class="btn btn-dark" href="{{ path(current_location ~ '/orders/create') }}">
+                <i data-feather="plus"></i> {{ trans('planner_hub.create_new_estimate') }}
+            </a>
+            <a class="btn btn-outline-secondary" href="{{ path('/panel/planner-hub/management/orders/orders/previous') }}">
+                <i data-feather="clock"></i> {{ trans('planner_hub.previous_orders') }}
+            </a>
+        </div>
+
+
+        <div class="row">
+            <!-- Orders -->
+            <div class="col-12 col-md-4 col-lg-3 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center py-4">
+                        <h5 class="card-title mb-2 text-muted">{{ trans('planner_hub.orders_and_estimates') }}</h5>
+                        <p class="card-text small text-muted">{{ trans('planner_hub.orders_and_estimates_desc') }}</p>
+                        <a href="{{ path('panel/planner-hub/management/orders/orders/') }}" class="btn btn-primary btn-sm mt-2">{{ trans('planner_hub.go_to_orders') }}</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Services -->
+            <div class="col-12 col-md-4 col-lg-3 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center py-4">
+                        <h5 class="card-title mb-2 text-muted">{{ trans('planner_hub.your_services') }}</h5>
+                        <p class="card-text small text-muted">{{ trans('planner_hub.your_services_desc') }}</p>
+                        <a href="{{ path('panel/planner-hub/management/orders/services') }}" class="btn btn-primary btn-sm mt-2">{{ trans('planner_hub.go_to_services') }}</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contracts -->
+            <div class="col-12 col-md-4 col-lg-3 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center py-4">
+                        <h5 class="card-title mb-2 text-muted">{{ trans('planner_hub.contracts') }}</h5>
+                        <p class="card-text small text-muted">{{ trans('planner_hub.contracts_desc') }}</p>
+                        <a href="{{ path('panel/planner-hub/management/orders/contracts') }}" class="btn btn-primary btn-sm mt-2">{{ trans('planner_hub.go_to_contracts') }}</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="col-12 col-md-4 col-lg-3 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center py-4">
+                        <h5 class="card-title mb-2 text-muted">{{ trans('planner_hub.tips') }}</h5>
+                        <p class="card-text small text-muted">{{ trans('planner_hub.tips_desc') }}</p>
+                        <a href="{{ path('panel/planner-hub/management/orders/tips') }}" class="btn btn-primary btn-sm mt-2">{{ trans('planner_hub.go_to_tips') }}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

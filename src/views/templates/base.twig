@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="{{ locale|default('en') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {% set publicBaseUrl = env.APP_URL|default('https://ophyra.com')|trim('/') %}
+    {% set defaultSeoTitle = product_mode == 'ophytrack' ? 'OPHYTRACK | Logística, tracking y entregas bajo control' : 'Ophyra | One Workspace for Every Moving Part of Your Service Business' %}
+    {% set defaultSeoDescription = 'Clients, orders, contracts, team and follow-up — from the first inquiry to the final payment. One workspace for service businesses. Start free.' %}
+    {% set defaultOgImage = publicBaseUrl ~ '/assets/public/ophyra/og/ophyra-og-default.jpg' %}
+    {% if product_mode == 'ophytrack' %}
+        {% set defaultSeoDescription = 'Controla pedidos, paquetes, almacén, transportadoras, entregas y evidencias desde una plataforma logística.' %}
+        {% set defaultOgImage = publicBaseUrl ~ '/' ~ brand.hero_logo %}
+    {% endif %}
+
+    <title>{% if seo.title is defined %}{{ seo.title }}{% else %}{{ defaultSeoTitle }}{% endif %}</title>
+
+    <meta name="description" content="{{ seo.description|default(defaultSeoDescription) }}">
+    {% if seo.canonical is defined %}
+        <link rel="canonical" href="{{ seo.canonical }}">
+    {% endif %}
+    <link rel="alternate" type="text/plain" href="{{ publicBaseUrl }}/llms.txt" title="LLMs.txt">
+    <link rel="alternate" type="text/plain" href="{{ publicBaseUrl }}/llms-full.txt" title="LLMs Full">
+    {% if seo.canonical is defined %}
+        <link rel="alternate" hreflang="{{ locale|default('en') }}" href="{{ seo.canonical }}">
+        <link rel="alternate" hreflang="x-default" href="{{ seo.canonical }}">
+    {% endif %}
+    <meta property="og:title" content="{{ seo.og_title|default(seo.title|default(defaultSeoTitle)) }}">
+    <meta property="og:site_name" content="{{ brand.name|default('Ophyra') }}">
+    <meta property="og:description" content="{{ seo.og_description|default(seo.description|default(defaultSeoDescription)) }}">
+    <meta property="og:image" content="{{ seo.og_image|default(defaultOgImage) }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    {% if seo.canonical is defined %}
+        <meta property="og:url" content="{{ seo.canonical }}">
+    {% endif %}
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ seo.twitter_title|default(seo.title|default(defaultSeoTitle)) }}">
+    <meta name="twitter:description" content="{{ seo.twitter_description|default(seo.description|default(defaultSeoDescription)) }}">
+    <meta name="twitter:image" content="{{ seo.og_image|default(defaultOgImage) }}">
+
+    {% set marketingLiteAssets = marketing_lite_assets|default(false) %}
+    {% if not marketingLiteAssets %}
+        <link rel="stylesheet" href="{{ asset_for('template/css/app.css') }}" />
+    {% endif %}
+    <link rel="shortcut icon" href="{{ asset_for('template/img/icons/icon-48x48.png') }}" />
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% if load_font_awesome|default(false) %}
+        <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"></noscript>
+    {% endif %}
+
+    {% block head %}
+    {% endblock %}
+
+    <meta name="robots" content="{{ seo.robots|default('index, follow') }}">
+    <meta name="keywords" content="{{ seo.keywords|default(trans('common.public_meta_keywords')) }}">
+    <meta name="author" content="{{ seo.author|default(brand.name|default('Ophyra')) }}">
+    <meta name="lang" content="{{ locale|default('en') }}">
+    <meta name="language" content="{{ getLocaleName(locale|default('en')) }}">
+
+    {% block meta %}
+        <meta name="priority" content="0.5">
+    {% endblock %}
+
+    {% block styles %}
+    {% endblock %}
+
+    {% if schemaJsonList is defined and schemaJsonList is iterable %}
+        {% for schemaItem in schemaJsonList %}
+            <script type="application/ld+json">
+{{ schemaItem|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
+            </script>
+        {% endfor %}
+    {% elseif schemaJson is defined %}
+        <script type="application/ld+json">
+{{ schemaJson|json_encode(constant('JSON_UNESCAPED_SLASHES'))|raw }}
+        </script>
+    {% endif %}
+
+</head>
+<body>
+
+    {% include 'templates/components/public-language-selector.twig' %}
+
+    {% block body %}
+    {% endblock %}
+
+    {% include 'templates/components/public-cookie-consent.twig' %}
+
+    {% if not marketingLiteAssets %}
+        <script src="{{ asset_for('template/js/app.js') }}" defer></script>
+    {% endif %}
+    {% set googleMapsKey = env.GOOGLE_MAPS_API_KEY|default(env.GOOGLE_KEY|default('')) %}
+    {% if uses_google_maps|default(false) and googleMapsKey %}
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ googleMapsKey }}&libraries=places&callback=initMap" async defer></script>
+        <script src="{{ asset_for('assets/js/googleMaps.js') }}"></script>
+    {% endif %}
+    
+    <!-- Bootstrap JS -->
+    {% if not marketingLiteAssets %}
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    {% endif %}
+    {% if enable_dom_translator|default(false) %}
+        {% include 'templates/components/i18n-dom-translator.twig' %}
+    {% endif %}
+    {% if requires_stripe|default(false) %}
+        <script src="https://js.stripe.com/v3/" defer></script>
+    {% endif %}
+    <script>
+        function formatNumber(elm) {
+            const raw = String(elm.value || '').trim();
+            const hasPlus = raw.startsWith('+');
+            const digits = raw.replace(/\D/g, '');
+
+            if (!digits) {
+                elm.value = '';
+                return;
+            }
+
+            if (hasPlus && digits.startsWith('1') && digits.length > 1) {
+                let local = digits.slice(1, 11);
+                if (local.length <= 3) {
+                    elm.value = '+1 ' + local;
+                } else if (local.length <= 6) {
+                    elm.value = '+1 (' + local.slice(0, 3) + ') ' + local.slice(3);
+                } else {
+                    elm.value = '+1 (' + local.slice(0, 3) + ') ' + local.slice(3, 6) + '-' + local.slice(6);
+                }
+                return;
+            }
+
+            const prefix = hasPlus ? '+' : '';
+            elm.value = prefix + digits.replace(/(\d{3})(?=\d)/g, '$1 ').trim();
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            {% if alertMessage is not null %}
+            setTimeout(() => {
+                alert('{{ alertMessage.message }}')
+            }, 1)
+            {% endif %}
+
+            document.querySelectorAll("[data-phone]").forEach(elm => {
+                formatNumber(elm)
+                elm.addEventListener("input", () => formatNumber(elm))
+            })
+        })
+    </script>
+
+    {% block scripts %}{% endblock %}
+
+    {% if product_mode == 'ophytrack' %}
+    <script>document.addEventListener('DOMContentLoaded',function(){document.title=document.title.replace(/Ophyra/gi,'OPHYTRACK');var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),n=[];while(w.nextNode())n.push(w.currentNode);n.forEach(function(x){if(x.parentElement&&!['SCRIPT','STYLE','TEXTAREA'].includes(x.parentElement.tagName))x.nodeValue=x.nodeValue.replace(/Ophyra/g,'OPHYTRACK').replace(/ophyra/g,'OPHYTRACK');});});</script>
+    {% endif %}
+
+
+</body>
+</html>

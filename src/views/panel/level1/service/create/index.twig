@@ -1,0 +1,161 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block style %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/trumbowyg@2.27.3/dist/ui/trumbowyg.min.css">
+{% endblock %}
+
+{% block body %}
+<div>
+    <h1 class="h3 text-center mb-4">{{ trans('planner_hub.create_new_service') }}</h1>
+
+    <div class="alert alert-info alert-dismissible fade show text-center" role="alert">
+        {{ trans('planner_hub.monthly_cost_per_service')|replace({'{amount}': env.SERVICE_PAYMENT_AMOUNT})|raw }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Paso 1: Categoría -->
+    <section id="step-1">
+        <select class="form-select mb-3" name="category_id" id="service-category" required>
+            <option value="">{{ trans('planner_hub.select_category') }}</option>
+            {% for c in categories %}
+                <option value="{{ c.id }}">{{ c.service_category }}</option>
+            {% endfor %}
+        </select>
+        <button type="button" class="btn btn-primary w-100" id="to-step-2">{{ trans('planner_hub.continue') }}</button>
+    </section>
+
+    <!-- Paso 2: Detalles -->
+    <section id="step-2" style="display:none;">
+        <form method="post" class="card shadow-lg p-4" id="service-form">
+            <input type="hidden" name="category_id" id="final-category">
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <label class="form-label">{{ trans('planner_hub.additional_categories_optional') }}</label>
+                    <div class="border rounded p-2" style="max-height: 220px; overflow:auto;">
+                        {% for c in categories %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="extra_categories[]" value="{{ c.id }}" id="cat-{{ c.id }}">
+                                <label class="form-check-label" for="cat-{{ c.id }}">{{ c.service_category }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <small class="text-muted">{{ trans('planner_hub.check_all_apply') }}</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ trans('planner_hub.profile_name') }}</label>
+                    <input name="name" class="form-control" required placeholder="{{ trans('planner_hub.profile_name_placeholder_dj') }}" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ trans('planner_hub.phone_number') }}</label>
+                    <input name="phone_number" class="form-control" data-phone placeholder="{{ trans('planner_hub.phone_placeholder_example') }}" />
+                </div>
+                <div class="col-12 mb-3">
+                    <label class="form-label">{{ trans('planner_hub.biography') }}</label>
+                    <textarea class="form-control" name="description" id="description-editor" placeholder="{{ trans('planner_hub.tell_us_what_makes_special') }}" required></textarea>
+                </div>
+                <div class="col-12 mb-3">
+                    <label class="form-label">{{ trans('planner_hub.address') }}</label>
+                    <input name="address" data-places class="form-control" required placeholder="{{ trans('planner_hub.start_typing_select_list') }}" />
+                    <small class="text-danger">{{ trans('planner_hub.example_address') }}</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>{{ trans('planner_hub.email') }}</label>
+                    <input name="email" class="form-control" placeholder="{{ trans('planner_hub.email_placeholder_service') }}" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>{{ trans('planner_hub.website') }}</label>
+                    <input name="website" class="form-control" placeholder="{{ trans('planner_hub.website_placeholder_service') }}" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>{{ trans('planner_hub.instagram') }}</label>
+                    <input name="instagram" class="form-control" placeholder="{{ trans('planner_hub.instagram_placeholder_service') }}" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>{{ trans('planner_hub.facebook') }}</label>
+                    <input name="facebook" class="form-control" placeholder="{{ trans('planner_hub.facebook_placeholder_service') }}" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>{{ trans('planner_hub.twitter') }}</label>
+                    <input name="twitter" class="form-control" placeholder="{{ trans('planner_hub.twitter_placeholder_service') }}" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>{{ trans('planner_hub.yelp') }}</label>
+                    <input name="yelp" class="form-control" placeholder="{{ trans('planner_hub.yelp_placeholder_service') }}" />
+                </div>
+
+                <button type="button" class="btn btn-outline-secondary w-100 mb-2" id="back-step-1">{{ trans('planner_hub.back') }}</button>
+                <button type="submit" class="btn btn-success w-100">{{ trans('planner_hub.submit_service') }}</button>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/trumbowyg@2.27.3/dist/trumbowyg.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    $('#description-editor').trumbowyg();
+
+    document.getElementById('to-step-2').onclick = () => {
+        const cat = document.getElementById('service-category').value;
+        if (!cat) return alert('{{ trans('planner_hub.select_category')|e('js') }}');
+        document.getElementById('final-category').value = cat;
+        document.getElementById('step-1').style.display = 'none';
+        document.getElementById('step-2').style.display = 'block';
+    };
+
+    document.getElementById('back-step-1').onclick = () => {
+        document.getElementById('step-1').style.display = 'block';
+        document.getElementById('step-2').style.display = 'none';
+    };
+
+    const addressInput = document.querySelector('[name="address"]');
+    const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+        types: ['address'],
+        componentRestrictions: { country: 'us' }
+    });
+
+    autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        addressInput.dataset.lat = place.geometry?.location?.lat() || "";
+        addressInput.dataset.lng = place.geometry?.location?.lng() || "";
+    });
+
+    document.getElementById("service-form").addEventListener("submit", function(e) {
+        const requiredFields = ["name", "description", "address"];
+        const fieldLabels = {
+            "name": "{{ trans('planner_hub.profile_name')|e('js') }}",
+            "description": "{{ trans('planner_hub.biography')|e('js') }}",
+            "address": "{{ trans('planner_hub.address')|e('js') }}"
+        };
+        for (const field of requiredFields) {
+            const input = document.querySelector(`[name='${field}']`);
+            if (!input.value.trim()) {
+                const fieldLabel = fieldLabels[field] || field;
+                alert('{{ trans('planner_hub.field_is_required')|e('js') }}'.replace('{field}', fieldLabel));
+                input.focus();
+                e.preventDefault();
+                return;
+            }
+        }
+
+        // Asegurar que la categoría principal no quede duplicada en extra_categories
+        const mainCat = document.getElementById('final-category').value;
+        const extraChecks = document.querySelectorAll('input[name="extra_categories[]"]');
+        extraChecks.forEach(chk => {
+            if (chk.value === mainCat && chk.checked) {
+                chk.checked = false;
+            }
+        });
+
+        if (!addressInput.dataset.lat || !addressInput.dataset.lng) {
+            alert('{{ trans('planner_hub.please_select_valid_address')|e('js') }}');
+            addressInput.focus();
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

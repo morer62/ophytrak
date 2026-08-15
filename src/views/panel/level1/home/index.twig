@@ -1,0 +1,454 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set dashboard = level1_dashboard %}
+{% set ophyra = dashboard.ophyra %}
+{% set vnv = dashboard.vnv %}
+{% set avomeal = dashboard.avomeal %}
+
+<main class="container-fluid level1-core-home">
+  <style>
+    .level1-core-home {
+      --core-ink: #0f172a;
+      --core-muted: #64748b;
+      --core-border: rgba(148, 163, 184, .26);
+      --core-shadow: 0 22px 52px rgba(15, 23, 42, .10);
+      color: var(--core-ink);
+    }
+
+    .core-hero {
+      border-radius: 26px;
+      padding: 2rem;
+      color: #fff;
+      background:
+        linear-gradient(135deg, rgba(8, 47, 73, .96), rgba(15, 118, 110, .94)),
+        radial-gradient(700px 360px at 85% 0%, rgba(125, 249, 235, .24), transparent 60%);
+      box-shadow: var(--core-shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .core-hero:after {
+      content: "";
+      position: absolute;
+      inset: auto -90px -140px auto;
+      width: 360px;
+      height: 360px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 50%;
+    }
+
+    .core-hero > * { position: relative; z-index: 2; }
+    .core-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      margin-bottom: .85rem;
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #99f6e4;
+    }
+
+    .core-hero h1 {
+      max-width: 840px;
+      font-size: clamp(2rem, 4vw, 3.6rem);
+      line-height: 1.02;
+      font-weight: 900;
+      margin: 0 0 .85rem;
+      letter-spacing: 0;
+      color: #fff !important;
+    }
+
+    .core-hero p {
+      max-width: 850px;
+      color: rgba(255,255,255,.82);
+      font-size: 1.05rem;
+      line-height: 1.72;
+      margin: 0;
+    }
+
+    .core-switch-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      margin-top: 1.35rem;
+    }
+
+    .core-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      color: #ecfeff;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
+      border-radius: 999px;
+      padding: .65rem .95rem;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .core-grid { margin-top: 1.5rem; }
+
+    .membership-ops-alert {
+      align-items: center;
+      border: 1px solid var(--core-border);
+      border-radius: 22px;
+      box-shadow: 0 16px 38px rgba(15, 23, 42, .08);
+      display: flex;
+      gap: 1rem;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+      padding: 1.15rem;
+    }
+
+    .membership-ops-alert.warning { background: #fffbeb; border-color: #fde68a; }
+    .membership-ops-alert.danger { background: #fef2f2; border-color: #fecaca; }
+    .membership-ops-alert.success { background: #f0fdf4; border-color: #bbf7d0; }
+    .membership-ops-alert strong { color: #0f172a; display: block; font-size: 1.05rem; }
+    .membership-ops-alert p { color: #475569; margin: .2rem 0; }
+    .membership-ops-alert small { color: #64748b; font-weight: 800; }
+    .membership-ops-actions { display:flex; flex-wrap:wrap; gap:.55rem; }
+
+    .core-card {
+      min-height: 100%;
+      border-radius: 24px;
+      border: 1px solid var(--core-border);
+      background: #fff;
+      box-shadow: 0 16px 44px rgba(15, 23, 42, .08);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .core-card.dark {
+      color: #f8fafc;
+      background:
+        radial-gradient(560px 260px at 100% 0%, rgba(45, 212, 191, .24), transparent 70%),
+        linear-gradient(145deg, #071411, #11201d 55%, #071411);
+      border-color: rgba(94, 234, 212, .28);
+    }
+
+    .core-card.magenta {
+      color: #fff;
+      background:
+        radial-gradient(520px 280px at 100% 0%, rgba(236, 72, 153, .28), transparent 65%),
+        linear-gradient(145deg, #1f1020, #31213f 55%, #111827);
+      border-color: rgba(244, 114, 182, .26);
+    }
+
+    .core-card.food {
+      color: #fff;
+      background:
+        radial-gradient(520px 280px at 100% 0%, rgba(34, 197, 94, .26), transparent 65%),
+        linear-gradient(145deg, #071411, #173323 55%, #0b1712);
+      border-color: rgba(134, 239, 172, .26);
+    }
+
+    .core-card-body {
+      padding: 1.45rem;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      position: relative;
+      z-index: 2;
+    }
+
+    .core-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: .85rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .core-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #0f172a;
+      background: linear-gradient(135deg, #99f6e4, #2dd4bf);
+      box-shadow: 0 12px 30px rgba(45, 212, 191, .26);
+    }
+
+    .core-card.magenta .core-icon { background: linear-gradient(135deg, #f9a8d4, #ec4899); color: #fff; }
+    .core-card.food .core-icon { background: linear-gradient(135deg, #bbf7d0, #22c55e); }
+
+    .core-label {
+      border-radius: 999px;
+      padding: .42rem .7rem;
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.88);
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.16);
+    }
+
+    .core-card.light .core-label {
+      color: #0f766e;
+      background: #ecfdf5;
+      border-color: #ccfbf1;
+    }
+
+    .core-card h2 {
+      font-size: 1.35rem;
+      font-weight: 900;
+      margin-bottom: .55rem;
+      letter-spacing: 0;
+    }
+
+    .core-card.dark h2,
+    .core-card.magenta h2,
+    .core-card.food h2 {
+      color: #fff !important;
+    }
+
+    .core-card.dark p,
+    .core-card.magenta p,
+    .core-card.food p {
+      color: rgba(255,255,255,.82) !important;
+      opacity: 1;
+    }
+
+    .core-card p {
+      color: inherit;
+      opacity: .78;
+      line-height: 1.65;
+      margin-bottom: 1rem;
+    }
+
+    .core-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .75rem;
+      margin: auto 0 1rem;
+    }
+
+    .core-metric {
+      border-radius: 16px;
+      padding: .85rem;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    .core-card.light .core-metric {
+      background: #f8fafc;
+      border-color: #e2e8f0;
+    }
+
+    .core-metric strong {
+      display: block;
+      font-size: 1.35rem;
+      line-height: 1.1;
+      margin-bottom: .2rem;
+    }
+
+    .core-metric span {
+      display: block;
+      font-size: .78rem;
+      font-weight: 800;
+      color: inherit;
+      opacity: .68;
+    }
+
+    .core-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .65rem;
+      align-items: center;
+      padding-top: .3rem;
+    }
+
+    .core-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .45rem;
+      min-height: 44px;
+      border-radius: 999px;
+      padding: .75rem 1rem;
+      font-weight: 900;
+      text-decoration: none;
+      color: #0f172a;
+      background: #fff;
+      border: 0;
+    }
+
+    .core-card.light .core-btn {
+      color: #fff;
+      background: #0f172a;
+    }
+
+    .core-link {
+      color: inherit;
+      opacity: .82;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .core-section {
+      margin-top: 1.5rem;
+      border-radius: 24px;
+      border: 1px solid var(--core-border);
+      background: #fff;
+      box-shadow: 0 12px 34px rgba(15, 23, 42, .06);
+      padding: 1.35rem;
+    }
+
+    .core-section h3 {
+      font-weight: 900;
+      margin: 0 0 .35rem;
+    }
+
+    .core-mini-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: .85rem;
+      margin-top: 1rem;
+    }
+
+    .core-mini {
+      border-radius: 18px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 1rem;
+    }
+
+    .core-mini strong { display:block; font-size: 1.3rem; }
+    .core-mini span { color: var(--core-muted); font-weight: 700; font-size: .84rem; }
+
+    @media (max-width: 991.98px) {
+      .core-mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 575.98px) {
+      .core-hero { padding: 1.4rem; border-radius: 20px; }
+      .core-metrics, .core-mini-grid { grid-template-columns: 1fr; }
+      .core-card-body, .core-section { padding: 1rem; }
+    }
+  </style>
+
+  <section class="core-hero">
+    <span class="core-eyebrow"><i data-feather="command"></i> {{ trans('dashboard_home.level1_command_center') }}</span>
+    <h1>{{ trans('dashboard_home.level1_hero_title') }}</h1>
+    <p>{{ trans('dashboard_home.level1_hero_text') }}</p>
+    <div class="core-switch-row">
+      <a class="core-chip" href="{{ path('panel/ophyra-platform') }}"><i data-feather="shield"></i> Ophyra Platform</a>
+      <a class="core-chip" href="{{ path('panel/vnv-events') }}"><i data-feather="calendar"></i> VNV Events</a>
+      <a class="core-chip" href="{{ path('panel/avomeal') }}"><i data-feather="shopping-bag"></i> Avomeal</a>
+    </div>
+  </section>
+
+  {% if membership_ops_alert %}
+  <section class="membership-ops-alert {{ membership_ops_alert.tone }}">
+    <div>
+      <strong>{{ membership_ops_alert.title }}</strong>
+      <p>{{ membership_ops_alert.text }}</p>
+      <small>{{ membership_ops_alert.eligible_count }} eligible · {{ membership_ops_alert.ineligible_count }} ineligible · Last cron run: {{ membership_ops_alert.last_cron_run }}</small>
+    </div>
+    <div class="membership-ops-actions">
+      <a href="{{ path(membership_ops_alert.primary_url) }}" class="btn btn-dark fw-bold">{{ membership_ops_alert.primary_label }}</a>
+      <a href="{{ path(membership_ops_alert.secondary_url) }}" class="btn btn-outline-dark fw-bold">{{ membership_ops_alert.secondary_label }}</a>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="row g-4 core-grid">
+    <div class="col-xl-4">
+      <article class="core-card light">
+        <div class="core-card-body">
+          <div class="core-card-top">
+            <span class="core-icon"><i data-feather="shield"></i></span>
+            <span class="core-label">{{ trans('dashboard_home.platform') }}</span>
+          </div>
+          <h2>{{ trans('dashboard_home.ophyra_platform') }}</h2>
+          <p>{{ trans('dashboard_home.ophyra_platform_text') }}</p>
+          <div class="core-metrics">
+            <div class="core-metric"><strong>{{ ophyra.businesses|default(0) }}</strong><span>{{ trans('dashboard_home.businesses') }}</span></div>
+            <div class="core-metric"><strong>{{ ophyra.active_memberships|default(0) }}</strong><span>{{ trans('dashboard_home.active_memberships') }}</span></div>
+            <div class="core-metric"><strong>{{ ophyra.active_modules|default(0) }}</strong><span>{{ trans('dashboard_home.active_modules') }}</span></div>
+            <div class="core-metric"><strong>{{ ophyra.cms_pages|default(0) }}</strong><span>{{ trans('dashboard_home.ophyra_pages') }}</span></div>
+          </div>
+          <div class="core-actions">
+            <a class="core-btn" href="{{ path('panel/ophyra-platform') }}">{{ trans('dashboard_home.open_ophyra') }} <i data-feather="arrow-right"></i></a>
+            <a class="core-link" href="{{ path('panel/subscriptions-manager') }}">{{ trans('dashboard_home.global_users') }}</a>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="col-xl-4">
+      <article class="core-card magenta">
+        <div class="core-card-body">
+          <div class="core-card-top">
+            <span class="core-icon"><i data-feather="calendar"></i></span>
+            <span class="core-label">{{ trans('dashboard_home.operations') }}</span>
+          </div>
+          <h2>{{ trans('dashboard_home.vnv_events_operations') }}</h2>
+          <p>{{ trans('dashboard_home.vnv_events_text') }}</p>
+          <div class="core-metrics">
+            <div class="core-metric"><strong>{{ vnv.upcoming_events|default(0) }}</strong><span>{{ trans('dashboard_home.upcoming_events') }}</span></div>
+            <div class="core-metric"><strong>{{ vnv.open_orders|default(0) }}</strong><span>{{ trans('dashboard_home.open_orders') }}</span></div>
+            <div class="core-metric"><strong>${{ vnv.monthly_sales|default(0)|number_format(0) }}</strong><span>{{ trans('dashboard_home.monthly_sales') }}</span></div>
+            <div class="core-metric"><strong>{{ vnv.clients|default(0) }}</strong><span>{{ trans('dashboard_home.event_clients') }}</span></div>
+          </div>
+          <div class="core-actions">
+            <a class="core-btn" href="{{ path('panel/vnv-events') }}">{{ trans('dashboard_home.open_vnv_events') }} <i data-feather="arrow-right"></i></a>
+            <a class="core-link" href="{{ path('panel/planner-hub/management/orders/orders') }}">{{ trans('ui.orders') }}</a>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="col-xl-4">
+      <article class="core-card food">
+        <div class="core-card-body">
+          <div class="core-card-top">
+            <span class="core-icon"><i data-feather="shopping-bag"></i></span>
+            <span class="core-label">{{ trans('dashboard_home.store_food') }}</span>
+          </div>
+          <h2>{{ trans('dashboard_home.avomeal_store_operations') }}</h2>
+          <p>{{ trans('dashboard_home.avomeal_text') }}</p>
+          <div class="core-metrics">
+            <div class="core-metric"><strong>{{ avomeal.new_orders|default(0) }}</strong><span>{{ trans('dashboard_home.new_orders') }}</span></div>
+            <div class="core-metric"><strong>{{ avomeal.pending_fulfillment|default(0) }}</strong><span>{{ trans('dashboard_home.pending_fulfillment') }}</span></div>
+            <div class="core-metric"><strong>${{ avomeal.monthly_sales|default(0)|number_format(0) }}</strong><span>{{ trans('dashboard_home.store_sales') }}</span></div>
+            <div class="core-metric"><strong>{{ avomeal.active_products|default(0) }}</strong><span>{{ trans('dashboard_home.active_products') }}</span></div>
+          </div>
+          <div class="core-actions">
+            <a class="core-btn" href="{{ path('panel/avomeal') }}">{{ trans('dashboard_home.open_avomeal') }} <i data-feather="arrow-right"></i></a>
+            <a class="core-link" href="{{ path('panel/planner-hub/store/orders/home?operation=avomeal') }}">{{ trans('dashboard_home.store_orders') }}</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="core-section">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
+      <div>
+        <h3>{{ trans('dashboard_home.separation_rules') }}</h3>
+        <p class="text-muted mb-0">{{ trans('dashboard_home.separation_rules_text') }}</p>
+      </div>
+      <div class="d-flex flex-wrap gap-2 align-items-start">
+        <a href="{{ path('panel/module-manager') }}" class="btn btn-outline-dark">{{ trans('dashboard_home.modules') }}</a>
+        <a href="{{ path('panel/custom-domain-requests') }}" class="btn btn-outline-dark">{{ trans('dashboard_home.cms_domains') }}</a>
+        <a href="{{ path('panel/planner-hub/management/chatia') }}" class="btn btn-outline-dark">{{ trans('dashboard_home.ai_workspace') }}</a>
+      </div>
+    </div>
+    <div class="core-mini-grid">
+      <div class="core-mini"><strong>{{ ophyra.global_active_users|default(0) }}</strong><span>{{ trans('dashboard_home.global_active_users') }}</span></div>
+      <div class="core-mini"><strong>{{ ophyra.operational_clients|default(0) }}</strong><span>{{ trans('dashboard_home.operational_level5_users') }}</span></div>
+      <div class="core-mini"><strong>{{ vnv.pending_tasks|default(0) }}</strong><span>{{ trans('dashboard_home.vnv_pending_tasks') }}</span></div>
+      <div class="core-mini"><strong>{{ avomeal.delivery_pending|default(0) }}</strong><span>{{ trans('dashboard_home.avomeal_deliveries_pending') }}</span></div>
+    </div>
+  </section>
+</main>
+{% endblock %}

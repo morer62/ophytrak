@@ -1,0 +1,233 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="container-fluid py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center mb-4">
+    <div>
+      <h1 class="h3 fw-bold mb-1">Affiliate Program Admin</h1>
+      <p class="text-muted mb-0">Review partner applications, commission rates and manual payouts.</p>
+    </div>
+    {{ macros.breadcrumb2() }}
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100"><div class="card-body">
+        <div class="text-muted small">Pending commissions</div>
+        <div class="h3 fw-bold mb-0">${{ commissionTotals.pending|default(0)|number_format(2, '.', ',') }}</div>
+      </div></div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100"><div class="card-body">
+        <div class="text-muted small">Approved / payable</div>
+        <div class="h3 fw-bold mb-0">${{ (commissionTotals.approved|default(0) + commissionTotals.payable|default(0))|number_format(2, '.', ',') }}</div>
+      </div></div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100"><div class="card-body">
+        <div class="text-muted small">Paid commissions</div>
+        <div class="h3 fw-bold mb-0">${{ commissionTotals.paid|default(0)|number_format(2, '.', ',') }}</div>
+      </div></div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100"><div class="card-body">
+        <div class="text-muted small">Referred revenue</div>
+        <div class="h3 fw-bold mb-0">${{ commissionTotals.gross|default(0)|number_format(2, '.', ',') }}</div>
+      </div></div>
+    </div>
+  </div>
+
+  <section class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+        <div>
+          <h2 class="h5 fw-bold mb-1">Affiliate applications</h2>
+          <p class="text-muted mb-0">Approved partners can use referral links and earn eligible recurring commissions.</p>
+        </div>
+        <form method="get" class="d-flex gap-2">
+          <select name="status" class="form-select">
+            <option value="">All statuses</option>
+            {% for item in ['PENDING','APPROVED','REJECTED','SUSPENDED'] %}
+              <option value="{{ item }}" {{ status == item ? 'selected' : '' }}>{{ item }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-dark">Filter</button>
+        </form>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Affiliate</th>
+              <th>{{ trans('ui.status') }}</th>
+              <th>Rate</th>
+              <th>Payout</th>
+              <th>Legal / Business</th>
+              <th style="min-width:320px;">Admin action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for profile in affiliateProfiles %}
+              <tr>
+                <td>
+                  <strong>{{ profile.name }} {{ profile.lastname }}</strong><br>
+                  <small class="text-muted">{{ profile.email }}</small>
+                </td>
+                <td>
+                  {% if profile.application_status == 'APPROVED' %}
+                    <span class="badge bg-success">Approved</span>
+                  {% elseif profile.application_status == 'REJECTED' %}
+                    <span class="badge bg-danger">Rejected</span>
+                  {% elseif profile.application_status == 'SUSPENDED' %}
+                    <span class="badge bg-dark">Suspended</span>
+                  {% else %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                  {% endif %}
+                </td>
+                <td>{{ profile.commission_rate|number_format(0) }}%</td>
+                <td>
+                  <strong>{{ profile.payout_method|default('Not set') }}</strong><br>
+                  <small class="text-muted">{{ profile.paypal_email|default(profile.bank_name|default('')) }}</small>
+                </td>
+                <td>
+                  {{ profile.legal_name|default('Not provided') }}<br>
+                  <small class="text-muted">{{ profile.business_name|default('') }}</small>
+                </td>
+                <td>
+                  <form method="post" class="row g-2">
+                    <input type="hidden" name="action" value="updateAffiliateProfile">
+                    <input type="hidden" name="affiliate_id" value="{{ profile.id_user }}">
+                    <div class="col-4">
+                      <select name="application_status" class="form-select form-select-sm">
+                        {% for item in ['PENDING','APPROVED','REJECTED','SUSPENDED'] %}
+                          <option value="{{ item }}" {{ profile.application_status == item ? 'selected' : '' }}>{{ item }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-3">
+                      <select name="commission_rate" class="form-select form-select-sm">
+                        {% for rate in [30,40,50] %}
+                          <option value="{{ rate }}" {{ profile.commission_rate|round == rate ? 'selected' : '' }}>{{ rate }}%</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-3">
+                      <input name="rejection_reason" class="form-control form-control-sm" placeholder="Note">
+                    </div>
+                    <div class="col-2">
+                      <button class="btn btn-sm btn-dark w-100">{{ trans('ui.save') }}</button>
+                    </div>
+                  </form>
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="6" class="text-center text-muted py-4">No affiliate profiles found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm">
+    <div class="card-body">
+      <h2 class="h5 fw-bold mb-3">Pending commissions to pay</h2>
+
+      <form method="get" class="row g-3 mb-4">
+        <div class="col-md-3">
+          <label class="form-label">Affiliate</label>
+          <select name="affiliate_id" class="form-select">
+            <option value="">All affiliates</option>
+            {% for affiliate in affiliates %}
+              <option value="{{ affiliate.id }}" {{ affiliate.id == affiliateId ? 'selected' : '' }}>
+                {{ affiliate.name }} ({{ affiliate.email }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">From</label>
+          <input type="date" name="from" class="form-control" value="{{ from }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">To</label>
+          <input type="date" name="to" class="form-control" value="{{ to }}">
+        </div>
+        <div class="col-md-3 d-flex align-items-end gap-2">
+          <button class="btn btn-primary w-100">Filter</button>
+          <a href="{{ path('panel/planner-hub/management/commissions/pending') }}" class="btn btn-outline-secondary">Reset</a>
+        </div>
+      </form>
+
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Affiliate</th>
+              <th>Commissions</th>
+              <th>{{ trans('ui.total') }}</th>
+              <th>Date range</th>
+              <th>{{ trans('ui.details') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in groupedCommissions %}
+              <tr>
+                <td>
+                  <strong>{{ item.referrer_name }}</strong><br>
+                  <small class="text-muted">{{ item.referrer_email }}</small>
+                </td>
+                <td><span class="badge bg-info">{{ item.commission_count }}</span></td>
+                <td><strong class="text-success">${{ item.total_amount|number_format(2, '.', ',') }}</strong></td>
+                <td><small>{{ item.oldest_commission|date("M j, Y") }} - {{ item.newest_commission|date("M j, Y") }}</small></td>
+                <td>
+                  <a href="{{ path('panel/planner-hub/management/commissions/pending/details', { id: item.referrer_id }) }}" class="btn btn-outline-primary btn-sm">
+                    Review payout
+                  </a>
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="5" class="text-center text-muted py-4">No pending commissions found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm mt-4">
+    <div class="card-body">
+      <h2 class="h5 fw-bold mb-3">Monthly affiliate ranking</h2>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Affiliate</th>
+              <th>Sales</th>
+              <th>Revenue</th>
+              <th>Commissions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in monthlyRanking %}
+              <tr>
+                <td>
+                  <strong>{{ row.name }} {{ row.lastname|default('') }}</strong><br>
+                  <small class="text-muted">{{ row.email }}</small>
+                </td>
+                <td>{{ row.sales_count }}</td>
+                <td>${{ row.revenue|number_format(2, '.', ',') }}</td>
+                <td>${{ row.commissions|number_format(2, '.', ',') }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="4" class="text-center text-muted py-4">No affiliate sales this month.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

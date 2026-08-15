@@ -1,0 +1,35 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+
+{% block body %}
+<main class="mt-4">
+    <div class="container">
+
+        <h1 class="h3 mt-4">{{ trans('planner_hub.inventory') }}</h1>
+
+        {{ macros.breadcrumb2() }}
+
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            <div class="col">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center py-4">
+                        <h5 class="card-title mb-2">{{ trans('planner_hub.containers_storage_unit') }}</h5>
+                        <p class="text-muted small">{{ trans('planner_hub.manage_storage_containers') }}</p>
+                        <a href="{{ path('panel/planner-hub/team/storage/containers') }}" class="btn btn-primary btn-sm mt-2">{{ trans('planner_hub.go_to_containers') }}</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center py-4">
+                        <h5 class="card-title mb-2">{{ trans('planner_hub.search_items') }}</h5>
+                        <p class="text-muted small">{{ trans('planner_hub.easily_search_organize') }}</p>
+                        <a href="{{ path('panel/planner-hub/team/storage/containers/items/search') }}" class="btn btn-primary btn-sm mt-2">{{ trans('planner_hub.go_to_search') }}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

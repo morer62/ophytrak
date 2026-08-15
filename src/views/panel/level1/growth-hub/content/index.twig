@@ -1,0 +1,288 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set site = growthHub.site %}
+{% set filters = growthHub.filters %}
+<main class="container-fluid py-4 growth-content">
+  <div class="d-flex flex-column flex-xl-row align-items-xl-center justify-content-between gap-3 mb-4">
+    <div>
+      <p class="text-uppercase fw-bold text-muted mb-1">Growth Hub inventory</p>
+      <h1 class="h2 fw-bold mb-1">Pages, locations and articles</h1>
+      <p class="text-muted mb-0">Review what exists, what is pending and which public URL each item will use.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-outline-secondary" href="{{ path('panel/growth-hub?site_key=' ~ growthHub.selected_site_key|url_encode) }}">Command center</a>
+      <a class="btn btn-outline-dark" href="{{ path('panel/growth-hub/content?site_key=' ~ growthHub.selected_site_key|url_encode ~ '&status=DRAFT') }}">View drafts</a>
+      <a class="btn btn-dark" href="{{ path('panel/growth-hub?site_key=' ~ growthHub.selected_site_key|url_encode) }}#manual-content">Create page</a>
+    </div>
+  </div>
+
+  {% if not site %}
+    <div class="alert alert-warning">Growth Hub tables are not ready yet. Run <code>db/ophyra_growth_hub_level1_required.sql</code>.</div>
+  {% else %}
+    <section class="row g-3 mb-4">
+      {% for project in growthHub.sites %}
+        <div class="col-xl-4">
+          <a class="project-card {{ project.site_key == site.site_key ? 'active' : '' }}" href="{{ path('panel/growth-hub/content?site_key=' ~ project.site_key|url_encode) }}">
+            <span>{{ project.site_key }}</span>
+            <strong>{{ project.site_name }}</strong>
+            <small>{{ project.domain ?: project.public_base_url }}</small>
+          </a>
+        </div>
+      {% endfor %}
+    </section>
+
+    <section class="row g-3 mb-4">
+      <div class="col-xl-3 col-md-6">
+        <div class="metric-card">
+          <span>Total content</span>
+          <strong>{{ growthHub.content_count }}</strong>
+          <small>{{ site.site_name }}</small>
+        </div>
+      </div>
+      {% for row in growthHub.content_status_counts %}
+        <div class="col-xl-3 col-md-6">
+          <a class="metric-card metric-link {{ filters.status == row.status ? 'active' : '' }}" href="{{ path('panel/growth-hub/content?site_key=' ~ site.site_key|url_encode ~ '&status=' ~ row.status|url_encode) }}">
+            <span>{{ row.status|title }}</span>
+            <strong>{{ row.total }}</strong>
+            <small>Items in this state</small>
+          </a>
+        </div>
+      {% endfor %}
+    </section>
+
+    <section class="inventory-panel mb-4">
+      <form method="get" action="{{ path('panel/growth-hub/content') }}" class="row g-3 align-items-end">
+        <div class="col-xl-3 col-md-6">
+          <label class="form-label">Brand</label>
+          <select class="form-select" name="site_key" onchange="this.form.submit()">
+            {% for option in growthHub.sites %}
+              <option value="{{ option.site_key }}" {{ option.site_key == site.site_key ? 'selected' : '' }}>{{ option.site_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-xl-2 col-md-6">
+          <label class="form-label">Status</label>
+          <select class="form-select" name="status">
+            <option value="">All</option>
+            {% for status in ['DRAFT','READY','PUBLISHED','ARCHIVED'] %}
+              <option value="{{ status }}" {{ filters.status == status ? 'selected' : '' }}>{{ status|title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-xl-2 col-md-6">
+          <label class="form-label">Type</label>
+          <select class="form-select" name="content_type">
+            <option value="">All</option>
+            {% for type in ['page','location','blog'] %}
+              <option value="{{ type }}" {{ filters.content_type == type ? 'selected' : '' }}>{{ type|replace({'_':' '})|title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <label class="form-label">Search</label>
+          <input class="form-control" name="q" value="{{ filters.q }}" placeholder="keyword, location, title or slug">
+        </div>
+        <div class="col-xl-2 col-md-6 d-grid">
+          <button class="btn btn-dark fw-bold" type="submit">Filter</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="inventory-panel">
+      <div class="d-flex flex-column flex-lg-row justify-content-between gap-2 mb-3">
+        <div>
+          <h2 class="h5 fw-bold mb-1">{{ site.site_name }} content inventory</h2>
+          <p class="text-muted mb-0">
+            {% if filters.status == 'ARCHIVED' %}
+              Archived items are hidden from public routes. Restore them as drafts or delete them permanently with their registered media.
+            {% elseif filters.status %}
+              Showing {{ filters.status|title }} content. Clear filters to see every page, draft, published item and archive.
+            {% else %}
+              Use this table as the source of truth for every draft, live page and archived item.
+            {% endif %}
+          </p>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-self-lg-start">
+          <a class="btn btn-outline-dark btn-sm" href="{{ path('panel/growth-hub/content?site_key=' ~ site.site_key|url_encode ~ '&status=DRAFT') }}">Drafts</a>
+          <a class="btn btn-outline-danger btn-sm" href="{{ path('panel/growth-hub/content?site_key=' ~ site.site_key|url_encode ~ '&status=ARCHIVED') }}">Archived</a>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ path('panel/growth-hub/content?site_key=' ~ site.site_key|url_encode) }}">All content</a>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table align-middle inventory-table">
+          <thead>
+            <tr>
+              <th>Content</th>
+              <th>SEO target</th>
+              <th>Status</th>
+              <th>Public URL</th>
+              <th>Activity</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for content in growthHub.content_inventory %}
+              {% set route = content.route ?: '/' ~ content.slug %}
+              {% set publicUrl = content.canonical_url ?: (site.public_base_url ? site.public_base_url|trim('/') ~ route : route) %}
+              <tr>
+                <td>
+                  <strong>{{ content.title }}</strong>
+                  <span>{{ content.content_type|replace({'_':' '})|title }} / {{ content.slug }}</span>
+                </td>
+                <td>
+                  <strong>{{ content.primary_keyword ?: 'No keyword' }}</strong>
+                  <span>{{ content.target_location ?: 'No location' }}</span>
+                </td>
+                <td>
+                  <span class="status-pill status-{{ content.status|lower }}">{{ content.status }}</span>
+                  <small>{{ content.approval_status }}</small>
+                </td>
+                <td>
+                  <code>{{ route }}</code>
+                  <a href="{{ publicUrl }}" target="_blank" rel="noopener">{{ publicUrl }}</a>
+                </td>
+                <td>
+                  <strong>{{ content.published_at ? 'Published' : 'Updated' }}</strong>
+                  <span>{{ content.published_at ? content.published_at|date('M d, Y') : (content.updated_at ?: content.created_at) }}</span>
+                </td>
+                <td class="text-end">
+                  {% if content.status == 'ARCHIVED' %}
+                    <form method="post" action="{{ path('panel/growth-hub/content') }}" class="d-inline">
+                      <input type="hidden" name="action" value="restore_archived_content">
+                      <input type="hidden" name="site_key" value="{{ site.site_key }}">
+                      <input type="hidden" name="id_content" value="{{ content.id }}">
+                      <input type="hidden" name="return_status" value="ARCHIVED">
+                      <button class="btn btn-outline-dark btn-sm" type="submit">Restore draft</button>
+                    </form>
+                    <form method="post" action="{{ path('panel/growth-hub/content') }}" class="d-inline" data-confirm-submit="Permanently delete this archived page, its route, blocks and registered images? This cannot be undone.">
+                      <input type="hidden" name="action" value="permanently_delete_content">
+                      <input type="hidden" name="site_key" value="{{ site.site_key }}">
+                      <input type="hidden" name="id_content" value="{{ content.id }}">
+                      <input type="hidden" name="return_status" value="ARCHIVED">
+                      <button class="btn btn-danger btn-sm" type="submit">Delete forever</button>
+                    </form>
+                  {% else %}
+                    <a class="btn btn-outline-dark btn-sm" href="{{ path('panel/growth-hub?site_key=' ~ site.site_key|url_encode ~ '&edit_content_id=' ~ content.id) }}#edit-content">Edit</a>
+                  {% if content.status != 'PUBLISHED' %}
+                    <form method="post" action="{{ path('panel/growth-hub/content') }}" class="d-inline">
+                      <input type="hidden" name="action" value="approve_publish_content">
+                      <input type="hidden" name="site_key" value="{{ site.site_key }}">
+                      <input type="hidden" name="id_content" value="{{ content.id }}">
+                      <button class="btn btn-dark btn-sm" type="submit">Approve & publish</button>
+                    </form>
+                  {% endif %}
+                  <form method="post" action="{{ path('panel/growth-hub/content') }}" class="d-inline" data-confirm-submit="Remove this page from active inventory and archive its public route?">
+                    <input type="hidden" name="action" value="archive_content">
+                    <input type="hidden" name="site_key" value="{{ site.site_key }}">
+                    <input type="hidden" name="id_content" value="{{ content.id }}">
+                    <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+                  </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="6" class="text-muted">
+                  {% if filters.status or filters.content_type or filters.q %}
+                    No items match this filter. Clear filters or choose another status to see the existing content.
+                  {% else %}
+                    No content exists for this brand yet. Create a planned draft from the command center.
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+</main>
+
+<style>
+  .growth-content .project-card,
+  .growth-content .metric-card,
+  .growth-content .inventory-panel {
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: 8px;
+    box-shadow: 0 12px 34px rgba(15, 23, 42, .06);
+    padding: 1rem;
+  }
+  .growth-content .project-card {
+    color: inherit;
+    display: block;
+    text-decoration: none;
+  }
+  .growth-content .metric-link {
+    color: inherit;
+    display: block;
+    text-decoration: none;
+  }
+  .growth-content .metric-link.active {
+    border-color: #dc2626;
+  }
+  .growth-content .project-card.active {
+    border-color: #0f172a;
+  }
+  .growth-content .project-card span,
+  .growth-content .project-card small,
+  .growth-content .metric-card span,
+  .growth-content .metric-card small,
+  .inventory-table td span,
+  .inventory-table td small {
+    color: #64748b;
+    display: block;
+  }
+  .growth-content .project-card strong,
+  .growth-content .metric-card strong {
+    display: block;
+    font-size: 1.1rem;
+  }
+  .inventory-table td {
+    min-width: 150px;
+    vertical-align: top;
+  }
+  .inventory-table code {
+    display: block;
+    white-space: nowrap;
+  }
+  .inventory-table a {
+    overflow-wrap: anywhere;
+  }
+  .status-pill {
+    border-radius: 999px;
+    display: inline-block;
+    font-size: .75rem;
+    font-weight: 700;
+    padding: .25rem .55rem;
+    text-transform: uppercase;
+  }
+  .status-draft {
+    background: #f1f5f9;
+    color: #334155;
+  }
+  .status-ready {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  .status-published {
+    background: #dcfce7;
+    color: #166534;
+  }
+  .status-archived {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+</style>
+<script>
+  document.querySelectorAll('[data-confirm-submit]').forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+      if (!window.confirm(form.dataset.confirmSubmit || 'Continue?')) {
+        event.preventDefault();
+      }
+    });
+  });
+</script>
+{% endblock %}

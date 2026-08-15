@@ -1,0 +1,461 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+{% set storeStatusLabels = {
+    'NEW': trans('store_status.new'),
+    'CONFIRMED': trans('store_status.confirmed'),
+    'PROCESSING': trans('store_status.processing'),
+    'IN_PREPARATION': trans('store_status.in_preparation'),
+    'READY': trans('store_status.ready'),
+    'READY_FOR_DELIVERY': trans('store_status.ready_for_delivery'),
+    'OUT_FOR_DELIVERY': trans('store_status.out_for_delivery'),
+    'DELIVERY_ATTEMPTED': trans('store_status.delivery_attempted'),
+    'RETURNED_TO_BUSINESS': trans('store_status.returned_to_business'),
+    'REDELIVERY_SCHEDULED': trans('store_status.redelivery_scheduled'),
+    'DELIVERED': trans('store_status.delivered'),
+    'COMPLETED': trans('store_status.completed'),
+    'CANCELLED': trans('store_status.cancelled'),
+    'RETURN_REQUESTED': trans('store_status.return_requested'),
+    'RETURN_APPROVED': trans('store_status.return_approved'),
+    'RETURN_REJECTED': trans('store_status.return_rejected'),
+    'RETURNED': trans('store_status.returned'),
+    'CLOSED': trans('store_status.closed')
+} %}
+{% set paymentStatusLabels = {
+    'PENDING': trans('store_payment_status.pending'),
+    'PAID': trans('store_payment_status.paid'),
+    'FAILED': trans('store_payment_status.failed'),
+    'REFUNDED': trans('store_payment_status.refunded')
+} %}
+<style>
+.client-store-delivery{min-width:280px;border:1px solid #dbeafe;border-radius:18px;padding:.85rem;background:linear-gradient(135deg,#eff6ff,#fff)}
+.client-store-delivery-title{font-weight:900;color:#0f172a;display:flex;align-items:center;justify-content:space-between;gap:.75rem}
+.client-store-map{width:100%;height:190px;border:0;border-radius:14px;margin-top:.65rem}
+.client-store-proof{display:grid;grid-template-columns:72px 1fr;gap:.7rem;align-items:center;margin-top:.7rem}
+.client-store-proof img{width:72px;height:72px;object-fit:cover;border-radius:14px;border:1px solid #d1d5db}
+.client-store-chip{border-radius:999px;padding:.35rem .65rem;background:#dcfce7;color:#166534;font-weight:900;font-size:.78rem}
+.client-store-hero{border-radius:24px;padding:1.35rem;background:linear-gradient(135deg,#071513,#0f766e);color:#fff;box-shadow:0 18px 46px rgba(15,23,42,.12)}
+.client-store-hero h1{color:#fff;font-weight:900}
+.client-store-hero p{color:rgba(255,255,255,.82)}
+.client-store-action{border-radius:999px;font-weight:800}
+.client-team-strip{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem}
+@media (max-width:768px){.client-store-delivery{min-width:240px}}
+</style>
+<div class="container-fluid">
+    <div class="client-store-hero d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h1 class="h3 mb-1">{{ trans('store_client_orders.title') }}</h1>
+            <p class="mb-0">{{ trans('store_client_orders.subtitle') }}</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ path('panel/cards') }}" class="btn btn-light client-store-action">{{ trans('store_client_orders.payment_methods') }}</a>
+            <a href="{{ path('panel/chat') }}" class="btn btn-outline-light client-store-action">{{ trans('store_client_orders.messages') }}</a>
+        </div>
+    </div>
+
+    <div class="nav nav-pills gap-2 mb-3">
+        <a class="nav-link rounded-pill {{ lifecycleTab == 'active' ? 'active' : '' }}" href="{{ path('panel/store/orders/home?tab=active') }}">{{ trans('store_orders.active_orders') }} ({{ lifecycleCounts.active }})</a>
+        <a class="nav-link rounded-pill {{ lifecycleTab == 'incidents' ? 'active' : '' }}" href="{{ path('panel/store/orders/home?tab=incidents') }}">{{ trans('store_orders.incidents') }} ({{ lifecycleCounts.incidents }})</a>
+        <a class="nav-link rounded-pill {{ lifecycleTab == 'closed' ? 'active' : '' }}" href="{{ path('panel/store/orders/home?tab=closed') }}">{{ trans('store_orders.closed_orders') }} ({{ lifecycleCounts.closed }})</a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            {% if orders|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>{{ trans('store_client_orders.order') }}</th>
+                                <th>{{ trans('store_client_orders.business') }}</th>
+                                <th>{{ trans('store_client_orders.pricing') }}</th>
+                                <th>{{ trans('store_client_orders.coupon') }}</th>
+                                <th>{{ trans('ui.details') }}</th>
+                                <th class="text-end">{{ trans('store_client_orders.items') }}</th>
+                                <th class="text-end">{{ trans('ui.total') }}</th>
+                                <th class="text-nowrap">{{ trans('store_client_orders.next_charge') }}</th>
+                                <th>{{ trans('store_client_orders.payment') }}</th>
+                                <th>{{ trans('ui.status') }}</th>
+                                <th>{{ trans('store_client_orders.delivery') }}</th>
+                                <th>{{ trans('ui.date') }}</th>
+                                <th class="text-end">{{ trans('store_client_orders.action') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for o in orders %}
+                                <tr>
+                                    <td>
+                                        <strong>#{{ o.id }}</strong>
+                                        <div class="small text-muted">{{ o.guest_email ?: '-' }}</div>
+                                    </td>
+                                    <td>
+                                        {% if o.institution %}
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-primary mb-2 show-store-business-btn"
+                                                    data-business='{{ o.institution|json_encode|e('html_attr') }}'
+                                                    data-owner-id="{{ o.id_owner }}"
+                                                    data-team='{{ o.team_contacts_json|default('[]')|e('html_attr') }}'>
+                                                {{ trans('store_client_orders.view_business') }} {{ o.institution.company_name }}
+                                            </button>
+                                            <div class="small text-muted">{{ o.institution.city }}{% if o.institution.state %}, {{ o.institution.state }}{% endif %}</div>
+                                            <div class="small text-muted">
+                                                {% if o.institution.business_email %}
+                                                    {{ o.institution.business_email }}
+                                                {% elseif o.institution.email %}
+                                                    {{ o.institution.email }}
+                                                {% endif %}
+                                            </div>
+                                            {% if o.institution.phone %}
+                                                <div class="small text-muted">{{ o.institution.phone }}</div>
+                                            {% endif %}
+                                            {% if o.institution.address_line1 %}
+                                                <div class="small text-muted">{{ o.institution.address_line1 }}</div>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">Business #{{ o.id_owner }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ o.pricing_mode }}</td>
+                                    <td class="small">
+                                        {% if o.coupon_code %}
+                                            <span class="badge bg-info text-dark">{{ o.coupon_code }}</span>
+                                            {% if (o.coupon_discount ?: 0) > 0 %}
+                                                <div class="text-muted mt-1">- ${{ o.coupon_discount|number_format(2, '.', ',') }}</div>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-primary px-3"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#orderItemsModal"
+                                                data-items="{{ o.items_modal_json|e('html_attr') }}">
+                                            View details
+                                        </button>
+                                    </td>
+                                    <td class="text-end">{{ o.meals_count }}</td>
+                                    <td class="text-end">${{ o.total|number_format(2, '.', ',') }}</td>
+                                    <td class="small">
+                                        {% if o.pricing_mode == 'SUBSCRIPTION' and subscription_next_charge %}
+                                            <div class="fw-semibold">${{ subscription_next_charge.total|number_format(2, '.', ',') }}</div>
+                                            {% if subscription_next_charge.next_charge_date %}
+                                                <div class="text-muted">{{ subscription_next_charge.next_charge_date|date('M j, Y') }}</div>
+                                            {% else %}
+                                                <div class="text-muted">{{ trans('store_client_orders.date_tbd') }}</div>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if o.payment_status == 'PAID' %}
+                                            <span class="badge bg-success">{{ paymentStatusLabels[o.payment_status]|default(o.payment_status) }}</span>
+                                        {% elseif o.payment_status == 'FAILED' %}
+                                            <span class="badge bg-danger">{{ paymentStatusLabels[o.payment_status]|default(o.payment_status) }}</span>
+                                        {% elseif o.payment_status == 'REFUNDED' %}
+                                            <span class="badge bg-secondary">{{ paymentStatusLabels[o.payment_status]|default(o.payment_status) }}</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">{{ paymentStatusLabels[o.payment_status]|default(o.payment_status) }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set statusBadge = o.status in ['DELIVERED', 'COMPLETED'] ? 'bg-success' : (o.status in ['CANCELLED', 'RETURN_REJECTED'] ? 'bg-danger' : (o.status in ['DELIVERY_ATTEMPTED', 'RETURNED_TO_BUSINESS', 'RETURN_REQUESTED'] ? 'bg-warning text-dark' : (o.status in ['OUT_FOR_DELIVERY', 'READY_FOR_DELIVERY', 'RETURN_APPROVED', 'REDELIVERY_SCHEDULED'] ? 'bg-primary' : 'bg-info text-dark'))) %}
+                                        <span class="badge {{ statusBadge }}">{{ storeStatusLabels[o.status]|default(o.status) }}</span>
+                                        {% if o.return_admin_message %}
+                                            <div class="small text-muted mt-2"><strong>{{ trans('store_returns.business_response') }}:</strong> {{ o.return_admin_message }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="small">
+                                        <div class="client-store-delivery">
+                                            <div class="client-store-delivery-title">
+                                                <span>{{ trans('store_client_orders.delivery_tracking') }}</span>
+                                                <span class="client-store-chip">{{ storeStatusLabels[o.status]|default(o.status|replace({'_':' '})) }}</span>
+                                            </div>
+                                            {% if o.latest_location %}
+                                                <div class="text-muted mt-1">{{ o.latest_location.recorded_at|date('M j, g:i A') }}</div>
+                                                <iframe class="client-store-map" loading="lazy" src="https://maps.google.com/maps?q={{ o.latest_location.latitude }},{{ o.latest_location.longitude }}&z=15&output=embed"></iframe>
+                                                <a class="btn btn-sm btn-outline-success mt-2" target="_blank" href="https://www.google.com/maps?q={{ o.latest_location.latitude }},{{ o.latest_location.longitude }}">{{ trans('store_order_public.open_in_maps') }}</a>
+                                            {% endif %}
+                                            {% if o.workflow and o.workflow.delivery_photo_url %}
+                                                <div class="client-store-proof">
+                                                    <a target="_blank" href="{{ o.workflow.delivery_photo_url }}">
+                                                        <img src="{{ o.workflow.delivery_photo_url }}" alt="Delivery proof">
+                                                    </a>
+                                                    <div>
+                                                        <a target="_blank" href="{{ o.workflow.delivery_photo_url }}">{{ trans('store_order_public.view_delivery_proof') }}</a>
+                                                        {% if o.workflow.delivery_notes %}
+                                                            <div class="text-muted mt-1">{{ o.workflow.delivery_notes }}</div>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                            {% if not o.latest_location and not (o.workflow and o.workflow.delivery_photo_url) %}
+                                                <span class="text-muted d-block mt-2">{{ trans('store_client_orders.tracking_empty') }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>{{ o.created_at|date('M j, Y g:i A') }}</td>
+                                    <td class="text-end">
+                                        <a href="{{ path('store/order-access') }}?token={{ o.public_token|url_encode }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            {{ o.payment_status == 'PENDING' ? trans('store_client_orders.pay_track') : trans('store_client_orders.track_order') }}
+                                        </a>
+                                        <a href="{{ path('panel/chat') }}?to={{ o.id_owner }}" class="btn btn-sm btn-outline-secondary mt-1">
+                                            {{ trans('store_client_orders.message_business') }}
+                                        </a>
+                                        {% if o.team_contacts_json and o.team_contacts_json != '[]' %}
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-success mt-1 show-store-business-btn"
+                                                    data-business='{{ o.institution|json_encode|e('html_attr') }}'
+                                                    data-owner-id="{{ o.id_owner }}"
+                                                    data-team='{{ o.team_contacts_json|default('[]')|e('html_attr') }}'>
+                                                {{ trans('store_client_orders.assigned_team') }}
+                                            </button>
+                                        {% endif %}
+                                        {% if o.status == 'DELIVERED' or o.status == 'COMPLETED' or o.status == 'RETURN_REJECTED' %}
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger mt-1 request-return-btn"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#requestReturnModal"
+                                                    data-order-id="{{ o.id }}">
+                                                {{ o.status == 'RETURN_REJECTED' ? trans('store_returns.respond_to_return') : trans('store_returns.request_return') }}
+                                            </button>
+                                        {% endif %}
+                                        {% if o.can_cancel|default(false) %}
+                                            <button type="button" class="btn btn-sm btn-outline-danger mt-1 request-cancellation-btn" data-bs-toggle="modal" data-bs-target="#requestCancellationModal" data-order-id="{{ o.id }}">{{ trans('store_orders.request_cancellation') }}</button>
+                                        {% elseif o.cancellation_status|default('NONE') == 'REQUESTED' %}
+                                            <span class="badge bg-warning text-dark d-block mt-2">{{ trans('store_orders.cancellation_pending_business') }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <h5 class="mb-2">{{ trans('store_client_orders.empty_title') }}</h5>
+                    <p class="text-muted mb-0">{{ trans('store_client_orders.empty_text') }}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="modal fade" id="storeBusinessModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ trans('store_client_orders.business_profile') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="storeBusinessBody">
+                    {{ trans('store_client_orders.loading') }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="orderItemsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ trans('store_client_orders.items') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>{{ trans('store_client_orders.product') }}</th>
+                                <th class="text-end">{{ trans('store_client_orders.qty') }}</th>
+                                <th class="text-end">{{ trans('store_client_orders.unit_price') }}</th>
+                                <th class="text-end">{{ trans('ui.total') }}</th>
+                            </tr>
+                            </thead>
+                            <tbody id="orderItemsTableBody">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">{{ trans('store_client_orders.no_products') }}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ trans('ui.close') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="requestReturnModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ trans('store_returns.request_or_respond') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="action" value="request_return">
+                        <input type="hidden" name="order_id" id="returnOrderId">
+                        <p class="text-muted">{{ trans('store_returns.request_help') }}</p>
+                        <textarea class="form-control" name="return_notes" rows="4" maxlength="800" placeholder="{{ trans('store_returns.reason_placeholder') }}"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ trans('ui.cancel') }}</button>
+                        <button class="btn btn-danger">{{ trans('store_returns.send_request') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="requestCancellationModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post">
+        <div class="modal-header"><h5 class="modal-title">{{ trans('store_orders.request_cancellation') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body"><input type="hidden" name="action" value="request_cancellation"><input type="hidden" name="order_id" id="cancellationOrderId"><div class="alert alert-info small">{{ trans('store_orders.cancellation_requires_business') }}</div><label class="form-label">{{ trans('store_orders.cancellation_reason') }}</label><textarea class="form-control" name="cancellation_reason" rows="4" maxlength="800" required></textarea></div>
+        <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ trans('ui.cancel') }}</button><button class="btn btn-danger">{{ trans('store_orders.send_cancellation_request') }}</button></div>
+    </form></div></div></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    {{ parent() }}
+    <script>
+        const storeClientLabels = {
+            business: {{ trans('store_client_orders.business')|json_encode|raw }},
+            email: {{ trans('planner_hub.email')|json_encode|raw }},
+            phone: {{ trans('planner_hub.phone')|json_encode|raw }},
+            address: {{ trans('planner_hub.address')|json_encode|raw }},
+            assignedTeam: {{ trans('store_client_orders.assigned_team')|json_encode|raw }},
+            teamMember: {{ trans('store_client_orders.team_member')|json_encode|raw }},
+            messageBusiness: {{ trans('store_client_orders.message_business')|json_encode|raw }},
+            notAvailable: {{ trans('store_client_orders.not_available')|json_encode|raw }},
+            noProducts: {{ trans('store_client_orders.no_products')|json_encode|raw }}
+        };
+        document.addEventListener('DOMContentLoaded', function () {
+            const modalEl = document.getElementById('orderItemsModal');
+            const businessModalEl = document.getElementById('storeBusinessModal');
+            const returnModalEl = document.getElementById('requestReturnModal');
+            const cancellationModalEl = document.getElementById('requestCancellationModal');
+            if (cancellationModalEl) cancellationModalEl.addEventListener('show.bs.modal', function(event){ document.getElementById('cancellationOrderId').value=event.relatedTarget?.dataset.orderId||''; });
+
+            if (returnModalEl) {
+                returnModalEl.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    document.getElementById('returnOrderId').value = button ? (button.dataset.orderId || '') : '';
+                });
+            }
+
+            document.querySelectorAll('.show-store-business-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const ownerId = this.dataset.ownerId;
+                    let data = {};
+                    let team = [];
+                    try {
+                        data = JSON.parse(this.dataset.business || '{}');
+                    } catch (e) {
+                        data = {};
+                    }
+                    try {
+                        team = JSON.parse(this.dataset.team || '[]');
+                    } catch (e) {
+                        team = [];
+                    }
+
+                    const address = [data.address_line1, data.city, data.state, data.zip, data.country]
+                        .filter(Boolean)
+                        .join(', ');
+                    const teamHtml = team.length
+                        ? `
+                            <div class="pt-3 border-top">
+                                <strong>${storeClientLabels.assignedTeam}</strong>
+                                <div class="d-grid gap-2 mt-2">
+                                    ${team.map(member => `
+                                        <a href="{{ path('panel/chat') }}?to=${member.id}" class="btn btn-outline-secondary text-start">
+                                            ${member.name || member.email || storeClientLabels.teamMember}
+                                            ${member.email ? `<span class="d-block small text-muted">${member.email}</span>` : ''}
+                                        </a>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `
+                        : '';
+
+                    document.getElementById('storeBusinessBody').innerHTML = `
+                        <div class="d-grid gap-2">
+                            <div><strong>${storeClientLabels.business}</strong><br>${data.company_name || storeClientLabels.notAvailable}</div>
+                            <div><strong>${storeClientLabels.email}</strong><br>${data.business_email || data.email || storeClientLabels.notAvailable}</div>
+                            <div><strong>${storeClientLabels.phone}</strong><br>${data.phone || storeClientLabels.notAvailable}</div>
+                            <div><strong>${storeClientLabels.address}</strong><br>${address || storeClientLabels.notAvailable}</div>
+                            <div class="pt-2">
+                                <a href="{{ path('panel/chat') }}?to=${ownerId}" class="btn btn-outline-success">${storeClientLabels.messageBusiness}</a>
+                            </div>
+                            ${teamHtml}
+                        </div>
+                    `;
+
+                    new bootstrap.Modal(businessModalEl).show();
+                });
+            });
+
+            if (!modalEl) return;
+
+            modalEl.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                if (!button) return;
+
+                const itemsJson = button.getAttribute('data-items') || '[]';
+
+                let items = [];
+                try {
+                    items = JSON.parse(itemsJson);
+                } catch (e) {
+                    items = [];
+                }
+
+                const tbody = document.getElementById('orderItemsTableBody');
+                tbody.innerHTML = '';
+
+                if (!items.length) {
+                    const tr = document.createElement('tr');
+                    const td = document.createElement('td');
+                    td.colSpan = 4;
+                    td.className = 'text-center text-muted py-3';
+                    td.textContent = storeClientLabels.noProducts;
+                    tr.appendChild(td);
+                    tbody.appendChild(tr);
+                    return;
+                }
+
+                items.forEach(function (item) {
+                    const tr = document.createElement('tr');
+
+                    const tdName = document.createElement('td');
+                    tdName.textContent = item.name || '-';
+
+                    const tdQty = document.createElement('td');
+                    tdQty.className = 'text-end';
+                    tdQty.textContent = item.quantity ?? 0;
+
+                    const tdUnit = document.createElement('td');
+                    tdUnit.className = 'text-end';
+                    tdUnit.textContent = '$' + Number(item.unit_price ?? 0).toFixed(2);
+
+                    const tdTotal = document.createElement('td');
+                    tdTotal.className = 'text-end';
+                    tdTotal.textContent = '$' + Number(item.line_total ?? 0).toFixed(2);
+
+                    tr.appendChild(tdName);
+                    tr.appendChild(tdQty);
+                    tr.appendChild(tdUnit);
+                    tr.appendChild(tdTotal);
+                    tbody.appendChild(tr);
+                });
+            });
+        });
+    </script>
+{% endblock %}
+
+

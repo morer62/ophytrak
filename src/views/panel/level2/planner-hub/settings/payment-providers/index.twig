@@ -1,0 +1,1087 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+    <h1 class="h3 mb-4"><i data-feather="credit-card" class="me-2"></i>{{ trans('planner_hub.payment_providers_config') }}</h1>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <p class="text-muted mb-0">
+            {{ trans('planner_hub.payment_providers_desc') }}
+        </p>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProviderModal">
+            <i data-feather="plus" class="me-1"></i>{{ trans('planner_hub.add_payment_provider') }}
+        </button>
+    </div>
+
+    <div class="alert alert-primary d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+        <div><strong>{{ trans('planner_hub.payment_setup_choice_title') }}</strong><div>{{ trans('planner_hub.payment_setup_choice_desc') }}</div></div>
+        <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProviderModal">{{ trans('planner_hub.configure_online_payments') }}</button>
+            <a class="btn btn-outline-primary" href="{{ path('panel/planner-hub/store/orders/manual') }}">{{ trans('planner_hub.use_manual_payments') }}</a>
+        </div>
+    </div>
+
+    {% if providers is empty %}
+        <div class="alert alert-info">
+            <h5 class="alert-heading">{{ trans('planner_hub.no_payment_provider') }}</h5>
+            <p class="mb-2">{{ trans('planner_hub.no_payment_provider_desc') }}</p>
+            <p class="mb-0">
+                <strong>{{ trans('planner_hub.need_payment_provider') }}</strong>
+                {{ trans('planner_hub.click_add_provider') }}
+            </p>
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>{{ trans('planner_hub.provider') }}</th>
+                        <th>{{ trans('planner_hub.name') }}</th>
+                        <th>{{ trans('planner_hub.environment') }}</th>
+                        <th>{{ trans('planner_hub.currency') }}</th>
+                        <th>{{ trans('planner_hub.status') }}</th>
+                        <th>{{ trans('planner_hub.last_used') }}</th>
+                        <th class="text-center">{{ trans('planner_hub.actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for provider in providers %}
+                        <tr class="{% if provider.is_default %}table-primary{% endif %} {% if provider.is_active %}table-success{% endif %}">
+                            <td>
+                                <strong>
+                                    {% if provider.provider_type == 'stripe' %}Stripe
+                                    {% elseif provider.provider_type == 'square' %}Square
+                                    {% elseif provider.provider_type == 'paypal' %}PayPal
+                                    {% else %}{{ provider.provider_type|upper }}
+                                    {% endif %}
+                                </strong>
+                                {% if provider.is_default %}
+                                    <span class="badge bg-primary ms-2">{{ trans('planner_hub.default') }}</span>
+                                {% endif %}
+                                {% if provider.is_active %}
+                                    <span class="badge bg-success ms-2">{{ trans('planner_hub.active') }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary ms-2">{{ trans('planner_hub.inactive') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div>{{ provider.provider_name }}</div>
+                                {% if provider.merchant_email %}
+                                    <small class="text-muted">{{ provider.merchant_email }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if provider.environment == 'production' %}
+                                    <span class="badge bg-success">{{ trans('planner_hub.production') }}</span>
+                                {% else %}
+                                    <span class="badge bg-warning">{{ trans('planner_hub.sandbox') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ provider.currency }}</strong>
+                            </td>
+                            <td>
+                                {% if provider.is_verified %}
+                                    <span class="badge bg-success">{{ trans('planner_hub.verified') }}</span>
+                                {% else %}
+                                    <span class="badge bg-warning">{{ trans('planner_hub.not_verified') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if provider.last_used_at %}
+                                    <small>{{ provider.last_used_at|date('M j, Y g:i A') }}</small>
+                                {% else %}
+                                    <small class="text-muted">{{ trans('planner_hub.never_used') }}</small>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    {% if not provider.is_default %}
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="action" value="set_default">
+                                            <input type="hidden" name="provider_id" value="{{ provider.id }}">
+                                            <button type="submit" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="{{ trans('planner_hub.set_as_default') }}">
+                                                <i data-feather="star"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    
+                                    <button type="button" class="btn btn-outline-info" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#testProviderModal"
+                                            data-provider-id="{{ provider.id }}"
+                                            data-provider-name="{{ provider.provider_name }}"
+                                            data-provider-type="{{ provider.provider_type }}"
+                                            title="{{ trans('planner_hub.test_credentials') }}">
+                                        <i data-feather="check-circle"></i>
+                                    </button>
+                                    
+                                    <button type="button" class="btn btn-outline-secondary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editProviderModal"
+                                            data-provider-id="{{ provider.id }}"
+                                            data-provider-type="{{ provider.provider_type }}"
+                                            data-provider-name="{{ provider.provider_name }}"
+                                            data-api-key="{{ provider.api_key }}"
+                                            data-api-secret="{{ provider.api_secret }}"
+                                            data-public-key="{{ provider.public_key }}"
+                                            data-webhook-secret="{{ provider.webhook_secret }}"
+                                            data-environment="{{ provider.environment }}"
+                                            data-currency="{{ provider.currency }}"
+                                            data-merchant-email="{{ provider.merchant_email }}"
+                                            data-location-id="{{ provider.location_id }}"
+                                            title="{{ trans('planner_hub.edit') }}">
+                                        <i data-feather="edit"></i>
+                                    </button>
+                                    
+                                    {% if provider.is_active %}
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="action" value="deactivate">
+                                            <input type="hidden" name="provider_id" value="{{ provider.id }}">
+                                            <button type="submit" class="btn btn-outline-warning" title="{{ trans('planner_hub.deactivate') }}">
+                                                <i data-feather="pause"></i>
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <form method="post" class="d-inline">
+                                            <input type="hidden" name="action" value="activate">
+                                            <input type="hidden" name="provider_id" value="{{ provider.id }}">
+                                            <button type="submit" class="btn btn-outline-success" title="{{ trans('planner_hub.activate') }}">
+                                                <i data-feather="play"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    
+                                    {% if not provider.is_default %}
+                                        <button type="button" class="btn btn-outline-danger" 
+                                                onclick="confirmDelete({{ provider.id }}, '{{ provider.provider_name|e('js') }}')"
+                                                title="{{ trans('planner_hub.delete') }}">
+                                            <i data-feather="trash-2"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    <!-- Hidden delete form -->
+    <form method="post" id="deleteForm" class="d-none">
+        <input type="hidden" name="action" value="delete">
+        <input type="hidden" name="provider_id" id="deleteProviderId">
+    </form>
+
+    <!-- Test Payment Section -->
+    {% if activeProvider %}
+    <div class="card mt-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-credit-card me-2"></i>{{ trans('planner_hub.test_payment') }}
+            </h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">
+                {{ trans('planner_hub.test_payment_with_provider') }} <strong>{{ activeProvider.provider_name }}</strong> ({{ activeProvider.provider_type|upper }})
+            </p>
+            
+            <form id="testPaymentForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ trans('planner_hub.amount') }} <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ activeProvider.currency }}</span>
+                            <input type="number" class="form-control" id="testAmount" name="amount" 
+                                   step="0.01" min="0.50" value="1.00" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">{{ trans('planner_hub.description') }}</label>
+                        <input type="text" class="form-control" id="testDescription" name="description" 
+                               placeholder="{{ trans('planner_hub.test_payment') }}" value="{{ trans('planner_hub.test_payment') }}">
+                    </div>
+                </div>
+
+                <!-- Stripe Card Element -->
+                {% if activeProvider.provider_type == 'stripe' %}
+                <div id="stripe-card-element" class="mb-3">
+                    <label class="form-label">{{ trans('planner_hub.card_details') }} <span class="text-danger">*</span></label>
+                    <div id="card-element" class="form-control" style="height: 40px; padding: 10px;"></div>
+                    <div id="card-errors" class="text-danger mt-2" role="alert"></div>
+                </div>
+                {% endif %}
+
+                <!-- Square Card Element -->
+                {% if activeProvider.provider_type == 'square' %}
+                <div id="square-card-element" class="mb-3">
+                    <label class="form-label">{{ trans('planner_hub.card_details') }} <span class="text-danger">*</span></label>
+                    <div id="sq-card" style="min-height: 40px;"></div>
+                    <div id="square-card-errors" class="text-danger mt-2" role="alert"></div>
+                </div>
+                {% endif %}
+
+                <!-- PayPal Button -->
+                {% if activeProvider.provider_type == 'paypal' %}
+                <div id="paypal-button-container" class="mb-3"></div>
+                <div id="paypal-errors" class="text-danger mt-2" role="alert"></div>
+                {% endif %}
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <div id="testPaymentResult" class="mb-0"></div>
+                    <button type="submit" class="btn btn-primary" id="testPaymentBtn" 
+                            {% if activeProvider.provider_type == 'paypal' %}style="display: none;"{% endif %}>
+                        <i class="bi bi-credit-card me-2"></i>{{ trans('planner_hub.process_test_payment') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="card mt-4">
+        <div class="card-body">
+            <div class="alert alert-warning mb-0">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>{{ trans('planner_hub.no_active_provider_activate_to_test') }}</strong>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block aside %}
+    <!-- Add Provider Modal -->
+    <div class="modal fade" id="addProviderModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form method="post">
+                    <input type="hidden" name="action" value="add">
+                    
+                    <div class="modal-header">
+                        <h5 class="modal-title">➕ {{ trans('planner_hub.add_payment_provider') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">{{ trans('planner_hub.provider_type') }} <span class="text-danger">*</span></label>
+                            <select name="provider_type" id="providerType" class="form-select" required>
+                                <option value="">{{ trans('planner_hub.select_provider') }}</option>
+                                <option value="stripe">💳 Stripe</option>
+                                <option value="square">🔲 Square</option>
+                                <option value="paypal">🅿️ PayPal</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ trans('planner_hub.provider_name') }} <span class="text-danger">*</span></label>
+                            <input type="text" name="provider_name" class="form-control" required 
+                                   placeholder="{{ trans('planner_hub.provider_name_placeholder') }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ trans('planner_hub.environment') }}</label>
+                            <select name="environment" class="form-select">
+                                <option value="sandbox">{{ trans('planner_hub.sandbox_testing') }}</option>
+                                <option value="production">{{ trans('planner_hub.production_live') }}</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ trans('planner_hub.currency') }}</label>
+                            <select name="currency" class="form-select">
+                                <option value="USD">{{ trans('planner_hub.currency_usd') }}</option>
+                                <option value="EUR">{{ trans('planner_hub.currency_eur') }}</option>
+                                <option value="GBP">{{ trans('planner_hub.currency_gbp') }}</option>
+                                <option value="CAD">{{ trans('planner_hub.currency_cad') }}</option>
+                                <option value="MXN">{{ trans('planner_hub.currency_mxn') }}</option>
+                                <option value="BRL">{{ trans('planner_hub.currency_brl') }}</option>
+                                <option value="CLP">{{ trans('planner_hub.currency_clp') }}</option>
+                                <option value="COP">{{ trans('planner_hub.currency_cop') }}</option>
+                            </select>
+                        </div>
+                        
+                        <hr>
+                        <h6 class="mb-3">{{ trans('planner_hub.credentials') }}</h6>
+                        
+                        <!-- Stripe Fields -->
+                        <div id="stripeFields" class="provider-fields" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('planner_hub.stripe_secret_key') }} <span class="text-danger">*</span></label>
+                                <input type="text" name="api_key" class="form-control" 
+                                       placeholder="{{ trans('planner_hub.stripe_secret_key_placeholder') }}">
+                                <small class="text-muted">{{ trans('planner_hub.stripe_secret_key_help') }}</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('planner_hub.stripe_publishable_key') }} <span class="text-danger">*</span></label>
+                                <input type="text" name="public_key" class="form-control" 
+                                       placeholder="{{ trans('planner_hub.stripe_publishable_key_placeholder') }}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('planner_hub.webhook_secret_optional') }}</label>
+                                <input type="text" name="webhook_secret" class="form-control" 
+                                       placeholder="{{ trans('planner_hub.webhook_secret_placeholder') }}">
+                            </div>
+                        </div>
+                        
+                        <!-- Square Fields -->
+                        <div id="squareFields" class="provider-fields" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('planner_hub.square_access_token') }} <span class="text-danger">*</span></label>
+                                <input type="text" name="api_key" class="form-control" 
+                                       placeholder="{{ trans('planner_hub.square_access_token_placeholder') }}">
+                                <small class="text-muted">{{ trans('planner_hub.square_access_token_help') }}</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('planner_hub.square_application_id') }} <span class="text-danger">*</span></label>
+                                <input type="text" name="public_key" class="form-control" 
+                                       placeholder="{{ trans('planner_hub.square_application_id_placeholder') }}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('planner_hub.location_id') }} <span class="text-danger">*</span></label>
+                                <input type="text" name="location_id" class="form-control" 
+                                       placeholder="{{ trans('planner_hub.location_id_placeholder') }}">
+                            </div>
+                        </div>
+                        
+                        <!-- PayPal Fields -->
+                        <div id="paypalFields" class="provider-fields" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('planner_hub.paypal_client_id') }} <span class="text-danger">*</span></label>
+                                <input type="text" name="api_key" class="form-control" 
+                                       placeholder="{{ trans('planner_hub.paypal_client_id_placeholder') }}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('planner_hub.paypal_client_secret') }} <span class="text-danger">*</span></label>
+                                <input type="password" name="api_secret" class="form-control" 
+                                       placeholder="{{ trans('planner_hub.paypal_client_secret_placeholder') }}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">{{ trans('planner_hub.merchant_email_optional') }}</label>
+                                <input type="email" name="merchant_email" class="form-control" 
+                                       placeholder="{{ trans('planner_hub.merchant_email_placeholder') }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" name="is_active" class="form-check-input" id="isActiveCheck" checked>
+                            <label class="form-check-label" for="isActiveCheck">
+                                {{ trans('planner_hub.activate_this_provider') }}
+                            </label>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <small>
+                                {{ trans('planner_hub.credentials_encrypted_note') }}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans('planner_hub.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">💾 {{ trans('planner_hub.save_provider') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Provider Modal -->
+    <div class="modal fade" id="testProviderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post">
+                    <input type="hidden" name="action" value="test">
+                    <input type="hidden" name="provider_id" id="testProviderId">
+                    
+                    <div class="modal-header">
+                        <h5 class="modal-title">🧪 {{ trans('planner_hub.test_payment_provider_modal') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <p>{{ trans('planner_hub.test_credentials_for') }} <strong id="testProviderName"></strong></p>
+                        <p class="text-muted">{{ trans('planner_hub.test_verify_api_keys') }}</p>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans('planner_hub.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">🧪 {{ trans('planner_hub.test_credentials_btn') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Provider Modal -->
+    <div class="modal fade" id="editProviderModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form method="post">
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" name="provider_id" id="editProviderId">
+                    
+                    <div class="modal-header">
+                        <h5 class="modal-title">✏️ {{ trans('planner_hub.edit_payment_provider') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">{{ trans('planner_hub.provider_type') }}</label>
+                            <input type="text" id="editProviderType" class="form-control" readonly>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ trans('planner_hub.provider_name') }}</label>
+                            <input type="text" name="provider_name" id="editProviderName" class="form-control" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ trans('planner_hub.environment') }}</label>
+                            <select name="environment" id="editEnvironment" class="form-select">
+                                <option value="sandbox">{{ trans('planner_hub.sandbox_testing') }}</option>
+                                <option value="production">{{ trans('planner_hub.production_live') }}</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ trans('planner_hub.currency') }}</label>
+                            <select name="currency" id="editCurrency" class="form-select">
+                                <option value="USD">{{ trans('planner_hub.currency_usd') }}</option>
+                                <option value="EUR">{{ trans('planner_hub.currency_eur') }}</option>
+                                <option value="GBP">{{ trans('planner_hub.currency_gbp') }}</option>
+                                <option value="CAD">{{ trans('planner_hub.currency_cad') }}</option>
+                                <option value="MXN">{{ trans('planner_hub.currency_mxn') }}</option>
+                                <option value="BRL">{{ trans('planner_hub.currency_brl') }}</option>
+                                <option value="CLP">{{ trans('planner_hub.currency_clp') }}</option>
+                                <option value="COP">{{ trans('planner_hub.currency_cop') }}</option>
+                            </select>
+                        </div>
+                        
+                        <hr>
+                        <h6 class="mb-3">{{ trans('planner_hub.credentials') }}</h6>
+                        <p class="text-muted small">{{ trans('planner_hub.leave_empty_keep_current') }}</p>
+                        
+                        <!-- Stripe/Square/PayPal API Key -->
+                        <div class="mb-3">
+                            <label class="form-label" id="editApiKeyLabel">{{ trans('planner_hub.api_key') }}</label>
+                            <input type="text" name="api_key" id="editApiKey" class="form-control" 
+                                   placeholder="{{ trans('planner_hub.leave_empty_placeholder') }}">
+                            <small class="text-muted" id="editApiKeyHelp"></small>
+                        </div>
+                        
+                        <div class="mb-3" id="editApiSecretContainer">
+                            <label class="form-label">{{ trans('planner_hub.api_secret') }}</label>
+                            <input type="password" name="api_secret" id="editApiSecret" class="form-control" 
+                                   placeholder="{{ trans('planner_hub.leave_empty_placeholder') }}">
+                        </div>
+                        
+                        <div class="mb-3" id="editPublicKeyContainer">
+                            <label class="form-label" id="editPublicKeyLabel">{{ trans('planner_hub.public_key') }}</label>
+                            <input type="text" name="public_key" id="editPublicKey" class="form-control" 
+                                   placeholder="{{ trans('planner_hub.leave_empty_placeholder') }}">
+                            <small class="text-muted" id="editPublicKeyHelp"></small>
+                        </div>
+                        
+                        <div class="mb-3" id="editWebhookSecretContainer">
+                            <label class="form-label">{{ trans('planner_hub.webhook_secret') }}</label>
+                            <input type="text" name="webhook_secret" id="editWebhookSecret" class="form-control" 
+                                   placeholder="{{ trans('planner_hub.leave_empty_placeholder') }}">
+                        </div>
+                        
+                        <div class="mb-3" id="editLocationIdContainer">
+                            <label class="form-label">{{ trans('planner_hub.location_id') }}</label>
+                            <input type="text" name="location_id" id="editLocationId" class="form-control" 
+                                   placeholder="{{ trans('planner_hub.leave_empty_placeholder') }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">{{ trans('planner_hub.merchant_email') }}</label>
+                            <input type="email" name="merchant_email" id="editMerchantEmail" class="form-control" 
+                                   placeholder="{{ trans('planner_hub.merchant_email_placeholder') }}">
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans('planner_hub.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">💾 {{ trans('planner_hub.update_provider') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.i18nPaymentProviders = {
+    confirm_delete: '{{ trans('planner_hub.confirm_delete_provider')|e('js') }}',
+    processing: '{{ trans('planner_hub.processing')|e('js') }}',
+    process_test_payment: '{{ trans('planner_hub.process_test_payment')|e('js') }}',
+    payment_processed_successfully: '{{ trans('planner_hub.payment_processed_successfully')|e('js') }}',
+    payment_failed_please_retry: '{{ trans('planner_hub.payment_failed_please_retry')|e('js') }}',
+    error_occurred_retry: '{{ trans('planner_hub.error_occurred_retry')|e('js') }}',
+    unable_load_square_form: '{{ trans('planner_hub.unable_load_square_form')|e('js') }}',
+    unable_init_payment_form: '{{ trans('planner_hub.unable_init_payment_form')|e('js') }}',
+    payment_form_not_ready: '{{ trans('planner_hub.payment_form_not_ready')|e('js') }}',
+    failed_load_square_library: '{{ trans('planner_hub.failed_load_square_library')|e('js') }}',
+    unable_load_paypal_sdk: '{{ trans('planner_hub.unable_load_paypal_sdk')|e('js') }}',
+    payment_cancelled: '{{ trans('planner_hub.payment_cancelled')|e('js') }}',
+    payment_completed_capture: '{{ trans('planner_hub.payment_completed_capture')|e('js') }}',
+    payment_approved_order: '{{ trans('planner_hub.payment_approved_order')|e('js') }}',
+    error_processing_payment: '{{ trans('planner_hub.error_processing_payment')|e('js') }}',
+    paypal_error: '{{ trans('planner_hub.paypal_error')|e('js') }}',
+    failed_load_paypal_sdk: '{{ trans('planner_hub.failed_load_paypal_sdk')|e('js') }}',
+    stripe_secret_key: '{{ trans('planner_hub.stripe_secret_key')|e('js') }}',
+    stripe_secret_key_edit_help: '{{ trans('planner_hub.stripe_secret_key_edit_help')|e('js') }}',
+    stripe_publishable_key: '{{ trans('planner_hub.stripe_publishable_key')|e('js') }}',
+    stripe_publishable_key_edit_help: '{{ trans('planner_hub.stripe_publishable_key_edit_help')|e('js') }}',
+    square_access_token: '{{ trans('planner_hub.square_access_token')|e('js') }}',
+    square_access_token_edit_help: '{{ trans('planner_hub.square_access_token_edit_help')|e('js') }}',
+    square_application_id: '{{ trans('planner_hub.square_application_id')|e('js') }}',
+    square_application_id_edit_help: '{{ trans('planner_hub.square_application_id_edit_help')|e('js') }}',
+    paypal_client_id: '{{ trans('planner_hub.paypal_client_id')|e('js') }}',
+    paypal_client_id_edit_help: '{{ trans('planner_hub.paypal_client_id_edit_help')|e('js') }}',
+    test_payment: '{{ trans('planner_hub.test_payment')|e('js') }}'
+};
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to show/hide provider-specific fields
+    function toggleProviderFields(selectedValue) {
+        // Hide all provider fields
+        document.querySelectorAll('.provider-fields').forEach(el => {
+            el.style.display = 'none';
+            // Disable all inputs in hidden fields to prevent them from being submitted
+            el.querySelectorAll('input, select, textarea').forEach(input => {
+                input.disabled = true;
+            });
+        });
+        
+        // Show selected provider fields
+        let targetField = null;
+        if (selectedValue === 'stripe') {
+            targetField = document.getElementById('stripeFields');
+        } else if (selectedValue === 'square') {
+            targetField = document.getElementById('squareFields');
+        } else if (selectedValue === 'paypal') {
+            targetField = document.getElementById('paypalFields');
+        }
+        
+        if (targetField) {
+            targetField.style.display = 'block';
+            // Enable inputs in visible fields
+            targetField.querySelectorAll('input, select, textarea').forEach(input => {
+                input.disabled = false;
+            });
+        }
+    }
+    
+    // Show/hide provider-specific fields
+    const providerType = document.getElementById('providerType');
+    if (providerType) {
+        // Initialize fields on page load if a provider is already selected
+        if (providerType.value) {
+            toggleProviderFields(providerType.value);
+        }
+        
+        providerType.addEventListener('change', function() {
+            toggleProviderFields(this.value);
+        });
+    }
+    
+    // Also handle when the add modal is opened
+    const addModal = document.getElementById('addProviderModal');
+    if (addModal) {
+        addModal.addEventListener('show.bs.modal', function() {
+            // Reset form
+            const form = addModal.querySelector('form');
+            if (form) {
+                form.reset();
+            }
+            
+            // Reset provider type dropdown
+            const providerTypeSelect = document.getElementById('providerType');
+            if (providerTypeSelect) {
+                providerTypeSelect.value = '';
+                // Hide all fields initially
+                toggleProviderFields('');
+            }
+        });
+        
+        // Also handle when provider type changes in the modal
+        const providerTypeSelect = document.getElementById('providerType');
+        if (providerTypeSelect) {
+            providerTypeSelect.addEventListener('change', function() {
+                toggleProviderFields(this.value);
+            });
+        }
+    }
+    
+    // Test modal handler
+    const testModal = document.getElementById('testProviderModal');
+    if (testModal) {
+        testModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const providerId = button.getAttribute('data-provider-id');
+            const providerName = button.getAttribute('data-provider-name');
+            
+            document.getElementById('testProviderId').value = providerId;
+            document.getElementById('testProviderName').textContent = providerName;
+        });
+    }
+    
+    // Edit modal handler
+    const editModal = document.getElementById('editProviderModal');
+    if (editModal) {
+        editModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const providerType = button.getAttribute('data-provider-type');
+            
+            document.getElementById('editProviderId').value = button.getAttribute('data-provider-id');
+            document.getElementById('editProviderType').value = providerType.charAt(0).toUpperCase() + providerType.slice(1);
+            document.getElementById('editProviderName').value = button.getAttribute('data-provider-name');
+            document.getElementById('editEnvironment').value = button.getAttribute('data-environment');
+            document.getElementById('editCurrency').value = button.getAttribute('data-currency');
+            document.getElementById('editApiKey').value = '';
+            document.getElementById('editApiSecret').value = '';
+            document.getElementById('editPublicKey').value = '';
+            document.getElementById('editWebhookSecret').value = '';
+            document.getElementById('editMerchantEmail').value = button.getAttribute('data-merchant-email') || '';
+            document.getElementById('editLocationId').value = button.getAttribute('data-location-id') || '';
+            
+            // Show/hide fields based on provider type
+            const apiSecretContainer = document.getElementById('editApiSecretContainer');
+            const publicKeyContainer = document.getElementById('editPublicKeyContainer');
+            const webhookSecretContainer = document.getElementById('editWebhookSecretContainer');
+            const locationIdContainer = document.getElementById('editLocationIdContainer');
+            
+            // Update labels and help text based on provider type
+            const apiKeyLabel = document.getElementById('editApiKeyLabel');
+            const apiKeyHelp = document.getElementById('editApiKeyHelp');
+            const publicKeyLabel = document.getElementById('editPublicKeyLabel');
+            const publicKeyHelp = document.getElementById('editPublicKeyHelp');
+            
+            if (providerType === 'paypal') {
+                apiKeyLabel.textContent = window.i18nPaymentProviders.paypal_client_id;
+                apiKeyHelp.textContent = window.i18nPaymentProviders.paypal_client_id_edit_help;
+                apiSecretContainer.style.display = 'block';
+                publicKeyContainer.style.display = 'none';
+                webhookSecretContainer.style.display = 'none';
+                locationIdContainer.style.display = 'none';
+            } else if (providerType === 'square') {
+                apiKeyLabel.textContent = window.i18nPaymentProviders.square_access_token;
+                apiKeyHelp.textContent = window.i18nPaymentProviders.square_access_token_edit_help;
+                publicKeyLabel.textContent = window.i18nPaymentProviders.square_application_id;
+                publicKeyHelp.textContent = window.i18nPaymentProviders.square_application_id_edit_help;
+                apiSecretContainer.style.display = 'none';
+                publicKeyContainer.style.display = 'block';
+                webhookSecretContainer.style.display = 'none';
+                locationIdContainer.style.display = 'block';
+            } else if (providerType === 'stripe') {
+                apiKeyLabel.textContent = window.i18nPaymentProviders.stripe_secret_key;
+                apiKeyHelp.textContent = window.i18nPaymentProviders.stripe_secret_key_edit_help;
+                publicKeyLabel.textContent = window.i18nPaymentProviders.stripe_publishable_key;
+                publicKeyHelp.textContent = window.i18nPaymentProviders.stripe_publishable_key_edit_help;
+                apiSecretContainer.style.display = 'none';
+                publicKeyContainer.style.display = 'block';
+                webhookSecretContainer.style.display = 'block';
+                locationIdContainer.style.display = 'none';
+            }
+        });
+    }
+    
+    // Initialize Feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+});
+
+function confirmDelete(providerId, providerName) {
+    var msg = (window.i18nPaymentProviders.confirm_delete || 'Are you sure you want to delete "{name}"? This action cannot be undone.').replace('{name}', providerName);
+    if (confirm(msg)) {
+        document.getElementById('deleteProviderId').value = providerId;
+        document.getElementById('deleteForm').submit();
+    }
+}
+
+{% if activeProvider %}
+// Test Payment Scripts
+{% if activeProvider.provider_type == 'stripe' %}
+// Load Stripe.js
+const stripeScript = document.createElement('script');
+stripeScript.src = 'https://js.stripe.com/v3/';
+stripeScript.onload = function() {
+    const stripe = Stripe('{{ activeProvider.public_key }}');
+    const elements = stripe.elements();
+    const cardElement = elements.create('card', {
+        style: {
+            base: {
+                fontSize: '16px',
+                color: '#424770',
+                '::placeholder': {
+                    color: '#aab7c4',
+                },
+            },
+            invalid: {
+                color: '#9e2146',
+            },
+        },
+    });
+    
+    cardElement.mount('#card-element');
+    
+    cardElement.on('change', function(event) {
+        const displayError = document.getElementById('card-errors');
+        if (event.error) {
+            displayError.textContent = event.error.message;
+        } else {
+            displayError.textContent = '';
+        }
+    });
+    
+    const form = document.getElementById('testPaymentForm');
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const submitBtn = document.getElementById('testPaymentBtn');
+        const resultDiv = document.getElementById('testPaymentResult');
+        const amount = document.getElementById('testAmount').value;
+        const description = document.getElementById('testDescription').value;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + (window.i18nPaymentProviders.processing || 'Processing...');
+        resultDiv.innerHTML = '';
+        
+        try {
+            const {token, error} = await stripe.createToken(cardElement);
+            
+            if (error) {
+                resultDiv.innerHTML = '<div class="alert alert-danger">' + error.message + '</div>';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-credit-card me-2"></i>' + (window.i18nPaymentProviders.process_test_payment || 'Process Test Payment');
+                return;
+            }
+            
+            // Submit form with token
+            const formData = new FormData();
+            formData.append('action', 'test_payment');
+            formData.append('amount', amount);
+            formData.append('description', description);
+            formData.append('token', token.id);
+            
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                redirect: 'manual'
+            });
+            
+            if (response.type === 'opaqueredirect' || (response.redirected && response.url)) {
+                if (response.url) {
+                    window.location.href = response.url;
+                } else {
+                    resultDiv.innerHTML = '<div class="alert alert-danger">' + (window.i18nPaymentProviders.payment_failed_please_retry || 'Payment failed. Please try again.') + '</div>';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-credit-card me-2"></i>' + (window.i18nPaymentProviders.process_test_payment || 'Process Test Payment');
+                }
+                return;
+            }
+            
+            if (!response.ok) {
+                resultDiv.innerHTML = '<div class="alert alert-danger">' + (window.i18nPaymentProviders.payment_failed_please_retry || 'Payment failed. Please try again.') + '</div>';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-credit-card me-2"></i>' + (window.i18nPaymentProviders.process_test_payment || 'Process Test Payment');
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="alert alert-success">' + (window.i18nPaymentProviders.payment_processed_successfully || 'Payment processed successfully!') + '</div>';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-credit-card me-2"></i>' + (window.i18nPaymentProviders.process_test_payment || 'Process Test Payment');
+        } catch (err) {
+            console.error('Error:', err);
+            resultDiv.innerHTML = '<div class="alert alert-danger">' + (window.i18nPaymentProviders.error_occurred_retry || 'An error occurred. Please try again.') + '</div>';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-credit-card me-2"></i>' + (window.i18nPaymentProviders.process_test_payment || 'Process Test Payment');
+        }
+    });
+};
+document.head.appendChild(stripeScript);
+
+{% elseif activeProvider.provider_type == 'square' %}
+// Load Square.js - Make sure we use the correct environment
+(function() {
+    // Remove any existing Square script
+    const existingScript = document.querySelector('script[src*="squarecdn.com"]');
+    if (existingScript) {
+        existingScript.remove();
+    }
+    
+    // Determine environment based on provider settings
+    const isProduction = '{{ activeProvider.environment }}' === 'production';
+    const squareUrl = isProduction 
+        ? 'https://web.squarecdn.com/v1/square.js'
+        : 'https://sandbox.web.squarecdn.com/v1/square.js';
+    
+    const squareScript = document.createElement('script');
+    squareScript.src = squareUrl;
+    squareScript.async = true;
+    
+    squareScript.onload = function() {
+        // Wait a bit for Square to be fully available
+        setTimeout(function() {
+            const applicationId = '{{ activeProvider.public_key }}';
+            const locationId = '{{ activeProvider.location_id }}';
+            
+            if (!window.Square) {
+                console.error('Square.js failed to load');
+                const errorDiv = document.getElementById('square-card-errors');
+                if (errorDiv) {
+                    errorDiv.textContent = 'Unable to load Square payment form. Please refresh the page.';
+                }
+                return;
+            }
+            
+            // Check if sq-card element exists
+            const sqCardElement = document.getElementById('sq-card');
+            if (!sqCardElement) {
+                console.error('Square card element not found');
+                return;
+            }
+            
+            const payments = window.Square.payments(applicationId, locationId);
+            let card;
+            
+            async function initializeCard() {
+                try {
+                    card = await payments.card();
+                    await card.attach('#sq-card');
+                    console.log('Square card initialized successfully');
+                } catch (e) {
+                    console.error('Initializing Card failed', e);
+                    const errorDiv = document.getElementById('square-card-errors');
+                    if (errorDiv) {
+                        errorDiv.textContent = (window.i18nPaymentProviders.unable_init_payment_form || 'Unable to initialize payment form: ') + (e.message || 'Unknown error');
+                    }
+                }
+            }
+            
+            initializeCard();
+            
+            const form = document.getElementById('testPaymentForm');
+            if (form) {
+                form.addEventListener('submit', async function(event) {
+                    event.preventDefault();
+                    
+                    if (!card) {
+                        const errorDiv = document.getElementById('square-card-errors');
+                        if (errorDiv) {
+                            errorDiv.textContent = 'Payment form not ready. Please wait a moment and try again.';
+                        }
+                        return;
+                    }
+                    
+                    const submitBtn = document.getElementById('testPaymentBtn');
+                    const resultDiv = document.getElementById('testPaymentResult');
+                    const errorDiv = document.getElementById('square-card-errors');
+                    const amount = document.getElementById('testAmount').value;
+                    const description = document.getElementById('testDescription').value;
+                    
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + (window.i18nPaymentProviders.processing || 'Processing...');
+                    resultDiv.innerHTML = '';
+                    if (errorDiv) errorDiv.textContent = '';
+                    
+                    try {
+                        const tokenResult = await card.tokenize();
+                        if (tokenResult.status === 'OK') {
+                            // Submit form with token
+                            const formData = new FormData();
+                            formData.append('action', 'test_payment');
+                            formData.append('amount', amount);
+                            formData.append('description', description);
+                            formData.append('token', tokenResult.token);
+                            
+                            const response = await fetch(window.location.href, {
+                                method: 'POST',
+                                body: formData,
+                                redirect: 'manual'
+                            });
+                            
+                            if (response.type === 'opaqueredirect' || (response.redirected && response.url)) {
+                                if (response.url) {
+                                    window.location.href = response.url;
+                                } else {
+                                    resultDiv.innerHTML = '<div class="alert alert-danger">' + (window.i18nPaymentProviders.payment_failed_please_retry || 'Payment failed. Please try again.') + '</div>';
+                                    submitBtn.disabled = false;
+                                    submitBtn.innerHTML = '<i class="bi bi-credit-card me-2"></i>' + (window.i18nPaymentProviders.process_test_payment || 'Process Test Payment');
+                                }
+                                return;
+                            }
+                            
+                            if (!response.ok) {
+                                resultDiv.innerHTML = '<div class="alert alert-danger">' + (window.i18nPaymentProviders.payment_failed_please_retry || 'Payment failed. Please try again.') + '</div>';
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = '<i class="bi bi-credit-card me-2"></i>' + (window.i18nPaymentProviders.process_test_payment || 'Process Test Payment');
+                                return;
+                            }
+                            
+                            resultDiv.innerHTML = '<div class="alert alert-success">' + (window.i18nPaymentProviders.payment_processed_successfully || 'Payment processed successfully!') + '</div>';
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = '<i class="bi bi-credit-card me-2"></i>' + (window.i18nPaymentProviders.process_test_payment || 'Process Test Payment');
+                        } else {
+                            let errorMessage = window.i18nPaymentProviders.payment_failed_please_retry || 'Payment failed. Please try again.';
+                            if (tokenResult.errors && tokenResult.errors.length > 0) {
+                                errorMessage = tokenResult.errors[0].detail || errorMessage;
+                            }
+                            if (errorDiv) errorDiv.textContent = errorMessage;
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = '<i class="bi bi-credit-card me-2"></i>' + (window.i18nPaymentProviders.process_test_payment || 'Process Test Payment');
+                        }
+                    } catch (err) {
+                        console.error('Error:', err);
+                        if (errorDiv) {
+                            errorDiv.textContent = (window.i18nPaymentProviders.unable_init_payment_form || 'An error occurred: ') + (err.message || '');
+                        }
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-credit-card me-2"></i>' + (window.i18nPaymentProviders.process_test_payment || 'Process Test Payment');
+                    }
+                });
+            }
+        }, 500); // Wait 500ms for Square to be fully ready
+    };
+    
+    squareScript.onerror = function() {
+        console.error('Failed to load Square.js');
+        const errorDiv = document.getElementById('square-card-errors');
+        if (errorDiv) {
+            errorDiv.textContent = window.i18nPaymentProviders.failed_load_square_library || 'Failed to load Square payment library. Please refresh the page.';
+        }
+    };
+    
+    document.head.appendChild(squareScript);
+})();
+{% elseif activeProvider.provider_type == 'paypal' %}
+// Load PayPal.js SDK
+(function() {
+    // Remove any existing PayPal script
+    const existingScript = document.querySelector('script[src*="paypal.com"]');
+    if (existingScript) {
+        existingScript.remove();
+    }
+    
+    // Determine environment
+    const isProduction = '{{ activeProvider.environment }}' === 'production';
+    // PayPal Client ID is stored in api_key field
+    const clientId = '{{ activeProvider.api_key }}';
+    
+    // PayPal SDK URL
+    const paypalScript = document.createElement('script');
+    paypalScript.src = 'https://www.paypal.com/sdk/js?client-id=' + clientId + '&currency={{ activeProvider.currency }}';
+    paypalScript.async = true;
+    
+    paypalScript.onload = function() {
+        setTimeout(function() {
+            if (!window.paypal) {
+                console.error('PayPal.js failed to load');
+                const errorDiv = document.getElementById('paypal-errors');
+                if (errorDiv) {
+                    errorDiv.textContent = 'Unable to load PayPal SDK. Please refresh the page.';
+                }
+                return;
+            }
+            
+            const buttonContainer = document.getElementById('paypal-button-container');
+            if (!buttonContainer) {
+                console.error('PayPal button container not found');
+                return;
+            }
+            
+            const amountInput = document.getElementById('testAmount');
+            const descriptionInput = document.getElementById('testDescription');
+            const resultDiv = document.getElementById('testPaymentResult');
+            
+            // Render PayPal button
+            window.paypal.Buttons({
+                createOrder: function(data, actions) {
+                    const amount = parseFloat(amountInput.value) || 1.00;
+                    const description = descriptionInput.value || 'Test Payment';
+                    
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                value: amount.toFixed(2),
+                                currency_code: '{{ activeProvider.currency }}'
+                            },
+                            description: description
+                        }]
+                    });
+                },
+                onApprove: function(data, actions) {
+                    // The SDK automatically captures the order, so we just need to verify it
+                    return actions.order.get().then(function(orderDetails) {
+                        // Submit to server to verify and process the payment
+                        const formData = new FormData();
+                        formData.append('action', 'test_payment');
+                        formData.append('amount', amountInput.value);
+                        formData.append('description', descriptionInput.value || 'Test Payment');
+                        formData.append('token', data.orderID); // PayPal order ID
+                        
+                        fetch(window.location.href, {
+                            method: 'POST',
+                            body: formData
+                        }).then(function(response) {
+                            if (response.redirected) {
+                                window.location.href = response.url;
+                            } else {
+                                return response.text().then(function(text) {
+                                    if (resultDiv) {
+                                        // Check if order was already captured
+                                        const order = orderDetails;
+                                        const capture = order.purchase_units?.[0]?.payments?.captures?.[0];
+                                        
+                                        if (capture && capture.status === 'COMPLETED') {
+                                            resultDiv.innerHTML = '<div class="alert alert-success">✅ Payment completed! Capture ID: ' + capture.id + '</div>';
+                                        } else {
+                                            resultDiv.innerHTML = '<div class="alert alert-success">✅ Payment approved! Order ID: ' + data.orderID + '</div>';
+                                        }
+                                    }
+                                });
+                            }
+                        }).catch(function(err) {
+                            console.error('Error:', err);
+                            if (resultDiv) {
+                                resultDiv.innerHTML = '<div class="alert alert-danger">Error processing payment. Please try again.</div>';
+                            }
+                        });
+                    });
+                },
+                onError: function(err) {
+                    console.error('PayPal error:', err);
+                    const errorDiv = document.getElementById('paypal-errors');
+                    if (errorDiv) {
+                        errorDiv.textContent = 'PayPal error: ' + (err.message || 'Unknown error');
+                    }
+                },
+                onCancel: function(data) {
+                    const resultDiv = document.getElementById('testPaymentResult');
+                    if (resultDiv) {
+                        resultDiv.innerHTML = '<div class="alert alert-warning">Payment cancelled.</div>';
+                    }
+                }
+            }).render('#paypal-button-container');
+        }, 500);
+    };
+    
+    paypalScript.onerror = function() {
+        console.error('Failed to load PayPal.js');
+        const errorDiv = document.getElementById('paypal-errors');
+        if (errorDiv) {
+            errorDiv.textContent = 'Failed to load PayPal SDK. Please refresh the page.';
+        }
+    };
+    
+    document.head.appendChild(paypalScript);
+})();
+{% endif %}
+{% endif %}
+</script>
+{% endblock %}

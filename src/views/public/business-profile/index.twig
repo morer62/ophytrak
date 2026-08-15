@@ -1,0 +1,350 @@
+{% extends "templates/base.twig" %}
+
+{% block title %}{{ profile.company_name }}{% endblock %}
+
+{% block styles %}
+<style>
+body {
+  background: #f3f4f6;
+  color: #111827;
+}
+.bp-shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+.bp-hero {
+  background: linear-gradient(135deg, #111827, #0f766e);
+  color: #fff;
+  border-radius: 1.25rem;
+  padding: 2rem;
+  margin: 1rem 0;
+}
+.bp-logo {
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e5e7eb;
+  color: #64748b;
+  font-weight: 800;
+  overflow: hidden;
+  border: 4px solid rgba(255,255,255,.85);
+  flex: 0 0 auto;
+}
+.bp-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.bp-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 .125rem .45rem rgba(15, 23, 42, .06);
+}
+.bp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.bp-business-product .bp-grid {
+  grid-template-columns: minmax(0, 1fr) 360px;
+}
+.bp-section-full {
+  grid-column: 1 / -1;
+}
+.bp-map-box {
+  min-height: 180px;
+  border-radius: .85rem;
+  background: #eef2f7;
+  overflow: hidden;
+  position: relative;
+}
+.bp-map-box iframe {
+  width: 100%;
+  height: 220px;
+  border: 0;
+  display: block;
+}
+.bp-map-address {
+  margin-top: .75rem;
+  color: #64748b;
+}
+@media (max-width: 767.98px) {
+  .bp-hero {
+    padding: 1.25rem;
+  }
+  .bp-hero-row {
+    flex-direction: column;
+    text-align: center;
+  }
+  .bp-grid,
+  .bp-business-product .bp-grid {
+    grid-template-columns: 1fr;
+  }
+.bp-card .btn {
+    width: 100%;
+  }
+}
+.bp-actions {
+  display: flex;
+  gap: .75rem;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+}
+.bp-action-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: .85rem 1.25rem;
+  font-weight: 800;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #facc15;
+  color: #111827;
+  box-shadow: 0 .75rem 1.5rem rgba(15,23,42,.18);
+}
+.bp-action-btn.secondary {
+  background: rgba(255,255,255,.14);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.35);
+}
+.bp-store-showcase {
+  grid-column: 1 / -1;
+  background: #fff;
+  border: 1px solid #dbeafe;
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  box-shadow: 0 .8rem 1.8rem rgba(15,23,42,.08);
+}
+.bp-store-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.bp-store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1rem;
+}
+.bp-store-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: #f8fafc;
+}
+.bp-store-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #e2e8f0;
+}
+.bp-store-body {
+  padding: 1rem;
+}
+.bp-store-price {
+  font-weight: 900;
+  color: #0f766e;
+  margin: .5rem 0;
+}
+.bp-store-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 999px;
+  background: #111827;
+  color: #fff;
+  font-weight: 800;
+  padding: .7rem 1rem;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<main class="bp-shell {{ (profile.profile_layout ?? 'social_profile') == 'business_product' ? 'bp-business-product' : 'bp-social-profile' }}">
+  <section class="bp-hero">
+    <div class="d-flex align-items-center gap-4 bp-hero-row">
+      <div class="bp-logo">
+        {% if profile.logo_path %}
+          <img src="{{ profile.logo_path }}" alt="{{ profile.company_name }} logo">
+        {% else %}
+          LOGO
+        {% endif %}
+      </div>
+      <div>
+        <p class="text-uppercase fw-bold mb-2" style="letter-spacing:.08em;">{{ profile.business_nature ?: 'Business Operations' }}</p>
+        <h1 class="display-5 fw-bold mb-2">{{ profile.company_name }}</h1>
+        <p class="lead mb-0">{{ profile.short_description ?: profile.business_operation_type ?: 'A public business profile powered by Ophyra.' }}</p>
+        <div class="bp-actions">
+          {% if store_module_active and store_products_count > 0 %}
+            <a class="bp-action-btn" href="{{ storeUrl }}">Shop this business</a>
+          {% endif %}
+          {% if services_module_active and quoteUrl %}
+            <a class="bp-action-btn secondary" href="{{ quoteUrl }}">Request services</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bp-grid mb-4">
+    {% if store_module_active and store_products_count > 0 %}
+      <article class="bp-store-showcase">
+        <div class="bp-store-head">
+          <div>
+            <p class="text-uppercase text-muted fw-bold small mb-1">Storefront</p>
+            <h2 class="h4 fw-bold mb-1">Shop {{ profile.company_name }}</h2>
+            <p class="text-muted mb-0">Browse public products from this business profile. Cart and checkout continue through the existing Store flow.</p>
+          </div>
+          <a class="btn btn-outline-dark fw-bold" href="{{ storeUrl }}">View full store</a>
+        </div>
+        <div class="bp-store-grid">
+          {% for product in store_products %}
+            <article class="bp-store-card">
+              {% if product.main_image %}
+                <img class="bp-store-image" src="{{ product.main_image }}" alt="{{ product.name }}">
+              {% else %}
+                <div class="bp-store-image"></div>
+              {% endif %}
+              <div class="bp-store-body">
+                <h3 class="h6 fw-bold mb-1">{{ product.name }}</h3>
+                <p class="small text-muted mb-0">{{ product.short_description|default('') }}</p>
+                <div class="bp-store-price">${{ (product.promo_price ?: product.price)|number_format(2) }}</div>
+                {% if product.product_type == 'FIXED' and product.stock_quantity > 0 %}
+                  <button class="bp-store-btn" type="button" data-profile-add="{{ product.id }}" data-name="{{ product.name|e('html_attr') }}" data-price="{{ product.promo_price ?: product.price }}" data-image="{{ product.main_image|default('')|e('html_attr') }}">Add to cart</button>
+                {% else %}
+                  <a class="btn btn-sm btn-outline-dark w-100 fw-bold" href="{{ storeUrl }}">Choose options</a>
+                {% endif %}
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      </article>
+    {% endif %}
+
+    {% for section in sections %}
+      {% set key = section.section_key %}
+      {% if key == 'description' and profile.show_description_section %}
+        <article class="bp-card bp-section-full">
+          <h2 class="h4 fw-bold mb-2">{{ section.section_label }}</h2>
+          <p class="mb-0 text-muted">{{ profile.rich_description ?: profile.short_description ?: 'More information about this business will be available soon.' }}</p>
+        </article>
+      {% elseif key == 'contact' and profile.show_contact_section %}
+        <article class="bp-card">
+          <h2 class="h4 fw-bold mb-3">{{ section.section_label }}</h2>
+          <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
+            {% if profile.phone %}<li><strong>Phone:</strong> <a href="tel:{{ profile.phone }}">{{ profile.phone }}</a></li>{% endif %}
+            {% if profile.email %}<li><strong>Email:</strong> <a href="mailto:{{ profile.email }}">{{ profile.email }}</a></li>{% endif %}
+            {% if profile.payment_method_accepted %}<li><strong>Payments:</strong> {{ profile.payment_method_accepted }}</li>{% endif %}
+          </ul>
+        </article>
+      {% elseif key == 'map' and profile.show_map_section %}
+        {% set mapParts = [] %}
+        {% if profile.address_line1 %}{% set mapParts = mapParts|merge([profile.address_line1]) %}{% endif %}
+        {% if profile.city %}{% set mapParts = mapParts|merge([profile.city]) %}{% endif %}
+        {% if profile.state %}{% set mapParts = mapParts|merge([profile.state]) %}{% endif %}
+        {% if profile.zip %}{% set mapParts = mapParts|merge([profile.zip]) %}{% endif %}
+        {% if profile.country %}{% set mapParts = mapParts|merge([profile.country]) %}{% endif %}
+        {% set mapAddress = mapParts|join(', ') %}
+        <article class="bp-card">
+          <h2 class="h4 fw-bold mb-3">{{ section.section_label }}</h2>
+          {% if mapAddress %}
+            <div class="bp-map-box">
+              <iframe src="https://www.google.com/maps?q={{ mapAddress|url_encode }}&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen title="{{ profile.company_name }} map"></iframe>
+            </div>
+            <p class="bp-map-address mb-0">
+              <strong>{{ profile.address_line1 ?: 'Location' }}</strong><br>
+              {{ profile.city }}{% if profile.state %}, {{ profile.state }}{% endif %} {{ profile.zip }}
+            </p>
+          {% else %}
+            <p class="text-muted mb-0">Location details will appear here when the business address is available.</p>
+          {% endif %}
+        </article>
+      {% elseif key == 'quote_form' and profile.show_quote_form and services_module_active %}
+        <article class="bp-card">
+          <h2 class="h4 fw-bold mb-2">{{ section.section_label }}</h2>
+          <p class="text-muted">Send a request and the business will receive it through the existing Ophyra request flow.</p>
+          <a href="{{ quoteUrl }}" class="btn btn-dark fw-bold">Request Services</a>
+        </article>
+      {% elseif key == 'services' and profile.show_services_section and services_module_active %}
+        <article class="bp-card">
+          <h2 class="h4 fw-bold mb-2">{{ section.section_label }}</h2>
+          <p class="text-muted mb-0">Services and offerings can be highlighted here as the profile grows.</p>
+        </article>
+      {% elseif key == 'events' and profile.show_events_section %}
+        <article class="bp-card">
+          <h2 class="h4 fw-bold mb-3">{{ section.section_label }}</h2>
+          {% if events is not empty %}
+            <div class="d-flex flex-column gap-3">
+              {% for event in events %}
+                <div class="border rounded-3 p-3">
+                  <strong>{{ event.event_name }}</strong>
+                  <p class="text-muted small mb-0">{{ event.event_date }}{% if event.event_time %} at {{ event.event_time }}{% endif %}</p>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">No public events are listed right now.</p>
+          {% endif %}
+        </article>
+      {% elseif key == 'gallery' and profile.show_gallery_section %}
+        <article class="bp-card">
+          <h2 class="h4 fw-bold mb-2">{{ section.section_label }}</h2>
+          <p class="text-muted mb-0">Gallery content can be added as the business expands its profile.</p>
+        </article>
+      {% elseif key == 'business_hours' %}
+        <article class="bp-card">
+          <h2 class="h4 fw-bold mb-2">{{ section.section_label }}</h2>
+          <p class="text-muted mb-0">Business hours are not configured yet.</p>
+        </article>
+      {% elseif key == 'payment_methods' %}
+        <article class="bp-card">
+          <h2 class="h4 fw-bold mb-2">{{ section.section_label }}</h2>
+          <p class="text-muted mb-0">{{ profile.payment_method_accepted ?: 'Payment methods will be confirmed by the business.' }}</p>
+        </article>
+      {% elseif key == 'social_links' %}
+        <article class="bp-card">
+          <h2 class="h4 fw-bold mb-2">{{ section.section_label }}</h2>
+          <p class="text-muted mb-0">Social links are not configured yet.</p>
+        </article>
+      {% endif %}
+    {% endfor %}
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('click', function (event) {
+  const button = event.target.closest('[data-profile-add]');
+  if (!button) return;
+  const productId = Number(button.dataset.profileAdd);
+  const key = 'store_cart_selection';
+  const cart = JSON.parse(localStorage.getItem(key) || '{"items":[]}');
+  let items = Array.isArray(cart.items) ? cart.items : [];
+  if (Number(cart.owner_id || 0) !== Number({{ profile.id_owner }})) {
+    items = [];
+  }
+  const existing = items.find(item => Number(item.id_product) === productId && !item.id_product_variation);
+  if (existing) existing.quantity += 1;
+  else items.push({
+    id_product: productId,
+    id_product_variation: null,
+    quantity: 1,
+    product_name_snapshot: button.dataset.name || 'Item',
+    variation_name_snapshot: null,
+    unit_price: Number(button.dataset.price || 0),
+    main_image: button.dataset.image || ''
+  });
+  localStorage.setItem(key, JSON.stringify({owner_id: {{ profile.id_owner }}, items}));
+  window.location.href = '{{ path("store/cart") }}?owner={{ profile.id_owner }}';
+});
+</script>
+{% endblock %}

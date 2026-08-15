@@ -1,0 +1,171 @@
+﻿{% extends 'templates/base.admin.twig' %}
+
+{% block body %}
+<main class="mt-4 container">
+    <section class="mb-4">
+        <div class="p-4 p-lg-5 bg-white rounded-4 shadow-sm" style="border-left: 5px solid #0f766e;">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-8">
+                    <p class="text-uppercase text-muted fw-bold small mb-1" style="letter-spacing:.05em;">{{ trans('ui.client_portal') }}</p>
+                    <h2 class="fw-bold mb-2">{{ trans('client_home.hero_title') }}</h2>
+                    <p class="text-muted mb-0">
+                        This area is for you as a client. {{ trans('affiliate_hub.business_name') }}s appear inside each order so you can review who created it, open the order details and follow the correct service context.
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <a href="{{ path('panel/cards') }}" class="btn btn-dark btn-lg rounded-pill px-4">{{ trans('client_home.manage_payment_methods') }}</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-4">
+        <div class="p-4 p-lg-5 rounded-4 shadow-sm text-white" style="background: linear-gradient(135deg, #0f766e, #0284c7);">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-8">
+                    <p class="text-uppercase fw-bold small mb-2" style="letter-spacing:.06em; opacity:.8;">{{ trans('client_home.orders_kicker') }}</p>
+                    <h3 class="fw-bold mb-2">{{ trans('client_home.track_orders_title') }}</h3>
+                    <p class="mb-0" style="opacity:.88;">{{ trans('client_home.track_orders_body') }}</p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <a href="{{ path('panel/planner-hub/orders/orders') }}" class="btn btn-light btn-lg fw-bold rounded-pill px-4">View {{ trans('client_home.orders_kicker') }}</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <p class="text-uppercase text-muted fw-bold small mb-1" style="letter-spacing:.05em;">{{ trans('client_home.quick_access') }}</p>
+                <h4 class="fw-bold mb-0">{{ trans('client_home.client_tools') }}</h4>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6 col-xl-4">
+                <a href="{{ path('panel/planner-hub/orders/orders') }}" class="text-decoration-none text-dark">
+                    <div class="bg-white rounded-4 shadow-sm p-4 h-100 border">
+                        <div class="fw-bold fs-5 mb-2">My {{ trans('client_home.orders_kicker') }}</div>
+                        <p class="text-muted mb-0">{{ trans('client_home.my_orders_body') }}</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <a href="{{ path('panel/store/orders/home') }}" class="text-decoration-none text-dark">
+                    <div class="bg-white rounded-4 shadow-sm p-4 h-100 border">
+                        <div class="fw-bold fs-5 mb-2">My Store {{ trans('client_home.orders_kicker') }}</div>
+                        <p class="text-muted mb-0">{{ trans('client_home.store_orders_body') }}</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <a href="{{ path('panel/cards') }}" class="text-decoration-none text-dark">
+                    <div class="bg-white rounded-4 shadow-sm p-4 h-100 border">
+                        <div class="fw-bold fs-5 mb-2">{{ trans('client_home.payment_methods') }}</div>
+                        <p class="text-muted mb-0">{{ trans('client_home.payment_methods_body') }}</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <a href="{{ path('panel/chat') }}" class="text-decoration-none text-dark">
+                    <div class="bg-white rounded-4 shadow-sm p-4 h-100 border">
+                        <div class="fw-bold fs-5 mb-2">{{ trans('ui.messages') }}</div>
+                        <p class="text-muted mb-0">{{ trans('client_home.messages_body') }}</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <a href="{{ path('panel/settings') }}" class="text-decoration-none text-dark">
+                    <div class="bg-white rounded-4 shadow-sm p-4 h-100 border">
+                        <div class="fw-bold fs-5 mb-2">{{ trans('client_home.account_settings') }}</div>
+                        <p class="text-muted mb-0">{{ trans('client_home.account_settings_body') }}</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <p class="text-uppercase text-muted fw-bold small mb-1" style="letter-spacing:.05em;">{{ trans('client_home.business_tools') }}</p>
+                <h4 class="fw-bold mb-0">{{ trans('client_home.grow_title') }}</h4>
+            </div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="bg-white rounded-4 shadow-sm p-4 h-100 border">
+                    <div class="fw-bold fs-5 mb-2">{{ trans('affiliate_hub.title') }}</div>
+                    <p class="text-muted mb-3">{{ trans('client_home.affiliate_body') }}</p>
+                    <a href="{{ path('panel/afiliate-hub') }}" class="btn btn-outline-dark rounded-pill fw-bold px-4">{{ trans('client_home.open_affiliate_panel') }}</a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="bg-white rounded-4 shadow-sm p-4 h-100 border">
+                    <div class="fw-bold fs-5 mb-2">{{ trans('client_home.create_business_profile') }}</div>
+                    <p class="text-muted mb-3">{{ trans('client_home.create_business_profile_body') }}</p>
+                    <button type="button" class="btn btn-dark rounded-pill fw-bold px-4" data-bs-toggle="modal" data-bs-target="#confirmBusiness{{ trans('team_home.owner') }}Modal">
+                        {{ trans('client_home.switch_business_owner') }}
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="bg-white rounded-4 shadow-sm p-4 h-100 border">
+                    <div class="fw-bold fs-5 mb-2">{{ trans('client_home.team_view') }}</div>
+                    <p class="text-muted mb-3">{{ trans('client_home.team_view_body') }}</p>
+                    <form method="POST" action="{{ path('panel/home') }}" class="m-0">
+                        <input type="hidden" name="level" value="4">
+                        <button type="submit" class="btn btn-outline-dark rounded-pill fw-bold px-4">
+                            Switch to {{ trans('client_home.team_view') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<style>
+    .client-card-coming-soon {
+        background:#f5f5f3;
+        border-color:#e0ded8 !important;
+        color:#64748b;
+        filter:grayscale(.35);
+        opacity:.76;
+    }
+    .client-card-coming-soon small {
+        display:inline-flex;
+        margin-left:.35rem;
+        padding:.18rem .5rem;
+        border-radius:999px;
+        background:#ebebeb;
+        color:#737373;
+        font-size:.68rem;
+        font-weight:900;
+        vertical-align:middle;
+    }
+</style>
+
+<div class="modal fade" id="confirmBusiness{{ trans('team_home.owner') }}Modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4">
+            <form method="POST" action="{{ path('panel/home') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">{{ trans('client_home.activate_business_owner') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">{{ trans('client_home.activate_business_owner_body') }}</p>
+                    <p class="text-muted small mb-0">You can return to {{ trans('ui.client_portal') }} later and keep viewing your personal orders.</p>
+                    <input type="hidden" name="level" value="2">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ trans('ui.cancel') }}</button>
+                    <button type="submit" class="btn btn-dark">{{ trans('ui.continue') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

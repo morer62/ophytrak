@@ -1,0 +1,75 @@
+{% extends 'templates/base.admin.twig' %}
+
+{% block style %}
+<style>
+    .membership-header {
+        background-color: #e3f2fd;
+        padding: 1.5rem;
+        border-radius: 1rem;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .plan-card {
+        border: 1px solid #ccc;
+        border-radius: 1rem;
+        padding: 2rem;
+        text-align: center;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        height: 100%;
+    }
+
+    .plan-price {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<main>
+    <section class="membership-header">
+        <div class="bg-light rounded p-4 my-4 text-center">
+            <h2 class="mb-3">Activate Ophyra Base</h2>
+            <p class="text-muted mb-4">
+                Ophyra Base gives your business the operating foundation: CRM, clients, team, basic payroll, orders,
+                contracts, signatures, basic chat and business profile.
+            </p>
+            <div class="d-flex flex-column align-items-start mx-auto" style="max-width: 560px;">
+                <div class="d-flex align-items-center mb-2"><span class="text-success me-2">✓</span><span>CRM and client records</span></div>
+                <div class="d-flex align-items-center mb-2"><span class="text-success me-2">✓</span><span>Orders, jobs, services and contracts</span></div>
+                <div class="d-flex align-items-center mb-2"><span class="text-success me-2">✓</span><span>Team, basic chat and basic payroll</span></div>
+                <div class="d-flex align-items-center mb-2"><span class="text-success me-2">✓</span><span>Business profile and dashboard visibility</span></div>
+            </div>
+        </div>
+    </section>
+
+    <div class="row g-4 mt-4 justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="plan-card border-primary" style="border-width: 2px !important;">
+                <div>
+                    <h5 class="fw-bold text-muted">Ophyra Base</h5>
+                    <h2 class="plan-price">{{ base_price_label }}</h2>
+                    <p class="text-muted">Renews monthly</p>
+                </div>
+                <form method="post">
+                    <button class="btn btn-primary btn-lg w-100" type="submit" onclick="showLoader(this)">
+                        Pay {{ base_price_label }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function showLoader(button) {
+        button.disabled = true;
+        button.innerHTML = 'Processing...';
+        button.form.submit();
+    }
+</script>
+{% endblock %}

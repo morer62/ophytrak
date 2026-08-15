@@ -1,0 +1,208 @@
+{% extends "templates/base.twig" %}
+
+{% block head %}
+<style>
+.card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.btn {
+    border-radius: 8px;
+}
+
+.divider {
+    text-align: center;
+    margin: 12px 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e9ecef;
+}
+
+.divider span {
+    background: white;
+    padding: 0 8px;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.input-group .form-control {
+    border-right: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group .btn {
+    border-left: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-color: #dee2e6;
+}
+
+.input-group .btn:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+
+.input-group .btn:focus {
+    box-shadow: none;
+}
+
+[data-feather] {
+    width: 18px;
+    height: 18px;
+}
+
+#togglePassword {
+    min-width: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mb-3 {
+    margin-bottom: .8rem !important;
+}
+
+.mb-4 {
+    margin-bottom: 1rem !important;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<main class="bg-light d-flex justify-content-center align-items-center min-vh-100 flex-column">
+
+                
+                <!-- Header Section -->
+                <div class="text-center mb-4">
+                    <a href="{{ path('planner-hub') }}" class="d-inline-block mb-3" {% if product_mode == 'ophytrack' %}style="background:#020a16;padding:14px 20px;border-radius:16px"{% endif %}>
+                        <img src="{{ asset_for(product_mode == 'ophytrack' ? brand.logo : 'assets/images/planner-hub-logo-negative.png') }}" width="{{ product_mode == 'ophytrack' ? '260px' : '180px' }}" alt="{{ brand.name|default('Ophyra') }}">
+                    </a>
+                    <h4 class="fw-normal text-dark mb-2">{{ trans('auth.sign_in_continue') }}</h4>
+                    <p class="text-muted small mb-0">
+                        {{ trans('auth.need_help') }}
+                        <a href="{{ path('support') }}" class="text-decoration-none">{{ trans('auth.support_center') }}</a>
+                    </p>
+                </div>
+
+                <!-- Login Card -->
+                <div class="card shadow-sm bg-white" style="min-width: 30dvw;">
+                    <div class="card-body p-4">
+
+                        <!-- Login Form -->
+                        <form method="post">
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">{{ trans('auth.email') }}</label>
+                                <input class="form-control form-control-lg" 
+                                       type="email" 
+                                       name="email" 
+                                       placeholder="{{ trans('auth.enter_email') }}"
+                                       required/>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">{{ trans('auth.password') }}</label>
+                                <div class="input-group">
+                                    <input class="form-control form-control-lg" 
+                                           type="password" 
+                                           name="password" 
+                                           id="password"
+                                           placeholder="{{ trans('auth.enter_password') }}"
+                                           required/>
+                                    <button class="btn btn-outline-secondary" 
+                                            type="button" 
+                                            id="togglePassword">
+                                        <i data-feather="eye" id="eyeIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                           
+
+                            
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="form-check">
+                                    <input id="customControlInline" 
+                                           type="checkbox" 
+                                           class="form-check-input" 
+                                           value="remember-me" 
+                                           name="remember-me" 
+                                           checked>
+                                    <label class="form-check-label small" for="customControlInline">
+                                        {{ trans('auth.remember_me') }}
+                                    </label>
+                                </div>
+                                <a href="{{ path('forgot_password') }}" class="text-decoration-none small text-muted">
+                                    {{ trans('auth.forgot_password') }}
+                                </a>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-dark btn-lg py-3">{{ trans('auth.sign_in') }}</button>
+                            </div>
+                        </form>
+                        
+                    </div>
+                </div>
+
+                <!-- Sign Up Link (hidden in mobile single-company mode) -->
+                <div class="text-center mt-4">
+                    <p class="text-muted small mb-0">
+                        {% if not isMobileApp %}
+                        {{ trans('auth.dont_have_account') }}
+                        <a href="{{ path('signup') }}" class="text-decoration-none fw-medium">{{ trans('auth.sign_up') }}</a> -
+                        {% endif %}
+                         <a href="{{ path('terms_and_conditions') }}" class="text-decoration-none small ">
+                                   {{ trans('auth.privacy_policy') }}
+                                </a>
+                    </p>
+                </div>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const togglePassword = document.getElementById('togglePassword');
+    const password = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+
+    togglePassword.addEventListener('click', function() {
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        
+        console.log('Password type changed to:', type);
+        console.log('Current eye icon:', eyeIcon.getAttribute('data-feather'));
+        
+        if (type === 'text') {
+            eyeIcon.setAttribute('data-feather', 'eye-off');
+            console.log('Changed to eye-off');
+        } else {
+            eyeIcon.setAttribute('data-feather', 'eye');
+            console.log('Changed to eye');
+        }
+        
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+            console.log('Feather icons replaced');
+        } else {
+            console.log('Feather not available');
+        }
+    });
+});
+</script>
+
+{% endblock %}

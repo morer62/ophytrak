@@ -1,0 +1,832 @@
+{% extends "templates/base.twig" %}
+
+{% block styles %}
+<style>
+    :root{
+        --ophyra-ink:#101827;
+        --ophyra-muted:#657084;
+        --ophyra-soft:#f5f7fb;
+        --ophyra-line:#dfe6ee;
+        --ophyra-green:#12a870;
+        --ophyra-teal:#21a99a;
+        --ophyra-deep:#0f172a;
+    }
+    .ol-page{
+        color:var(--ophyra-ink);
+        background:#fff;
+        font-family:Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .ol-nav{
+        border-bottom:1px solid var(--ophyra-line);
+        background:rgba(255,255,255,.96);
+        backdrop-filter:blur(12px);
+    }
+    .ol-brand{
+        display:inline-flex;
+        align-items:center;
+        gap:.7rem;
+        font-weight:800;
+        color:var(--ophyra-ink);
+        text-decoration:none;
+    }
+    .ol-brand img{
+        display:block;
+        width:150px;
+        height:auto;
+    }
+    .ol-brand-tagline{
+        display:block;
+        color:#fff;
+        font-size:.56rem;
+        font-weight:900;
+        letter-spacing:.22em;
+        line-height:1;
+        text-transform:uppercase;
+    }
+    .ol-nav-link{
+        color:#475569;
+        font-weight:700;
+        text-decoration:none;
+        margin-left:1.2rem;
+    }
+    .ol-nav-link:hover{
+        color:var(--ophyra-green);
+    }
+    .ol-hero{
+        position:relative;
+        overflow:hidden;
+        background:linear-gradient(135deg,#f8fbff 0%,#ffffff 48%,#eefbf6 100%);
+        padding:4.5rem 0 3.5rem;
+    }
+    .ol-hero::before{
+        content:"";
+        position:absolute;
+        inset:0;
+        background:linear-gradient(90deg,rgba(18,168,112,.08),transparent 45%,rgba(33,169,154,.08));
+        pointer-events:none;
+    }
+    .ol-kicker{
+        display:inline-flex;
+        align-items:center;
+        gap:.45rem;
+        padding:.42rem .72rem;
+        border-radius:999px;
+        background:#e8f8f2;
+        color:#087a52;
+        font-size:.82rem;
+        font-weight:800;
+        text-transform:uppercase;
+        letter-spacing:0;
+        margin-bottom:1rem;
+    }
+    .ol-kicker.is-coming-soon{
+        background:#ebebeb;
+        color:#737373;
+    }
+    .ol-coming-soon-note{
+        display:inline-flex;
+        align-items:center;
+        gap:.45rem;
+        border:1px solid #e0ded8;
+        border-radius:999px;
+        background:#f5f5f3;
+        color:#737373;
+        font-weight:800;
+        min-height:48px;
+        padding:.85rem 1.25rem;
+    }
+    .ol-hero h1{
+        font-size:clamp(2.25rem, 4vw, 4.35rem);
+        line-height:1.04;
+        font-weight:900;
+        letter-spacing:0;
+        margin-bottom:1rem;
+        max-width:780px;
+    }
+    .ol-lead{
+        font-size:1.18rem;
+        line-height:1.75;
+        color:#4b5563;
+        max-width:720px;
+        margin-bottom:1.5rem;
+    }
+    .ol-cta-row{
+        display:flex;
+        flex-wrap:wrap;
+        gap:.9rem;
+        align-items:center;
+    }
+    .ol-btn{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        gap:.5rem;
+        min-height:48px;
+        padding:.85rem 1.25rem;
+        border-radius:999px;
+        font-weight:800;
+        text-decoration:none;
+        transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .ol-btn-primary{
+        color:#fff;
+        background:linear-gradient(135deg,var(--ophyra-green),var(--ophyra-teal));
+        box-shadow:0 16px 34px rgba(18,168,112,.22);
+    }
+    .ol-btn-primary:hover{
+        color:#fff;
+        transform:translateY(-2px);
+        box-shadow:0 20px 38px rgba(18,168,112,.28);
+    }
+    .ol-btn-secondary{
+        color:#0f172a;
+        border:1px solid var(--ophyra-line);
+        background:#fff;
+    }
+    .ol-btn-secondary:hover{
+        color:#087a52;
+        border-color:#b7e6d3;
+        background:#f7fffb;
+    }
+    .ol-hero-media{
+        position:relative;
+        width:min(680px, 100%);
+        aspect-ratio:16/9;
+        margin-left:auto;
+        border-radius:8px;
+        overflow:hidden;
+        box-shadow:0 24px 70px rgba(15,23,42,.16);
+        background:transparent;
+    }
+    .ol-hero-media.ol-hero-media-industry{
+        width:100%;
+        max-width:720px;
+        aspect-ratio:16/9 !important;
+        min-height:0 !important;
+        max-height:420px;
+    }
+    .ol-hero-media img{
+        position:absolute;
+        inset:0;
+        width:100%;
+        height:100%;
+        object-fit:cover;
+        object-position:center center;
+        display:block;
+        border:0;
+    }
+    .ol-hero-media.ol-hero-media-industry img{
+        width:100% !important;
+        height:100% !important;
+        max-width:none !important;
+        max-height:none !important;
+        object-fit:cover !important;
+        object-position:center center !important;
+    }
+    @media (max-width: 991px){
+        .ol-hero-media{
+            width:100%;
+            margin-left:0;
+        }
+    }
+    .ol-breadcrumbs{
+        position:relative;
+        z-index:1;
+        font-size:.9rem;
+        color:#64748b;
+        margin-bottom:1rem;
+    }
+    .ol-breadcrumbs a{
+        color:#475569;
+        text-decoration:none;
+        font-weight:700;
+    }
+    .ol-breadcrumbs a:hover{
+        color:var(--ophyra-green);
+    }
+    .ol-section{
+        padding:4.5rem 0;
+    }
+    .ol-section-soft{
+        background:var(--ophyra-soft);
+    }
+    .ol-section-dark{
+        background:var(--ophyra-deep);
+        color:#fff;
+    }
+    .ol-section-title{
+        font-size:clamp(1.8rem, 3vw, 3rem);
+        font-weight:900;
+        line-height:1.12;
+        letter-spacing:0;
+        margin-bottom:1rem;
+    }
+    .ol-section-copy{
+        color:#5f6b7e;
+        line-height:1.75;
+        font-size:1.04rem;
+        max-width:760px;
+    }
+    .ol-section-dark .ol-section-copy{
+        color:#d8e3ee;
+    }
+    .ol-list{
+        display:grid;
+        gap:.85rem;
+        padding:0;
+        margin:1.4rem 0 0;
+        list-style:none;
+    }
+    .ol-list li{
+        display:flex;
+        gap:.75rem;
+        align-items:flex-start;
+        padding:1rem;
+        background:#fff;
+        border:1px solid var(--ophyra-line);
+        border-radius:8px;
+        color:#334155;
+        line-height:1.55;
+    }
+    .ol-list li i{
+        color:var(--ophyra-green);
+        margin-top:.2rem;
+    }
+    .ol-section-dark .ol-list li{
+        background:rgba(255,255,255,.06);
+        border-color:rgba(255,255,255,.12);
+        color:#edf6f6;
+    }
+    .ol-grid{
+        display:grid;
+        grid-template-columns:repeat(3, minmax(0, 1fr));
+        gap:1rem;
+        margin-top:1.7rem;
+    }
+    .ol-card{
+        border:1px solid var(--ophyra-line);
+        border-radius:8px;
+        background:#fff;
+        padding:1.25rem;
+        height:100%;
+        box-shadow:0 14px 34px rgba(15,23,42,.05);
+    }
+    .ol-card h3{
+        font-size:1.08rem;
+        font-weight:850;
+        margin-bottom:.55rem;
+    }
+    .ol-card p{
+        color:#5f6b7e;
+        line-height:1.65;
+        margin:0;
+    }
+    .ol-product-shot{
+        position:relative;
+        overflow:hidden;
+        border-radius:24px;
+        background:
+            radial-gradient(840px 320px at 88% 0%, rgba(33,169,154,.18), transparent 62%),
+            linear-gradient(135deg,#071312 0%,#0f2f2c 58%,#101827 100%);
+        border:1px solid rgba(33,169,154,.22);
+        box-shadow:0 30px 82px rgba(15,23,42,.20);
+    }
+    .ol-product-shot-copy{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:1rem;
+        padding:1.25rem 1.35rem;
+        color:#fff;
+    }
+    .ol-product-shot-copy h2{
+        color:#fff;
+        font-size:clamp(1.35rem,2.4vw,2rem);
+        font-weight:900;
+        margin:0 0 .35rem;
+    }
+    .ol-product-shot-copy p{
+        color:#d8e8e6;
+        margin:0;
+        line-height:1.62;
+        max-width:760px;
+    }
+    .ol-product-shot-badge{
+        display:inline-flex;
+        align-items:center;
+        gap:.45rem;
+        padding:.68rem .85rem;
+        border-radius:999px;
+        color:#053b35;
+        background:#9ff3e8;
+        font-weight:900;
+        white-space:nowrap;
+    }
+    .ol-product-shot img{
+        display:block;
+        width:100%;
+        height:auto;
+        background:#f3f7fb;
+    }
+    .ol-inline-preview-carousel{
+        display:grid;
+        grid-auto-flow:column;
+        grid-auto-columns:100%;
+        overflow-x:auto;
+        overscroll-behavior-x:contain;
+        scroll-snap-type:x mandatory;
+        background:#eef4f8;
+        scrollbar-width:thin;
+        scrollbar-color:#0f766e #dbe7ec;
+    }
+    .ol-inline-preview-carousel figure{
+        margin:0;
+        scroll-snap-align:start;
+        background:#eef4f8;
+    }
+    .ol-inline-preview-carousel img{
+        display:block;
+        width:100%;
+        height:auto;
+        max-height:640px;
+        object-fit:contain;
+        background:#eef4f8;
+    }
+    .ol-inline-preview-hint{
+        padding:.75rem 1rem 1rem;
+        color:#d8e8e6;
+        font-weight:800;
+        font-size:.86rem;
+        background:#071312;
+    }
+    .ol-preview-carousel{
+        position:fixed;
+        inset:0;
+        z-index:9999;
+        display:none;
+        align-items:center;
+        justify-content:center;
+        padding:1.25rem;
+        background:rgba(2,10,18,.76);
+        backdrop-filter:blur(10px);
+    }
+    .ol-preview-carousel.is-open{
+        display:flex;
+    }
+    .ol-preview-shell{
+        width:min(1120px,96vw);
+        max-height:92vh;
+        overflow:hidden;
+        border-radius:28px;
+        background:#071312;
+        border:1px solid rgba(141,244,232,.22);
+        box-shadow:0 34px 90px rgba(0,0,0,.38);
+        display:flex;
+        flex-direction:column;
+    }
+    .ol-preview-head{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:1rem;
+        padding:1rem 1.1rem;
+        color:#fff;
+    }
+    .ol-preview-head h3{
+        color:#fff;
+        font-size:1.1rem;
+        font-weight:900;
+        margin:0;
+    }
+    .ol-preview-close,
+    .ol-preview-nav{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        border:1px solid rgba(255,255,255,.18);
+        color:#fff;
+        background:rgba(255,255,255,.08);
+    }
+    .ol-preview-close{
+        width:42px;
+        height:42px;
+        border-radius:999px;
+    }
+    .ol-preview-stage{
+        background:#f3f7fb;
+        flex:1 1 auto;
+        min-height:0;
+        max-height:calc(92vh - 142px);
+        overflow:auto;
+    }
+    .ol-preview-slide{
+        display:none;
+        margin:0;
+    }
+    .ol-preview-slide.is-active{
+        display:block;
+    }
+    .ol-preview-slide img{
+        display:block;
+        width:100%;
+        max-height:calc(92vh - 142px);
+        height:auto;
+        object-fit:contain;
+    }
+    .ol-preview-controls{
+        flex:0 0 auto;
+        display:flex;
+        justify-content:center;
+        gap:.7rem;
+        padding:1rem;
+        background:#071312;
+    }
+    .ol-preview-nav{
+        min-height:42px;
+        border-radius:999px;
+        padding:0 1rem;
+        font-weight:850;
+    }
+    .ol-related{
+        display:flex;
+        flex-wrap:wrap;
+        gap:.75rem;
+        margin-top:1.2rem;
+    }
+    .ol-related a{
+        display:inline-flex;
+        align-items:center;
+        gap:.45rem;
+        border:1px solid #cfeee2;
+        border-radius:999px;
+        color:#087a52;
+        background:#f4fcf8;
+        padding:.6rem .85rem;
+        font-weight:800;
+        text-decoration:none;
+    }
+    .ol-related a:hover{
+        background:#e5f8ef;
+    }
+    .ol-faq{
+        border-top:1px solid var(--ophyra-line);
+        padding-top:1rem;
+        margin-top:1rem;
+    }
+    .ol-faq h3{
+        font-size:1.08rem;
+        font-weight:850;
+    }
+    .ol-faq p{
+        color:#5f6b7e;
+        line-height:1.65;
+    }
+    .ol-final{
+        background:linear-gradient(135deg,#0f172a 0%,#12322d 55%,#0b5f4a 100%);
+        color:#fff;
+        border-radius:8px;
+        padding:2.25rem;
+    }
+    .ol-final p{
+        color:#dce9ec;
+        max-width:760px;
+        line-height:1.75;
+    }
+    @media (max-width: 991px){
+        .ol-hero{
+            padding:3rem 0;
+        }
+        .ol-grid{
+            grid-template-columns:1fr;
+        }
+        .ol-product-shot-copy{
+            align-items:flex-start;
+            flex-direction:column;
+        }
+        .ol-preview-shell,
+        .ol-preview-stage,
+        .ol-preview-slide img{
+            max-height:none;
+        }
+        .ol-preview-stage{
+            overflow:auto;
+        }
+        .ol-nav-link{
+            display:none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% set screen_map = {
+    'venues-hospitality': 'assets/public/ophyra/screens/industry-venues-hospitality.svg',
+    'consultants-agencies': 'assets/public/ophyra/screens/industry-consultants-agencies.svg',
+    'service-businesses': 'assets/public/ophyra/screens/industry-service-businesses.svg',
+    'retail-online-stores': 'assets/public/ophyra/screens/industry-retail-online-stores.svg',
+    'logistics-delivery': 'assets/public/ophyra/screens/industry-logistics-delivery.svg',
+    'project-based-businesses': 'assets/public/ophyra/screens/industry-project-based-businesses.svg',
+    'orders-operations': 'assets/public/ophyra/screens/industry-service-businesses.svg',
+    'service-operations': 'assets/public/ophyra/screens/industry-service-businesses.svg',
+    'crm': 'assets/public/ophyra/screens/industry-consultants-agencies.svg',
+    'team-payroll': 'assets/public/ophyra/screens/dashboard-command-center.svg',
+    'inventory-storage': 'assets/public/ophyra/screens/industry-logistics-delivery.svg',
+    'store-delivery-tracking': 'assets/public/ophyra/screens/industry-retail-online-stores.svg',
+    'store-logistics': 'assets/public/ophyra/screens/industry-retail-online-stores.svg',
+    'advanced-storage-qr-inventory': 'assets/public/ophyra/screens/industry-logistics-delivery.svg',
+    'marketplace-connectors': 'assets/public/ophyra/screens/industry-retail-online-stores.svg',
+    'ai-advisor': 'assets/public/ophyra/screens/dashboard-command-center.svg',
+    'ticket-sales-rsvp': 'assets/public/ophyra/screens/industry-venues-hospitality.svg'
+} %}
+{% set screen_asset = page.screenshot_image|default(screen_map[page.slug]|default('assets/public/ophyra/screens/dashboard-command-center.svg')) %}
+{% set industry_command_asset = 'assets/public/ophyra/screens/dashboard-view.png' %}
+<main class="ol-page">
+    <nav class="ol-nav py-3">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a class="ol-brand" href="{{ path('planner-hub') }}">
+                <span>
+                    <img src="{{ asset_for('assets/images/planner-hub-logo-negative.png') }}" alt="OphyraApp">
+                    <span class="ol-brand-tagline">One system. Every operation.</span>
+                </span>
+            </a>
+            <div>
+                <a class="ol-nav-link" href="{{ path('planner-hub') }}#ophyra-modules">{{ trans('ophyra_landing.nav_modules') }}</a>
+                <a class="ol-nav-link" href="{{ path('planner-hub') }}#ophyra-industries">{{ trans('ophyra_landing.nav_industries') }}</a>
+                <a class="ol-nav-link" href="{{ path('signup') }}">{{ trans('public_home.start_free') }}</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="ol-hero">
+        <div class="container position-relative">
+            <div class="ol-breadcrumbs" aria-label="Breadcrumb">
+                <a href="{{ path('planner-hub') }}">Ophyra</a>
+                <span> / </span>
+                <span>{{ page.group == 'modules' ? trans('ophyra_landing.nav_modules') : trans('ophyra_landing.nav_industries') }}</span>
+                <span> / </span>
+                <span>{{ page.label }}</span>
+            </div>
+
+            <div class="row align-items-center g-5">
+                <div class="col-lg-7">
+                    <span class="ol-kicker {{ page.coming_soon|default(false) ? 'is-coming-soon' : '' }}"><i class="fa-solid {{ page.coming_soon|default(false) ? 'fa-clock' : 'fa-star' }}"></i> {{ page.coming_soon|default(false) ? trans('public_home.coming_soon') : page.eyebrow }}</span>
+                    <h1>{{ page.h1 }}</h1>
+                    <p class="ol-lead">{{ page.hero_subtitle }}</p>
+                    <div class="ol-cta-row">
+                        {% if page.coming_soon|default(false) %}
+                            <span class="ol-coming-soon-note"><i class="fa-solid fa-clock"></i> {{ trans('public_home.coming_soon') }}</span>
+                        {% else %}
+                            <a class="ol-btn ol-btn-primary" href="{{ path(page.signup_route) }}">
+                                {{ trans('ophyra_landing.start_workspace') }}
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+                        {% endif %}
+                        <a class="ol-btn ol-btn-secondary" href="{{ path('planner-hub') }}">
+                            {{ trans('ophyra_landing.explore_platform') }}
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <figure class="ol-hero-media {{ page.group == 'industries' ? 'ol-hero-media-industry' : '' }} mb-0">
+                        <img src="{{ asset_for(page.group == 'industries' ? page.hero_image : screen_asset) }}" alt="{{ page.hero_alt }}" loading="eager" width="1500" height="860">
+                    </figure>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="ol-section">
+        <div class="container">
+            <div class="row g-4 align-items-start">
+                <div class="col-lg-5">
+                    <h2 class="ol-section-title">{{ page.problem_title }}</h2>
+                    <p class="ol-section-copy">{{ trans('ophyra_landing.problem_intro') }}</p>
+                </div>
+                <div class="col-lg-7">
+                    <ul class="ol-list">
+                        {% for item in page.problem_points %}
+                            <li><i class="fa-solid fa-circle-exclamation"></i><span>{{ item }}</span></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="ol-section ol-section-dark">
+        <div class="container">
+            <div class="row g-4 align-items-start">
+                <div class="col-lg-5">
+                    <h2 class="ol-section-title">{{ page.cost_title }}</h2>
+                    <p class="ol-section-copy">{{ trans('ophyra_landing.cost_intro') }}</p>
+                </div>
+                <div class="col-lg-7">
+                    <ul class="ol-list">
+                        {% for item in page.cost_points %}
+                            <li><i class="fa-solid fa-bolt"></i><span>{{ item }}</span></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="ol-section ol-section-soft">
+        <div class="container">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-6">
+                    <h2 class="ol-section-title">{{ page.solution_title }}</h2>
+                    <p class="ol-section-copy">{{ page.solution_body }}</p>
+                    <div class="ol-related">
+                        {% for link in page.related %}
+                            <a href="{{ path(link.route) }}">{{ link.label }} <i class="fa-solid fa-arrow-right"></i></a>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="ol-grid" style="grid-template-columns:1fr;">
+                        {% for item in page.benefits %}
+                            <article class="ol-card">
+                                <h3><i class="fa-solid fa-check" style="color:var(--ophyra-green);"></i> {{ item }}</h3>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="ol-section">
+        <div class="container">
+            <article class="ol-product-shot">
+                <div class="ol-product-shot-copy">
+                    <div>
+                        <h2>Start centralizing your business today.</h2>
+                        <p>Move clients, work, orders, reports and execution into one operating rhythm, then add the modules your business actually needs.</p>
+                    </div>
+                    <button class="ol-product-shot-badge border-0" type="button" data-ol-preview-open><i class="fa-solid fa-chart-line"></i> Operating visibility</button>
+                </div>
+                <div class="ol-inline-preview-carousel" aria-label="Ophyra workspace screenshots">
+                    {% for previewImage in [
+                        'dashboard-view.png',
+                        'dashboard-view-2.png',
+                        'dashboard-view-3.png',
+                        'dashboard-view-4.png',
+                        'dashboard-view-5.png',
+                        'dashboard-view-6.png'
+                    ] %}
+                        <figure>
+                            <img src="{{ asset_for('assets/public/ophyra/screens/' ~ previewImage) }}" alt="{{ page.label }} workspace preview {{ loop.index }} inside Ophyra" loading="lazy" decoding="async" width="1500" height="860">
+                        </figure>
+                    {% endfor %}
+                </div>
+                <div class="ol-inline-preview-hint">{{ trans('ophyra_landing.preview_scroll_hint') }}</div>
+            </article>
+            <div class="ol-preview-carousel" data-ol-preview-modal aria-hidden="true">
+                <div class="ol-preview-shell" role="dialog" aria-modal="true" aria-label="Workspace previews">
+                    <div class="ol-preview-head">
+                        <h3>Workspace previews</h3>
+                        <button class="ol-preview-close" type="button" data-ol-preview-close aria-label="Close previews">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="ol-preview-stage">
+                        {% for previewImage in [
+                            'dashboard-view.png',
+                            'dashboard-view-2.png',
+                            'dashboard-view-3.png',
+                            'dashboard-view-4.png',
+                            'dashboard-view-5.png',
+                            'dashboard-view-6.png'
+                        ] %}
+                            <figure class="ol-preview-slide {{ loop.first ? 'is-active' : '' }}" data-ol-preview-slide>
+                                <img src="{{ asset_for('assets/public/ophyra/screens/' ~ previewImage) }}" alt="Ophyra workspace preview {{ loop.index }}" loading="lazy" decoding="async" width="1500" height="860">
+                            </figure>
+                        {% endfor %}
+                    </div>
+                    <div class="ol-preview-controls">
+                        <button class="ol-preview-nav" type="button" data-ol-preview-prev><i class="fa-solid fa-arrow-left"></i> Previous</button>
+                        <button class="ol-preview-nav" type="button" data-ol-preview-next>Next <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="ol-section">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <h2 class="ol-section-title">{{ trans('ophyra_landing.ideal_for_title') }}</h2>
+                    <div class="ol-grid" style="grid-template-columns:1fr;">
+                        {% for item in page.ideal_for %}
+                            <article class="ol-card">
+                                <p>{{ item }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <h2 class="ol-section-title">{{ trans('ophyra_landing.use_cases_title') }}</h2>
+                    <div class="ol-grid" style="grid-template-columns:1fr;">
+                        {% for item in page.use_cases %}
+                            <article class="ol-card">
+                                <p>{{ item }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% if page.faqs is not empty %}
+    <section class="ol-section ol-section-soft">
+        <div class="container">
+            <h2 class="ol-section-title">{{ trans('ophyra_landing.faq_title') }}</h2>
+            <div class="row g-4">
+                {% for faq in page.faqs %}
+                    <div class="col-lg-6">
+                        <div class="ol-faq">
+                            <h3>{{ faq.question }}</h3>
+                            <p>{{ faq.answer }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="ol-section">
+        <div class="container">
+            <div class="ol-final">
+                <h2 class="ol-section-title">{{ trans('ophyra_landing.final_title') }}</h2>
+                <p>{{ trans('ophyra_landing.final_text') }}</p>
+                <div class="ol-cta-row">
+                    <a class="ol-btn ol-btn-primary" href="{{ path(page.signup_route) }}">
+                        {{ trans('ophyra_landing.start_free_with_ophyra') }}
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                    <a class="ol-btn ol-btn-secondary" href="{{ path('planner-hub') }}#ophyra-industries">
+                        {{ trans('ophyra_landing.compare_business_types') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.querySelector('[data-ol-preview-modal]');
+    const openBtn = document.querySelector('[data-ol-preview-open]');
+    if (!modal || !openBtn) return;
+
+    const closeBtn = modal.querySelector('[data-ol-preview-close]');
+    const slides = Array.from(modal.querySelectorAll('[data-ol-preview-slide]'));
+    const prevBtn = modal.querySelector('[data-ol-preview-prev]');
+    const nextBtn = modal.querySelector('[data-ol-preview-next]');
+    let activeIndex = 0;
+
+    function renderSlide() {
+        slides.forEach(function (slide, index) {
+            slide.classList.toggle('is-active', index === activeIndex);
+        });
+    }
+
+    function openModal() {
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        closeBtn && closeBtn.focus();
+    }
+
+    function closeModal() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        openBtn.focus();
+    }
+
+    function move(delta) {
+        if (!slides.length) return;
+        activeIndex = (activeIndex + delta + slides.length) % slides.length;
+        renderSlide();
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn && closeBtn.addEventListener('click', closeModal);
+    prevBtn && prevBtn.addEventListener('click', function () { move(-1); });
+    nextBtn && nextBtn.addEventListener('click', function () { move(1); });
+    modal.addEventListener('click', function (event) {
+        if (event.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', function (event) {
+        if (!modal.classList.contains('is-open')) return;
+        if (event.key === 'Escape') closeModal();
+        if (event.key === 'ArrowLeft') move(-1);
+        if (event.key === 'ArrowRight') move(1);
+    });
+});
+</script>
+{% endblock %}
