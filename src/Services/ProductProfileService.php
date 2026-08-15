@@ -20,8 +20,8 @@ final class ProductProfileService
     {
         return [
             'mode' => self::mode(), 'name' => 'OPHYTRACK',
-            'tagline' => 'Tecnología que mueve tu negocio',
-            'description' => 'Control de pedidos, paquetes, almacén, transportadoras y entregas en una sola plataforma.',
+            'tagline' => TranslationService::trans('ophytrack_public.tagline'),
+            'description' => TranslationService::trans('ophytrack_public.meta_description'),
             'logo' => 'assets/ophytrack/ophytrack-logo.svg',
             'mark' => 'assets/ophytrack/ophytrack-mark.svg',
             'hero_logo' => 'assets/ophytrack/ophytrack-logo-hero.png',

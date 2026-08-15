@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophyra';
+const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophytrak';
 
 test('Level 2 manages owner-scoped Warehouse container categories', async ({ page }) => {
   await page.goto(`${baseURL}/login`);

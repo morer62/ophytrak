@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophyra';
+const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophytrak';
 
 test('Level 2 records an externally received payment without rewinding logistics', async ({ page }, testInfo) => {
   test.setTimeout(120_000);

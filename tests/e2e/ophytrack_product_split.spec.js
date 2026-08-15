@@ -22,6 +22,28 @@ test('public product and signup expose only OPHYTRACK logistics', async ({ page 
   await expect(page.locator('[name="business_operation_type"] option[value="contracts_services"]')).toHaveCount(0);
 });
 
+test('public logistics story and signup remain localized in every supported language', async ({ page }) => {
+  const expectations = {
+    en: ['Every package. Every handoff.', 'Create your OPHYTRACK logistics account'],
+    es: ['Cada paquete. Cada traspaso.', 'Crea tu cuenta logística OPHYTRACK'],
+    pt: ['Cada pacote. Cada transferência.', 'Crie sua conta logística OPHYTRACK'],
+    fr: ['Chaque colis. Chaque transfert.', 'Créez votre compte logistique OPHYTRACK'],
+  };
+
+  for (const [locale, [hero, signup]] of Object.entries(expectations)) {
+    let response = await page.goto(`${baseURL}/?locale=${locale}`, { waitUntil: 'domcontentloaded' });
+    expect(response.status()).toBe(200);
+    await expect(page.locator('h1')).toContainText(hero);
+    await expect(page.locator('body')).toContainText(/Shopify/);
+    await expect(page.locator('body')).not.toContainText(/ophytrack_public\.|Ã.|Â.|â€|�/);
+
+    response = await page.goto(`${baseURL}/signup?locale=${locale}`, { waitUntil: 'domcontentloaded' });
+    expect(response.status()).toBe(200);
+    await expect(page.locator('.signup-step-title')).toContainText(signup);
+    await expect(page.locator('body')).not.toContainText(/ophytrack_public\.|Ã.|Â.|â€|�/);
+  }
+});
+
 test('seller sees logistics shell and legacy service routes are closed', async ({ page }) => {
   await page.goto(`${baseURL}/login`, { waitUntil: 'domcontentloaded' });
   await page.locator('[name="email"]').fill(sellerEmail);

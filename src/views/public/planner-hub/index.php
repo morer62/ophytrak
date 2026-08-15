@@ -19,10 +19,10 @@ $router->get(function () {
     $seo = $seoService->seoForRoute('', $appUrl);
     if (\App\Services\ProductProfileService::isOphytrack()) {
         $seo = array_merge($seo, [
-            'title' => 'OPHYTRACK | Logística, tracking y entregas bajo control',
-            'description' => 'Controla pedidos, paquetes, almacén, transportadoras, deliveries, incidencias y evidencias desde una plataforma logística multilingüe.',
-            'og_title' => 'OPHYTRACK — Tecnología que mueve tu negocio',
-            'og_description' => 'Trazabilidad completa desde la orden hasta la prueba de entrega.',
+            'title' => \App\Services\TranslationService::trans('ophytrack_public.meta_title'),
+            'description' => \App\Services\TranslationService::trans('ophytrack_public.meta_description'),
+            'og_title' => \App\Services\TranslationService::trans('ophytrack_public.meta_title'),
+            'og_description' => \App\Services\TranslationService::trans('ophytrack_public.meta_description'),
             'author' => 'OPHYTRACK',
         ]);
     }

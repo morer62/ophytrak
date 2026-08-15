@@ -1,5 +1,5 @@
 const {test,expect}=require('@playwright/test');const{execFileSync}=require('child_process');const path=require('path');
-const baseURL=process.env.E2E_BASE_URL||'http://localhost/ophyra';const password='OphyraQA!2026';
+const baseURL=process.env.E2E_BASE_URL||'http://localhost/ophytrak';const password='OphyraQA!2026';
 const sellerEmail='qa.seller.20260806cert1@example.test',driverEmail='qa.carrier.delivery.20260806cert1@example.test',clientEmail='qa.client.20260806cert1@example.test';
 const sellerOwner='1642',packageCode='OPH-1642-11-01',qrToken='d7ff16b7d66ea7d365eaaa8fb3e570bbe2632641977ba1d4';
 const proof={name:'evidence.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64')};

@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophyra';
+const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophytrak';
 const proof = { name: 'delivery-proof.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64') };
 
 test('delivery controller closes the assigned order with local evidence', async ({ page }) => {

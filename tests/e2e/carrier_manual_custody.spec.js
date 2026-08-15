@@ -1,5 +1,5 @@
 const {test,expect}=require('@playwright/test');
-const baseURL=process.env.E2E_BASE_URL||'http://localhost/ophyra';
+const baseURL=process.env.E2E_BASE_URL||'http://localhost/ophytrak';
 async function login(page,email){await page.goto(`${baseURL}/login`);await page.locator('[name="email"]').fill(email);await page.locator('[name="password"]').fill('OphyraQA!2026');await page.locator('form').filter({has:page.locator('[name="email"]')}).locator('button[type="submit"]').click();await expect(page).toHaveURL(/panel/);}
 test('manual package code requires seller approval then enters carrier custody',async({browser},testInfo)=>{
  const carrier=await browser.newPage({viewport:{width:390,height:844}});await login(carrier,'qa.carrier.delivery.20260806carrier1@example.test');await carrier.goto(`${baseURL}/panel/planner-hub/team/driver-mode`);await expect(carrier.locator('[name="package_code"]')).toBeVisible();await carrier.locator('[name="package_code"]').fill('OPH-1637-1012-01');await carrier.locator('form').filter({has:carrier.locator('[name="package_code"]')}).locator('button').click();await carrier.waitForLoadState('domcontentloaded');

@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophyra';
+const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophytrak';
 
 test('Level 5 sees distinct service-order and document portal views', async ({ page }) => {
   await page.goto(`${baseURL}/login`);

@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophyra';
+const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophytrak';
 const runId = process.env.E2E_RUN_ID || '20260716a';
 const ownerEmail = process.env.E2E_OWNER_EMAIL || 'qa.owner.20260716a@example.test';
 const password = process.env.E2E_OWNER_PASSWORD || 'OphyraQA!2026';

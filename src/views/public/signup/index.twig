@@ -266,9 +266,16 @@
         max-width: 96px;
     }
 }
+.signup-shell.is-ophytrack {
+    background: radial-gradient(720px 340px at 12% 16%, rgba(3,198,244,.2), transparent 62%), linear-gradient(180deg,#f7fbff,#eaf5ff);
+}
+.signup-shell.is-ophytrack .signup-step-dot.is-active,
+.signup-shell.is-ophytrack .signup-step-dot.is-complete { background: #087cff; }
+.signup-shell.is-ophytrack .form-control:focus { border-color: #087cff; box-shadow: 0 0 0 .18rem rgba(8,124,255,.16); }
+.signup-shell.is-ophytrack .btn-ophyra-primary { background: linear-gradient(135deg,#03c6f4,#087cff); border-color: transparent; }
 </style>
 
-<main class="signup-shell d-flex w-100">
+<main class="signup-shell d-flex w-100 {{ product_mode == 'ophytrack' ? 'is-ophytrack' : '' }}">
     <div class="container py-4 py-lg-5">
         <div class="signup-panel">
             <div class="row g-0">
@@ -286,8 +293,8 @@
                 <div class="col-lg-7">
                     <div class="p-4 p-lg-5">
                         <div class="mb-4">
-                            <h2 class="signup-step-title mb-2">{{ trans('auth.create_business_account') }}</h2>
-                            <p class="signup-step-copy mb-0">{{ trans('auth.signup_subtitle') }}</p>
+                            <h2 class="signup-step-title mb-2">{{ product_mode == 'ophytrack' ? trans('ophytrack_public.signup_title') : trans('auth.create_business_account') }}</h2>
+                            <p class="signup-step-copy mb-0">{{ product_mode == 'ophytrack' ? trans('ophytrack_public.signup_subtitle') : trans('auth.signup_subtitle') }}</p>
                         </div>
 
                         <div class="signup-stepper" aria-label="{{ trans('auth.signup_progress') }}">

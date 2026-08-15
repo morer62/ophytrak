@@ -1,7 +1,7 @@
 const {test,expect}=require('@playwright/test');
 const {execFileSync}=require('child_process');
 const path=require('path');
-const baseURL=process.env.E2E_BASE_URL||'http://localhost/ophyra';
+const baseURL=process.env.E2E_BASE_URL||'http://localhost/ophytrak';
 const email=process.env.E2E_SELLER_EMAIL||'qa.seller.20260806cert1@example.test';
 const password='OphyraQA!2026';
 

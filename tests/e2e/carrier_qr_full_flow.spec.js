@@ -1,5 +1,5 @@
 const {test,expect}=require('@playwright/test');
-const baseURL=process.env.E2E_BASE_URL||'http://localhost/ophyra';
+const baseURL=process.env.E2E_BASE_URL||'http://localhost/ophytrak';
 const proof={name:'evidence.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64')};
 test('secure QR enters carrier custody without approval and completes full chain',async({page})=>{
  await page.goto(`${baseURL}/login`);await page.locator('[name="email"]').fill('qa.carrier.delivery.20260806carrier1@example.test');await page.locator('[name="password"]').fill('OphyraQA!2026');await page.locator('form').filter({has:page.locator('[name="email"]')}).locator('button[type="submit"]').click();

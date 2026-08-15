@@ -8351,6 +8351,7 @@
         "created": "Criado"
     },
     "nav": {
+        "operations": "Operações",
         "dashboard_group": "Dashboard",
         "dashboard": "Dashboard",
         "start_guide": "Guia inicial",
@@ -8692,6 +8693,21 @@
         "manage_orders": "Gerenciar ordens"
     },
     "billing_overview.payment_status_required": "Método de pagamento obrigatório",
+    "ophytrack_public": {
+        "meta_title": "OPHYTRACK | Logística, rastreamento e controle de entregas", "meta_description": "Conecte pedidos, estoque, armazéns, transportadoras, entregadores e clientes com rastreabilidade por pacote da venda à prova de entrega.", "tagline": "Tecnologia que movimenta o seu negócio", "signup_title": "Crie sua conta logística OPHYTRACK", "signup_subtitle": "Comece como vendedor, loja ou transportadora. Configure a operação que sua organização realmente executa.",
+        "nav_platform": "Plataforma", "nav_flow": "Como funciona", "nav_roles": "Soluções", "nav_security": "Rastreabilidade", "login": "Entrar", "start": "Começar",
+        "hero_kicker": "SISTEMA OPERACIONAL LOGÍSTICO", "hero_title": "Cada pacote. Cada transferência. Uma única fonte de verdade.", "hero_lead": "Gerencie pedidos, preparação, custódia, triagem no armazém e última milha em uma operação conectada.", "hero_cta": "Criar meu espaço logístico", "hero_secondary": "Explorar o fluxo completo",
+        "metric_identity": "Identidade do pacote", "metric_timeline": "Linha do tempo de custódia", "metric_evidence": "Comprovante de entrega", "metric_languages": "EN · ES · PT · FR",
+        "core_kicker": "UMA PLATAFORMA CONECTADA", "core_title": "A profundidade operacional que sua rede logística precisa", "core_lead": "Substitua planilhas, mensagens e status desconectados por um registro que acompanha o pacote em toda a operação.",
+        "orders_title": "Pedidos e comércio", "orders_text": "Crie produtos e pedidos, registre pagamentos, publique links e sincronize canais externos.", "warehouse_title": "Armazém e custódia", "warehouse_text": "Receba, leia, classifique e localize pacotes preservando empresa, usuário e evidência.", "delivery_title": "Entrega e comprovação", "delivery_text": "Ofereça um fluxo móvel para rotas, ocorrências, tentativas, validação do recebedor e fotos.",
+        "flow_kicker": "DE PONTA A PONTA", "flow_title": "Da venda à entrega, sem pontos cegos", "flow_lead": "Cada marco adiciona um evento imutável à linha do tempo.",
+        "step_1_title": "01 · Pedido e etiqueta", "step_1_text": "Crie ou importe o pedido, valide o pagamento e gere um identificador com etiqueta QR.", "step_2_title": "02 · Preparação", "step_2_text": "Atribua a equipe, valide o estoque e deixe o pacote pronto para coleta.", "step_3_title": "03 · Coleta e custódia", "step_3_text": "Um QR válido registra custódia imediata; o código manual depende do vendedor.", "step_4_title": "04 · Armazém e triagem", "step_4_text": "Confirme a recepção com evidência e organize por região, rota e prioridade.", "step_5_title": "05 · Última milha", "step_5_text": "Registre saída, tentativas, ausência, recusa, ocorrências e novas entregas.", "step_6_title": "06 · Entrega ou devolução", "step_6_text": "Finalize com prova ou continue com custódia reversa, reposição e reembolso.",
+        "roles_kicker": "PARA TODA A REDE", "roles_title": "Um registro por pacote. Um espaço para cada função.", "seller_title": "Vendedores e lojas", "seller_text": "Controlam estoque, pagamento, preparação e transportadora com visibilidade completa.", "carrier_title": "Transportadoras e armazéns", "carrier_text": "Operam centros e equipes e coordenam coleta, triagem e expedição.", "driver_title": "Entregadores", "driver_text": "Leem códigos, navegam, ligam, conversam e registram resultados no celular.", "customer_title": "Clientes", "customer_text": "Acompanham compras, pagamentos, tentativas, provas, devoluções e decisões.",
+        "trust_kicker": "RASTREABILIDADE INTEGRADA", "trust_title": "Cada movimento tem responsável, local e motivo", "trust_text": "Cada status fica ligado à empresa, usuário, horário, localização, origem, notas e evidência.", "trust_owner": "Isolamento empresarial", "trust_owner_text": "Os limites de vendedor, transportadora, workspace e cliente são validados no servidor.", "trust_history": "Histórico completo", "trust_history_text": "Os eventos preservam a história do pacote sem substituir o estado anterior.", "trust_exceptions": "Exceções incluídas", "trust_exceptions_text": "Ausência, recusa, cancelamento, devolução, reembolso e nova entrega ficam na mesma linha do tempo.",
+        "integrations_kicker": "COMÉRCIO CONECTADO", "integrations_title": "Leve pedidos externos para a mesma operação", "integrations_text": "Conecte Shopify, Mercado Livre e TikTok Shop com sincronização manual, webhooks e cron.",
+        "carrier_cta_title": "É uma transportadora? Seu espaço logístico está incluído.", "carrier_cta_text": "Cadastre a organização, conclua a verificação e opere armazéns, custódia e entregadores sem assinatura padrão de loja.", "carrier_cta": "Cadastrar transportadora",
+        "final_title": "Movimente mais pacotes com clareza operacional completa.", "final_text": "Comece como vendedor ou transportadora e conecte equipes, armazéns, entregadores e clientes ao mesmo histórico.", "footer_product": "Plataforma de logística, rastreamento e entregas"
+    },
     "store_categories_home": {
         "create_card_text": "Adicione um novo grupo de catálogo para navegação na loja e descoberta de produtos.",
         "workflow_subtitle": "Categorias apoiam a estrutura do catálogo de produtos. Os produtos continuam no centro do fluxo, enquanto categorias ajudam a organizar listas e páginas."

@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const baseURL=process.env.E2E_BASE_URL||'http://localhost/ophyra';
+const baseURL=process.env.E2E_BASE_URL||'http://localhost/ophytrak';
 const runId=process.env.E2E_RUN_ID||Date.now().toString();
 const email=`qa.carrier.${runId}@example.test`;
 test('carrier signup includes logistics without billing',async({page},testInfo)=>{

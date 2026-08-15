@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophyra';
+const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophytrak';
 
 test('Level 2 can open responsibility assignment and assign both stages to self', async ({ page }, testInfo) => {
   await page.goto(`${baseURL}/login`, { waitUntil: 'domcontentloaded' });

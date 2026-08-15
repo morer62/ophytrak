@@ -1,5 +1,5 @@
 const {test,expect}=require('@playwright/test');
-const baseURL=process.env.E2E_BASE_URL||'http://localhost/ophyra';
+const baseURL=process.env.E2E_BASE_URL||'http://localhost/ophytrak';
 const carrierEmail=process.env.E2E_CARRIER_EMAIL||'qa.carrier.20260806carrier1@example.test';
 const deliveryEmail=process.env.E2E_CARRIER_DELIVERY_EMAIL||'qa.carrier.delivery.20260806carrier1@example.test';
 test('carrier creates its Level 4 delivery employee',async({page})=>{

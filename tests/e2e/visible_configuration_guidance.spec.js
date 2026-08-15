@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophyra';
+const baseURL = process.env.E2E_BASE_URL || 'http://localhost/ophytrak';
 
 test('Level 2 sees clean payment brands and actionable payment/SMTP alternatives', async ({ page }) => {
   await page.goto(`${baseURL}/login`);await page.locator('[name="email"]').fill('qa.owner.20260716a@example.test');await page.locator('[name="password"]').fill('OphyraQA!2026');await page.locator('form').filter({has:page.locator('[name="email"]')}).locator('button[type="submit"]').click();

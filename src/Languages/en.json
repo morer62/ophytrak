@@ -8316,6 +8316,7 @@
         "pdf_contract_clauses": "Contract Clauses"
     },
     "nav": {
+        "operations": "Operations",
         "dashboard_group": "Dashboard",
         "dashboard": "Dashboard",
         "start_guide": "Start Guide",
@@ -8617,5 +8618,37 @@
         "pending_hours": "pending hours",
         "create_team_member": "Create team member",
         "manage_orders": "Manage orders"
+    },
+    "ophytrack_public": {
+        "meta_title": "OPHYTRACK | Logistics, package tracking and delivery control",
+        "meta_description": "Connect orders, inventory, warehouses, carriers, drivers and customers with package-level traceability from sale to proof of delivery.",
+        "tagline": "Technology that moves your business", "signup_title": "Create your OPHYTRACK logistics account", "signup_subtitle": "Start as a seller, store or carrier. Configure the operation your organization actually runs.",
+        "nav_platform": "Platform", "nav_flow": "How it works", "nav_roles": "Solutions", "nav_security": "Traceability", "login": "Sign in", "start": "Start now",
+        "hero_kicker": "LOGISTICS OPERATING SYSTEM", "hero_title": "Every package. Every handoff. One source of truth.", "hero_lead": "Run store orders, fulfillment, carrier custody, warehouse sorting and last-mile delivery in one connected operation.", "hero_cta": "Create your logistics workspace", "hero_secondary": "Explore the complete flow",
+        "metric_identity": "Package identity", "metric_timeline": "Custody timeline", "metric_evidence": "Delivery evidence", "metric_languages": "EN · ES · PT · FR",
+        "core_kicker": "ONE CONNECTED PLATFORM", "core_title": "The operational depth your logistics network needs", "core_lead": "Replace disconnected spreadsheets, messages and status updates with a shared package record that follows the physical operation.",
+        "orders_title": "Orders and commerce", "orders_text": "Create products and manual orders, record payments, publish payment links and synchronize external sales channels.",
+        "warehouse_title": "Warehouse and custody", "warehouse_text": "Receive, scan, classify and locate packages while preserving the responsible organization, user and evidence at every handoff.",
+        "delivery_title": "Delivery and proof", "delivery_text": "Give drivers a mobile workflow for routes, incidents, retries, recipient validation, photos and final proof of delivery.",
+        "flow_kicker": "END TO END", "flow_title": "From checkout to delivery, without blind spots", "flow_lead": "Each milestone adds an immutable event to the package timeline.",
+        "step_1_title": "01 · Order and label", "step_1_text": "Create or import the order, validate payment and generate a secure package identifier and printable QR label.",
+        "step_2_title": "02 · Preparation", "step_2_text": "Assign the preparation team, validate stock and leave the package ready for pickup or an in-house driver.",
+        "step_3_title": "03 · Pickup and custody", "step_3_text": "A valid QR can record immediate custody; a manual-code request remains subject to seller approval.",
+        "step_4_title": "04 · Hub and sorting", "step_4_text": "Confirm warehouse reception with evidence, then organize by region, route, priority and promised date.",
+        "step_5_title": "05 · Last mile", "step_5_text": "Track departure, delivery attempts, customer absence, rejection, incidents and scheduled retries.",
+        "step_6_title": "06 · Delivery or return", "step_6_text": "Close with recipient proof or continue through reverse custody, seller decision, restocking and refund.",
+        "roles_kicker": "BUILT FOR THE WHOLE NETWORK", "roles_title": "One package record. A focused workspace for every role.",
+        "seller_title": "Sellers and stores", "seller_text": "Own the commercial relationship, inventory, payment, preparation and carrier assignment while retaining end-to-end visibility.",
+        "carrier_title": "Carriers and warehouses", "carrier_text": "Operate independent hubs and teams, accept authorized custody and coordinate collection, sorting and dispatch.",
+        "driver_title": "Drivers", "driver_text": "Scan, navigate, call, chat and register every outcome from a mobile-first delivery workspace.",
+        "customer_title": "Customers", "customer_text": "Follow purchases, payments, delivery attempts, approved evidence, returns and seller decisions without seeing internal notes.",
+        "trust_kicker": "TRACEABILITY BY DESIGN", "trust_title": "Every movement has an owner, a place and a reason", "trust_text": "OPHYTRACK ties each status to the authorized company, responsible user, timestamp, location, source, notes and photographic evidence when required.",
+        "trust_owner": "Company isolation", "trust_owner_text": "Seller, carrier, workspace and customer boundaries are verified on the server.",
+        "trust_history": "Complete history", "trust_history_text": "Custody events preserve the package story instead of replacing the previous status.",
+        "trust_exceptions": "Exceptions included", "trust_exceptions_text": "Absence, rejection, cancellation, return, refund and redelivery stay in the same timeline.",
+        "integrations_kicker": "CONNECTED COMMERCE", "integrations_title": "Bring external orders into the same operation", "integrations_text": "Connect Shopify, Mercado Libre and TikTok Shop through owner-scoped connectors, manual sync, webhooks and scheduled synchronization.",
+        "carrier_cta_title": "Are you a carrier? Your logistics workspace is included.", "carrier_cta_text": "Register your organization, complete verification and operate warehouses, custody and delivery teams without a standard store subscription.", "carrier_cta": "Register a carrier",
+        "final_title": "Move more packages with complete operational clarity.", "final_text": "Start as a seller or carrier. Keep every team, warehouse, delivery and customer connected to the same trusted package history.",
+        "footer_product": "Logistics, tracking and delivery platform"
     }
 }

@@ -156,7 +156,7 @@ class TemplateResponse
             $routeName = stripos((string)($seo['title'] ?? ''), 'OPHYTRACK') !== false
                 ? (string)$seo['title']
                 : ($currentRoute === 'signup' ? 'Create your OPHYTRACK account' : ($currentRoute === 'login' ? 'Sign in to OPHYTRACK' : 'OPHYTRACK logistics platform'));
-            $description = 'Manage store orders, packages, warehouses, carriers, drivers, delivery evidence and customer tracking in one logistics platform.';
+            $description = TranslationService::trans('ophytrack_public.meta_description');
             $canonical = $appUrl . ($currentRoute === '' ? '/' : '/' . $currentRoute);
             $seo = array_merge($seo, [
                 'title' => $routeName,

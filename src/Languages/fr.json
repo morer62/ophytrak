@@ -8265,6 +8265,7 @@
         "created": "Créé"
     },
     "nav": {
+        "operations": "Opérations",
         "dashboard_group": "Tableau de bord",
         "dashboard": "Tableau de bord",
         "start_guide": "Guide de démarrage",
@@ -8604,6 +8605,21 @@
         "pending_hours": "heures en attente",
         "create_team_member": "Creer un membre de l equipe",
         "manage_orders": "Gerer les commandes"
+    },
+    "ophytrack_public": {
+        "meta_title": "OPHYTRACK | Logistique, suivi des colis et contrôle des livraisons", "meta_description": "Reliez commandes, stocks, entrepôts, transporteurs, livreurs et clients avec une traçabilité par colis, de la vente à la preuve de livraison.", "tagline": "La technologie qui fait avancer votre entreprise", "signup_title": "Créez votre compte logistique OPHYTRACK", "signup_subtitle": "Commencez comme vendeur, boutique ou transporteur. Configurez l'opération réellement gérée par votre organisation.",
+        "nav_platform": "Plateforme", "nav_flow": "Fonctionnement", "nav_roles": "Solutions", "nav_security": "Traçabilité", "login": "Connexion", "start": "Commencer",
+        "hero_kicker": "SYSTÈME OPÉRATIONNEL LOGISTIQUE", "hero_title": "Chaque colis. Chaque transfert. Une seule source de vérité.", "hero_lead": "Gérez commandes, préparation, garde, tri en entrepôt et dernier kilomètre dans une opération connectée.", "hero_cta": "Créer mon espace logistique", "hero_secondary": "Explorer le flux complet",
+        "metric_identity": "Identité du colis", "metric_timeline": "Historique de garde", "metric_evidence": "Preuve de livraison", "metric_languages": "EN · ES · PT · FR",
+        "core_kicker": "UNE PLATEFORME CONNECTÉE", "core_title": "La profondeur opérationnelle dont votre réseau logistique a besoin", "core_lead": "Remplacez feuilles de calcul, messages et statuts isolés par un dossier qui accompagne le colis pendant toute l'opération.",
+        "orders_title": "Commandes et commerce", "orders_text": "Créez produits et commandes, enregistrez les paiements, publiez des liens et synchronisez les canaux externes.", "warehouse_title": "Entrepôt et garde", "warehouse_text": "Réceptionnez, scannez, triez et localisez les colis en conservant entreprise, utilisateur et preuve.", "delivery_title": "Livraison et preuve", "delivery_text": "Offrez un parcours mobile pour itinéraires, incidents, tentatives, destinataire et photos.",
+        "flow_kicker": "DE BOUT EN BOUT", "flow_title": "De la vente à la livraison, sans angle mort", "flow_lead": "Chaque étape ajoute un événement immuable à l'historique.",
+        "step_1_title": "01 · Commande et étiquette", "step_1_text": "Créez ou importez la commande, validez le paiement et générez un identifiant avec étiquette QR.", "step_2_title": "02 · Préparation", "step_2_text": "Affectez l'équipe, validez le stock et préparez le colis pour l'enlèvement.", "step_3_title": "03 · Enlèvement et garde", "step_3_text": "Un QR valide enregistre la garde immédiate ; un code manuel dépend du vendeur.", "step_4_title": "04 · Entrepôt et tri", "step_4_text": "Confirmez la réception avec preuve puis organisez par région, tournée et priorité.", "step_5_title": "05 · Dernier kilomètre", "step_5_text": "Consignez départ, tentatives, absence, refus, incidents et nouvelles livraisons.", "step_6_title": "06 · Livraison ou retour", "step_6_text": "Terminez avec la preuve ou poursuivez par garde inverse, remise en stock et remboursement.",
+        "roles_kicker": "POUR TOUT LE RÉSEAU", "roles_title": "Un dossier par colis. Un espace pour chaque rôle.", "seller_title": "Vendeurs et boutiques", "seller_text": "Ils contrôlent stock, paiement, préparation et transporteur avec une visibilité complète.", "carrier_title": "Transporteurs et entrepôts", "carrier_text": "Ils exploitent centres et équipes et coordonnent enlèvement, tri et expédition.", "driver_title": "Livreurs", "driver_text": "Ils scannent, naviguent, appellent, échangent et consignent les résultats sur mobile.", "customer_title": "Clients", "customer_text": "Ils suivent achats, paiements, tentatives, preuves, retours et décisions.",
+        "trust_kicker": "TRAÇABILITÉ INTÉGRÉE", "trust_title": "Chaque mouvement a un responsable, un lieu et une raison", "trust_text": "Chaque statut est relié à l'entreprise, l'utilisateur, l'heure, le lieu, la source, les notes et la preuve.", "trust_owner": "Isolation des entreprises", "trust_owner_text": "Les limites vendeur, transporteur, espace de travail et client sont validées côté serveur.", "trust_history": "Historique complet", "trust_history_text": "Les événements préservent l'histoire du colis sans remplacer l'état précédent.", "trust_exceptions": "Exceptions incluses", "trust_exceptions_text": "Absence, refus, annulation, retour, remboursement et nouvelle livraison restent dans le même historique.",
+        "integrations_kicker": "COMMERCE CONNECTÉ", "integrations_title": "Intégrez les commandes externes à la même opération", "integrations_text": "Connectez Shopify, Mercado Libre et TikTok Shop avec synchronisation manuelle, webhooks et cron.",
+        "carrier_cta_title": "Vous êtes transporteur ? Votre espace logistique est inclus.", "carrier_cta_text": "Inscrivez l'organisation, terminez la vérification et gérez entrepôts, garde et livreurs sans abonnement boutique standard.", "carrier_cta": "Inscrire un transporteur",
+        "final_title": "Déplacez plus de colis avec une clarté opérationnelle complète.", "final_text": "Commencez comme vendeur ou transporteur et reliez équipes, entrepôts, livreurs et clients au même historique.", "footer_product": "Plateforme de logistique, suivi et livraison"
     },
     "billing_overview.payment_status_required": "Moyen de paiement requis"
 }
