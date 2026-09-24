@@ -12,6 +12,7 @@ use App\Repositories\StoreSubscriptionsRepository;
 use App\Repositories\UserCardsRepository;
 use App\Repositories\UserRepository;
 use App\Services\LoginService;
+use App\Services\ProductProfileService;
 use App\Utils\LocationUtils;
 use App\Utils\MessageUtil;
 use App\Utils\Router;
@@ -41,7 +42,7 @@ function chargeSquareStoredCard(
 {
     $accessToken = trim((string)($provider->api_key ?? ''));
     $locationId = trim((string)($provider->location_id ?? ''));
-    $currency = strtoupper((string)($provider->currency ?? 'USD'));
+    $currency = ProductProfileService::operationalCurrency();
 
     if ($accessToken === '' || $locationId === '' || $cardId === '') {
         return [
@@ -422,7 +423,7 @@ $router->post(function () {
         'external_payment_id' => $paymentResponse['payment_id'] ?? null,
         'external_reference' => $paymentResponse['reference'] ?? null,
         'amount' => $total,
-        'currency' => strtoupper((string)($provider->currency ?? 'USD')),
+        'currency' => ProductProfileService::operationalCurrency(),
         'status' => StorePaymentsRepository::STATUS_PAID,
         'payer_name' => (string)($subscription->full_name ?? ''),
         'payer_email' => (string)($subscription->email ?? ''),

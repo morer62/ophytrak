@@ -189,4 +189,15 @@ test('locked logistics guides a new seller through activation', async ({ page })
   await expect(page.locator('#createEstimateModal')).not.toContainText(/Ã|Â|â€|ï¿½/);
   await page.locator('#createEstimateModal .btn-primary').click();
   await expect(page).toHaveURL(/panel\/planner-hub\/store\/orders\/manual\?client_id=\d+/);
+  await expect(page.locator('body')).toContainText('R$');
+  await expect(page.locator('body')).not.toContainText(/\b(?:USD|EUR|GBP)\b/);
+  await expect(page.locator('body')).not.toContainText(/(^|[^R])\$\d/);
+  await expect(page.locator('#display_currency')).toHaveCount(0);
+
+  await page.goto(`${baseURL}/panel/planner-hub/settings/payment-providers?locale=es`, { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('select[name="currency"]')).toHaveCount(0);
+  const providerCurrencies = await page.locator('input[name="currency"]').evaluateAll(inputs => inputs.map(input => input.value));
+  expect(providerCurrencies.length).toBeGreaterThan(0);
+  expect(new Set(providerCurrencies)).toEqual(new Set(['BRL']));
+  await expect(page.locator('body')).not.toContainText(/\b(?:USD|EUR|GBP|CAD|MXN|CLP|COP)\b/);
 });

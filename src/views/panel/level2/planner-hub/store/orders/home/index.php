@@ -14,6 +14,7 @@ use App\Repositories\StoreDeliveryLocationLogsRepository;
 use App\Repositories\StorePackagesRepository;
 use App\Repositories\CarrierPackageRepository;
 use App\Services\LoginService;
+use App\Services\ProductProfileService;
 use App\Services\StoreDeliveryNotificationService;
 use App\Services\StoreLogisticsWorkflowService;
 use App\Services\StoreManualOrderService;
@@ -405,7 +406,7 @@ $router->post(function () {
                 'payment_type' => $willBePaid ? StorePaymentsRepository::TYPE_FULL : StorePaymentsRepository::TYPE_PARTIAL,
                 'external_reference' => $manualReference,
                 'amount' => $manualAmount,
-                'currency' => strtoupper((string)($order->currency ?? 'USD')),
+                'currency' => ProductProfileService::operationalCurrency(),
                 'status' => StorePaymentsRepository::STATUS_PAID,
                 'payer_name' => $order->guest_name ?? null,
                 'payer_email' => $order->guest_email ?? null,

@@ -142,6 +142,7 @@ class StoreManualOrderService
             'manual_fee_amount' => $feeAmount,
             'manual_fee_label' => $feeLabel,
             'total' => $total,
+            'currency' => ProductProfileService::operationalCurrency(),
             'payment_status' => $paidManually ? StoreOrdersRepository::PAYMENT_PAID : StoreOrdersRepository::PAYMENT_PENDING,
             'status' => $paidManually ? StoreOrdersRepository::STATUS_IN_PREPARATION : StoreOrdersRepository::STATUS_NEW,
             'notes' => $notes,
@@ -197,7 +198,7 @@ class StoreManualOrderService
                     'payment_method' => 'saved_card',
                     'payment_type' => StorePaymentsRepository::TYPE_FULL,
                     'amount' => $total,
-                    'currency' => 'USD',
+                    'currency' => ProductProfileService::operationalCurrency(),
                     'status' => StoreOrdersRepository::PAYMENT_FAILED,
                     'payer_name' => $customerName,
                     'payer_email' => $customerEmail,
@@ -393,7 +394,7 @@ class StoreManualOrderService
                 'external_payment_id' => $charge['payment_id'] ?? null,
                 'external_reference' => $charge['reference'] ?? null,
                 'amount' => $total,
-                'currency' => (string)($charge['currency'] ?? 'USD'),
+                'currency' => ProductProfileService::operationalCurrency(),
                 'status' => StorePaymentsRepository::STATUS_PAID,
                 'payer_name' => $name,
                 'payer_email' => $email,
@@ -418,7 +419,7 @@ class StoreManualOrderService
                 'payment_type' => StorePaymentsRepository::TYPE_FULL,
                 'external_reference' => trim((string)($post['payment_reference'] ?? '')),
                 'amount' => $total,
-                'currency' => 'USD',
+                'currency' => ProductProfileService::operationalCurrency(),
                 'status' => StorePaymentsRepository::STATUS_PAID,
                 'payer_name' => $name,
                 'payer_email' => $email,
@@ -438,7 +439,7 @@ class StoreManualOrderService
             'payment_method' => 'payment_link',
             'payment_type' => StorePaymentsRepository::TYPE_FULL,
             'amount' => $total,
-            'currency' => 'USD',
+            'currency' => ProductProfileService::operationalCurrency(),
             'status' => StorePaymentsRepository::STATUS_PENDING,
             'payer_name' => $name,
             'payer_email' => $email,
@@ -479,7 +480,7 @@ class StoreManualOrderService
             \Stripe\Stripe::setApiKey((string)$provider->api_key);
             $charge = \Stripe\Charge::create([
                 'amount' => $amountCents,
-                'currency' => strtolower((string)($provider->currency ?? 'usd')),
+                'currency' => strtolower(ProductProfileService::operationalCurrency()),
                 'customer' => $customerToken,
                 'receipt_email' => $email,
                 'description' => $note
@@ -487,7 +488,7 @@ class StoreManualOrderService
             return [
                 'success' => true,
                 'provider' => 'stripe',
-                'currency' => strtoupper((string)($provider->currency ?? 'USD')),
+                'currency' => ProductProfileService::operationalCurrency(),
                 'payment_id' => $charge->id ?? null,
                 'reference' => $charge->balance_transaction ?? null,
                 'raw' => json_encode($charge),
@@ -513,7 +514,7 @@ class StoreManualOrderService
             'location_id' => $locationId,
             'amount_money' => [
                 'amount' => $amountCents,
-                'currency' => strtoupper((string)($provider->currency ?? 'USD'))
+                'currency' => ProductProfileService::operationalCurrency()
             ],
             'autocomplete' => true,
             'buyer_email_address' => $email,
@@ -543,7 +544,7 @@ class StoreManualOrderService
             return [
                 'success' => true,
                 'provider' => 'square',
-                'currency' => strtoupper((string)($provider->currency ?? 'USD')),
+                'currency' => ProductProfileService::operationalCurrency(),
                 'payment_id' => $data['payment']['id'],
                 'reference' => $data['payment']['receipt_number'] ?? null,
                 'raw' => $response
@@ -637,7 +638,7 @@ class StoreManualOrderService
     private function orderEmailSummary(object $order): string
     {
         $orderId = (int)($order->id ?? 0);
-        $currency = htmlspecialchars((string)($order->currency ?? 'USD'), ENT_QUOTES, 'UTF-8');
+        $currency = htmlspecialchars(ProductProfileService::operationalCurrency(), ENT_QUOTES, 'UTF-8');
         $total = number_format((float)($order->total ?? 0), 2);
         return '<p><strong>Order:</strong> #' . $orderId . '<br><strong>Total:</strong> ' . $currency . ' ' . $total . '</p>';
     }

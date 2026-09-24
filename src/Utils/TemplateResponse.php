@@ -211,6 +211,8 @@ class TemplateResponse
             "active_module_slugs" => $activeModuleSlugs,
             "active_addon_slugs" => $activeAddonSlugs,
             "product_mode" => ProductProfileService::mode(),
+            "currency_code" => ProductProfileService::operationalCurrency(),
+            "currency_symbol" => ProductProfileService::currencySymbol(),
             "brand" => ProductProfileService::profile(),
             ...$data
         ];
@@ -321,6 +323,8 @@ class TemplateResponse
             "supported_locales" => TranslationService::getSupportedLocales(),
             "TranslationService" => TranslationService::class,
             "product_mode" => ProductProfileService::mode(),
+            "currency_code" => ProductProfileService::operationalCurrency(),
+            "currency_symbol" => ProductProfileService::currencySymbol(),
             "brand" => ProductProfileService::profile(),
             ...$data
         ]);

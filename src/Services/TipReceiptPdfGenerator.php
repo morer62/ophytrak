@@ -41,7 +41,7 @@ class TipReceiptPdfGenerator
 
         $providersRepo = new PaymentProvidersRepository();
         $activeProvider = $providersRepo->getActiveProviderForOwner($order->id_owner);
-        $currencyCode = $activeProvider ? strtoupper($activeProvider->currency ?? 'USD') : 'USD';
+        $currencyCode = ProductProfileService::operationalCurrency();
 
         $logoBase64 = '';
         if ($institution && !empty($institution['logo_path'])) {

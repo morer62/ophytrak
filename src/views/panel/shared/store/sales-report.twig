@@ -46,28 +46,28 @@
     <div class="col-md-3">
       <div class="store-report-card primary">
         <span>{{ trans('store_report.net_sales') }}</span>
-        <strong>${{ stats.net_sales|default(0)|number_format(2, '.', ',') }}</strong>
+        <strong>{{ currency_symbol }} {{ stats.net_sales|default(0)|number_format(2, ',', '.') }}</strong>
         <small>{{ trans('store_report.net_sales_help') }}</small>
       </div>
     </div>
     <div class="col-md-3">
       <div class="store-report-card success">
         <span>{{ trans('store_report.gross_sales') }}</span>
-        <strong>${{ stats.gross_sales|default(0)|number_format(2, '.', ',') }}</strong>
+        <strong>{{ currency_symbol }} {{ stats.gross_sales|default(0)|number_format(2, ',', '.') }}</strong>
         <small>{{ stats.paid_orders|default(0) }} {{ trans('store_report.paid_orders') }}</small>
       </div>
     </div>
     <div class="col-md-3">
       <div class="store-report-card warning">
         <span>{{ trans('store_report.returns') }}</span>
-        <strong>${{ stats.returned_amount|default(0)|number_format(2, '.', ',') }}</strong>
+        <strong>{{ currency_symbol }} {{ stats.returned_amount|default(0)|number_format(2, ',', '.') }}</strong>
         <small>{{ stats.return_requested|default(0) }} {{ trans('store_report.requested') }} / {{ stats.return_approved|default(0) }} {{ trans('store_report.approved') }} / {{ stats.returned_orders|default(0) }} {{ trans('store_report.returned') }}</small>
       </div>
     </div>
     <div class="col-md-3">
       <div class="store-report-card muted">
         <span>{{ trans('store_report.average_order') }}</span>
-        <strong>${{ stats.average_order|default(0)|number_format(2, '.', ',') }}</strong>
+        <strong>{{ currency_symbol }} {{ stats.average_order|default(0)|number_format(2, ',', '.') }}</strong>
         <small>{{ stats.total_orders|default(0) }} {{ trans('store_report.total_orders_in_range') }}</small>
       </div>
     </div>
@@ -159,7 +159,7 @@
                     <td>{{ row.product_name }}</td>
                     <td class="text-end">{{ row.sold_quantity|default(0) }}</td>
                     <td class="text-end">{{ row.returned_quantity|default(0) }}</td>
-                    <td class="text-end fw-semibold">${{ (row.sold_amount - row.returned_amount)|number_format(2, '.', ',') }}</td>
+                    <td class="text-end fw-semibold">{{ currency_symbol }} {{ (row.sold_amount - row.returned_amount)|number_format(2, ',', '.') }}</td>
                   </tr>
                 {% endfor %}
                 </tbody>
@@ -209,7 +209,7 @@
                         <span class="badge bg-light text-dark border">{{ o.quantity_total|default(0) }} {{ trans('store_report.units') }}</span>
                         <div class="small text-muted">{{ o.item_count|default(0) }} {{ trans('store_report.item_lines') }}</div>
                       </td>
-                      <td class="text-end fw-semibold">${{ o.total|default(0)|number_format(2, '.', ',') }}</td>
+                      <td class="text-end fw-semibold">{{ currency_symbol }} {{ o.total|default(0)|number_format(2, ',', '.') }}</td>
                       <td>
                         <span class="badge {{ o.payment_status == 'PAID' ? 'bg-success' : (o.payment_status == 'REFUNDED' ? 'bg-secondary' : (o.payment_status == 'FAILED' ? 'bg-danger' : 'bg-warning text-dark')) }}">{{ paymentStatusLabels[o.payment_status]|default(o.payment_status) }}</span>
                         {% if o.latest_payment_method %}<div class="small text-muted">{{ o.latest_payment_method|replace({'_':' '})|title }}</div>{% endif %}

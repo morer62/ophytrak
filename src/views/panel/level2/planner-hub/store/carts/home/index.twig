@@ -41,7 +41,7 @@
                                     <td class="small text-muted">{{ c.guest_phone ?: '—' }}</td>
                                     <td class="text-uppercase small text-muted">{{ c.pricing_mode ?: 'PAYG' }}</td>
                                     <td class="text-end">{{ c.meals_count }}</td>
-                                    <td class="text-end">${{ c.total|number_format(2, '.', ',') }}</td>
+                                    <td class="text-end">{{ currency_symbol }} {{ c.total|number_format(2, ',', '.') }}</td>
                                     <td>
                                         {% if c.status == 'ABANDONED' %}
                                             <span class="badge bg-danger">ABANDONED</span>

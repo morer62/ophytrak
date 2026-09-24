@@ -622,13 +622,13 @@ body{
                                     {% endif %}
 
                                     <div class="mt-1">
-                                        {{ item.quantity }} x ${{ item.unit_price|number_format(2, '.', ',') }}
+                                        {{ item.quantity }} x {{ currency_symbol }} {{ item.unit_price|number_format(2, ',', '.') }}
                                     </div>
                                 </div>
                             </div>
 
                             <div class="order-item-total">
-                                ${{ item.line_total|number_format(2, '.', ',') }}
+                                {{ currency_symbol }} {{ item.line_total|number_format(2, ',', '.') }}
                             </div>
                         </div>
                     {% else %}
@@ -659,17 +659,17 @@ body{
                     </div>
                     <div class="summary-row">
                         <span>{{ trans('store_order_public.subtotal') }}</span>
-                        <strong>${{ order.subtotal|number_format(2, '.', ',') }}</strong>
+                        <strong>{{ currency_symbol }} {{ order.subtotal|number_format(2, ',', '.') }}</strong>
                     </div>
                     {% if order.discount > 0 %}
                         <div class="summary-row discount">
                             <span>{{ trans('store_order_public.discount') }}</span>
-                            <strong>-${{ order.discount|number_format(2, '.', ',') }}</strong>
+                            <strong>-{{ currency_symbol }} {{ order.discount|number_format(2, ',', '.') }}</strong>
                         </div>
                     {% endif %}
                     <div class="summary-row total">
                         <span>{{ trans('ui.total') }}</span>
-                        <strong>${{ order.total|number_format(2, '.', ',') }}</strong>
+                        <strong>{{ currency_symbol }} {{ order.total|number_format(2, ',', '.') }}</strong>
                     </div>
                 </div>
 
@@ -732,7 +732,7 @@ body{
                         <div class="payment-panel-title">{{ trans('store_order_public.pay_order') }}</div>
                         <p class="text-muted mb-3">
                             {{ trans('store_order_public.paid_in_full') }}
-                            <strong>{{ currencyCode|default('USD') }} {{ order.total|number_format(2, '.', ',') }}</strong>
+                            <strong>{{ currency_code }} {{ order.total|number_format(2, ',', '.') }}</strong>
                         </p>
 
                         {% if paymentReady %}
@@ -762,7 +762,7 @@ body{
                                 {% endif %}
 
                                 <button type="submit" id="store-pay-button" class="btn-main w-100" {% if activeProviderType == 'paypal' %}style="display:none;"{% endif %}>
-                                    <i class="fa-solid fa-credit-card"></i> {{ trans('store_order_public.pay') }} {{ currencyCode|default('USD') }} {{ order.total|number_format(2, '.', ',') }}
+                                    <i class="fa-solid fa-credit-card"></i> {{ trans('store_order_public.pay') }} {{ currency_code }} {{ order.total|number_format(2, ',', '.') }}
                                 </button>
                                 <div id="store-payment-loading" class="text-muted text-center mt-3" style="display:none;">{{ trans('store_order_public.processing_payment') }}</div>
                             </form>
@@ -814,7 +814,7 @@ body{
     {% elseif activeProviderType == 'square' %}
         <script src="https://{{ squareEnvironment == 'production' ? 'web' : 'sandbox.web' }}.squarecdn.com/v1/square.js"></script>
     {% elseif activeProviderType == 'paypal' and paypalClientId %}
-        <script src="https://www.paypal.com/sdk/js?client-id={{ paypalClientId|e('html_attr') }}&currency={{ currencyCode|default('USD') }}&intent=capture"></script>
+        <script src="https://www.paypal.com/sdk/js?client-id={{ paypalClientId|e('html_attr') }}&currency={{ currency_code }}&intent=capture"></script>
     {% endif %}
     <script>
     (async function () {

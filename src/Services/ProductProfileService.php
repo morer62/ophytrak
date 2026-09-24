@@ -22,6 +22,16 @@ final class ProductProfileService
         return self::isOphytrack() ? self::BILLING_CURRENCY : null;
     }
 
+    public static function operationalCurrency(): string
+    {
+        return self::isOphytrack() ? self::BILLING_CURRENCY : 'USD';
+    }
+
+    public static function currencySymbol(): string
+    {
+        return self::isOphytrack() ? 'R$' : '$';
+    }
+
     public static function defaultBillingPrice(string $canonicalModuleSlug): ?float
     {
         if (!self::isOphytrack()) return null;

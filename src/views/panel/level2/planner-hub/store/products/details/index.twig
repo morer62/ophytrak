@@ -287,12 +287,12 @@
                             <div class="store-meta-value">
                                 {% if product.product_type == 'VARIABLE' %}
                                     {% if product.min_price == product.max_price %}
-                                        ${{ product.min_price|number_format(2, '.', ',') }}
+                                        {{ currency_symbol }} {{ product.min_price|number_format(2, ',', '.') }}
                                     {% else %}
-                                        ${{ product.min_price|number_format(2, '.', ',') }} - ${{ product.max_price|number_format(2, '.', ',') }}
+                                        {{ currency_symbol }} {{ product.min_price|number_format(2, ',', '.') }} - {{ currency_symbol }} {{ product.max_price|number_format(2, ',', '.') }}
                                     {% endif %}
                                 {% else %}
-                                    ${{ product.display_price|number_format(2, '.', ',') }}
+                                    {{ currency_symbol }} {{ product.display_price|number_format(2, ',', '.') }}
                                 {% endif %}
                             </div>
                         </div>
@@ -300,14 +300,14 @@
                         {% if product.product_type == 'FIXED' %}
                             <div class="col-md-4">
                                 <div class="store-meta-label">{{ trans('store_product_details.base_price') }}</div>
-                                <div class="store-meta-value">${{ product.price|number_format(2, '.', ',') }}</div>
+                                <div class="store-meta-value">{{ currency_symbol }} {{ product.price|number_format(2, ',', '.') }}</div>
                             </div>
 
                             <div class="col-md-4">
                                 <div class="store-meta-label">{{ trans('store_product_form.promo_price') }}</div>
                                 <div class="store-meta-value">
                                     {% if product.promo_price %}
-                                        ${{ product.promo_price|number_format(2, '.', ',') }}
+                                        {{ currency_symbol }} {{ product.promo_price|number_format(2, ',', '.') }}
                                     {% else %}
                                         &mdash;
                                     {% endif %}
@@ -413,14 +413,14 @@
                                 <div class="store-grid-compact mb-3">
                                     <div>
                                         <div class="store-meta-label">Price</div>
-                                        <div class="store-meta-value mb-0">${{ variation.price|number_format(2, '.', ',') }}</div>
+                                        <div class="store-meta-value mb-0">{{ currency_symbol }} {{ variation.price|number_format(2, ',', '.') }}</div>
                                     </div>
 
                                     <div>
                                         <div class="store-meta-label">{{ trans('store_product_form.promo_price') }}</div>
                                         <div class="store-meta-value mb-0">
                                             {% if variation.promo_price %}
-                                                ${{ variation.promo_price|number_format(2, '.', ',') }}
+                                                {{ currency_symbol }} {{ variation.promo_price|number_format(2, ',', '.') }}
                                             {% else %}
                                                 &mdash;
                                             {% endif %}
@@ -429,7 +429,7 @@
 
                                     <div>
                                         <div class="store-meta-label">{{ trans('store_product_details.effective_price') }}</div>
-                                        <div class="store-meta-value mb-0">${{ variation.effective_price|number_format(2, '.', ',') }}</div>
+                                        <div class="store-meta-value mb-0">{{ currency_symbol }} {{ variation.effective_price|number_format(2, ',', '.') }}</div>
                                     </div>
 
                                     <div>

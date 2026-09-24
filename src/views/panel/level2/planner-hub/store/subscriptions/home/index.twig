@@ -39,8 +39,8 @@
                                     </td>
                                     <td>{{ s.frequency }}</td>
                                     <td>{{ s.meals_count }}</td>
-                                    <td>${{ s.price_per_meal|number_format(2, '.', ',') }}</td>
-                                    <td>${{ totalRenewal|number_format(2, '.', ',') }}</td>
+                                    <td>{{ currency_symbol }} {{ s.price_per_meal|number_format(2, ',', '.') }}</td>
+                                    <td>{{ currency_symbol }} {{ totalRenewal|number_format(2, ',', '.') }}</td>
                                     <td>
                                         {% if s.status == 'ACTIVE' %}
                                             <span class="badge bg-success">{{ trans('ui.active') }}</span>

@@ -260,7 +260,7 @@
                                         {% if o.coupon_code %}
                                             <span class="badge bg-info text-dark">{{ o.coupon_code }}</span>
                                             {% if (o.coupon_discount ?: 0) > 0 %}
-                                                <div class="text-muted mt-1">- ${{ o.coupon_discount|number_format(2, '.', ',') }}</div>
+                                                <div class="text-muted mt-1">- {{ currency_symbol }} {{ o.coupon_discount|number_format(2, ',', '.') }}</div>
                                             {% endif %}
                                         {% else %}
                                             <span class="text-muted">-</span>
@@ -287,7 +287,7 @@
                                         </button>
                                     </td>
                                     <td class="text-end">{{ o.meals_count }}</td>
-                                    <td class="text-end">${{ o.total|number_format(2, '.', ',') }}</td>
+                                    <td class="text-end">{{ currency_symbol }} {{ o.total|number_format(2, ',', '.') }}</td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
                                             {% if o.payment_status == 'PAID' %}
@@ -309,7 +309,7 @@
                                                 {{ trans('ui.edit') }}
                                             </button>
                                         </div>
-                                        <div class="small mt-1">{{ trans('store_orders.paid_total') }}: ${{ o.paid_total|number_format(2, '.', ',') }} · {{ trans('store_orders.remaining_balance') }}: ${{ o.remaining_balance|number_format(2, '.', ',') }}</div>
+                                        <div class="small mt-1">{{ trans('store_orders.paid_total') }}: {{ currency_symbol }} {{ o.paid_total|number_format(2, ',', '.') }} · {{ trans('store_orders.remaining_balance') }}: {{ currency_symbol }} {{ o.remaining_balance|number_format(2, ',', '.') }}</div>
                                         {% if o.latest_payment %}
                                             <div class="small text-muted mt-2">
                                                 {{ o.latest_payment.payment_method|default('payment')|replace({'_':' '})|title }}
@@ -410,7 +410,7 @@
                                                 data-sender-postal="{{ businessProfile.zip|default('') }}"
                                                 data-sender-country="{{ businessProfile.country|default('') }}"
                                                 data-carrier-name="{{ o.delivery_assignee_name ?: trans('store_orders.label_logistics') }}"
-                                                data-total="${{ o.total|number_format(2, '.', ',') }}"
+                                                data-total="{{ currency_symbol }} {{ o.total|number_format(2, ',', '.') }}"
                                                 data-url="{{ path('store/order-access?token=' ~ o.public_token) }}">
                                             {{ trans('store_orders.print_label') }}
                                         </button>

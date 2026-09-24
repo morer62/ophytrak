@@ -10,6 +10,7 @@ use App\Repositories\StoreDeliveryLocationLogsRepository;
 use App\Repositories\PaymentProvidersRepository;
 use App\Services\Payment\PaymentProviderFactory;
 use App\Services\Payment\PayPalProvider;
+use App\Services\ProductProfileService;
 use App\Utils\LocationUtils;
 use App\Utils\MessageUtil;
 use App\Utils\Router;
@@ -95,7 +96,7 @@ $router->get(function () {
         ? $userRepo->getOneWithoutOwnership(['id' => (int)$workflow->delivery_user_id], ['id', 'name', 'lastname'])
         : null;
     $activeProvider = getStoreOrderPaymentProvider($order);
-    $currencyCode = strtoupper((string)($order->currency ?? ($activeProvider->currency ?? 'USD')));
+    $currencyCode = ProductProfileService::operationalCurrency();
 
     $existingUser = null;
     if (!empty($order->guest_email)) {
@@ -146,7 +147,7 @@ $router->post(function () {
             "paymentReady" => false,
             "paymentError" => "Payment provider is not configured for this store.",
             "activeProviderType" => "",
-            "currencyCode" => strtoupper((string)($order->currency ?? 'USD')),
+            "currencyCode" => ProductProfileService::operationalCurrency(),
             "baseUrl" => rtrim((string)($_ENV['APP_URL'] ?? ''), '/')
         ]);
     }
@@ -167,7 +168,7 @@ $router->post(function () {
             "paymentReady" => false,
             "paymentError" => "This order does not have a payable amount.",
             "activeProviderType" => $activeProvider->provider_type ?? "",
-            "currencyCode" => strtoupper((string)($order->currency ?? ($activeProvider->currency ?? 'USD'))),
+            "currencyCode" => ProductProfileService::operationalCurrency(),
             "baseUrl" => rtrim((string)($_ENV['APP_URL'] ?? ''), '/')
         ]);
     }
@@ -222,7 +223,7 @@ $router->post(function () {
             "squareLocationId" => ($activeProvider->provider_type === 'square') ? ($activeProvider->location_id ?? '') : '',
             "squareEnvironment" => ($activeProvider->provider_type === 'square') ? ($activeProvider->environment ?? 'sandbox') : 'sandbox',
             "paypalClientId" => ($activeProvider->provider_type === 'paypal') ? ($activeProvider->api_key ?? '') : '',
-            "currencyCode" => strtoupper((string)($order->currency ?? ($activeProvider->currency ?? 'USD'))),
+            "currencyCode" => ProductProfileService::operationalCurrency(),
             "baseUrl" => rtrim((string)($_ENV['APP_URL'] ?? ''), '/')
         ]);
     }
@@ -251,12 +252,12 @@ $router->post(function () {
             "squareLocationId" => ($activeProvider->provider_type === 'square') ? ($activeProvider->location_id ?? '') : '',
             "squareEnvironment" => ($activeProvider->provider_type === 'square') ? ($activeProvider->environment ?? 'sandbox') : 'sandbox',
             "paypalClientId" => ($activeProvider->provider_type === 'paypal') ? ($activeProvider->api_key ?? '') : '',
-            "currencyCode" => strtoupper((string)($order->currency ?? ($activeProvider->currency ?? 'USD'))),
+            "currencyCode" => ProductProfileService::operationalCurrency(),
             "baseUrl" => rtrim((string)($_ENV['APP_URL'] ?? ''), '/')
         ]);
     }
 
-    $currencyCode = strtoupper((string)($charge->currency ?? $order->currency ?? $activeProvider->currency ?? 'USD'));
+    $currencyCode = ProductProfileService::operationalCurrency();
     $paymentsRepo = new StorePaymentsRepository();
     $paymentsRepo->addCompatible([
         'id_owner' => (int)$order->id_owner,

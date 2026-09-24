@@ -52,7 +52,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="text-muted small">Filtered total</div>
-                    <div class="h5 mb-0">${{ summary.total|default(0)|number_format(2, '.', ',') }}</div>
+                    <div class="h5 mb-0">{{ currency_symbol }} {{ summary.total|default(0)|number_format(2, ',', '.') }}</div>
                 </div>
             </div>
         </div>
@@ -60,7 +60,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="text-muted small">Paid</div>
-                    <div class="h5 mb-0 text-success">${{ summary.paid|default(0)|number_format(2, '.', ',') }}</div>
+                    <div class="h5 mb-0 text-success">{{ currency_symbol }} {{ summary.paid|default(0)|number_format(2, ',', '.') }}</div>
                 </div>
             </div>
         </div>
@@ -68,7 +68,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="text-muted small">Pending</div>
-                    <div class="h5 mb-0 text-warning">${{ summary.pending|default(0)|number_format(2, '.', ',') }}</div>
+                    <div class="h5 mb-0 text-warning">{{ currency_symbol }} {{ summary.pending|default(0)|number_format(2, ',', '.') }}</div>
                 </div>
             </div>
         </div>
@@ -76,7 +76,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="text-muted small">Failed / refunded</div>
-                    <div class="h5 mb-0 text-secondary">${{ ((summary.failed|default(0)) + (summary.refunded|default(0)))|number_format(2, '.', ',') }}</div>
+                    <div class="h5 mb-0 text-secondary">{{ currency_symbol }} {{ ((summary.failed|default(0)) + (summary.refunded|default(0)))|number_format(2, ',', '.') }}</div>
                 </div>
             </div>
         </div>
@@ -112,7 +112,7 @@
                                 </td>
                                 <td class="text-uppercase">{{ p.payment_method ?: '—' }}</td>
                                 <td>{{ p.payment_type ?: '—' }}</td>
-                                <td class="text-end">${{ (p.amount ?: 0)|number_format(2, '.', ',') }} {{ p.currency ?: 'USD' }}</td>
+                                <td class="text-end">{{ currency_symbol }} {{ (p.amount ?: 0)|number_format(2, ',', '.') }} {{ currency_code }}</td>
                                 <td>
                                     {% if p.status == 'PAID' %}
                                         <span class="badge bg-success">PAID</span>

@@ -27,7 +27,7 @@
             <div class="store-body">
                 <div class="store-name">{{ product.name }}</div>
                 <div>{{ product.short_description }}</div>
-                <div class="store-price">${{ (product.promo_price ?: product.price)|number_format(2) }}</div>
+                <div class="store-price">{{ currency_symbol }} {{ (product.promo_price ?: product.price)|number_format(2, ',', '.') }}</div>
                 {% if product.product_type == 'FIXED' and product.stock_quantity > 0 %}
                 <div class="store-actions">
                     <input class="store-qty" type="number" min="{{ product.min_purchase_qty ?: 1 }}" max="{{ product.stock_quantity }}" value="{{ product.min_purchase_qty ?: 1 }}" data-qty="{{ product.id }}">
@@ -38,7 +38,7 @@
                     <select class="store-select" data-variation="{{ product.id }}">
                         {% for variation in product.variations %}
                         <option value="{{ variation.id }}" data-name="{{ variation.name|e('html_attr') }}" data-price="{{ variation.promo_price ?: variation.price }}" data-stock="{{ variation.stock_quantity }}">
-                            {{ variation.name }} - ${{ (variation.promo_price ?: variation.price)|number_format(2) }}
+                            {{ variation.name }} - {{ currency_symbol }} {{ (variation.promo_price ?: variation.price)|number_format(2, ',', '.') }}
                         </option>
                         {% endfor %}
                     </select>

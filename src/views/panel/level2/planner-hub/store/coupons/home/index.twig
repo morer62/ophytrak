@@ -47,7 +47,7 @@
                                         {% if c.discount_type == 'PERCENT' %}
                                             {{ c.discount_value|number_format(2, '.', ',') }}%
                                         {% else %}
-                                            ${{ c.discount_value|number_format(2, '.', ',') }}
+                                            {{ currency_symbol }} {{ c.discount_value|number_format(2, ',', '.') }}
                                         {% endif %}
                                     </td>
                                     <td>
@@ -58,7 +58,7 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <div class="small">Min: ${{ c.min_order_total|number_format(2, '.', ',') }}</div>
+                                        <div class="small">Min: {{ currency_symbol }} {{ c.min_order_total|number_format(2, ',', '.') }}</div>
                                         {% if (c.purchase_mode ?: 'PAYG') == 'PAYG' %}
                                             <div class="small">Total limit: {{ c.max_total_uses == 0 ? 'Unlimited' : c.max_total_uses }}</div>
                                             <div class="small">Per customer: {{ c.max_uses_per_customer == 0 ? 'Unlimited' : c.max_uses_per_customer }}</div>

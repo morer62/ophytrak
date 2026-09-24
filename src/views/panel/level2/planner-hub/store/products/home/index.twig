@@ -596,18 +596,18 @@
                                         {% if p.product_type == 'VARIABLE' %}
                                             {% if p.min_price is defined and p.max_price is defined %}
                                                 {% if p.min_price == p.max_price %}
-                                                    <span class="sp-price">${{ p.min_price|number_format(2, '.', ',') }}</span>
+                                                    <span class="sp-price">{{ currency_symbol }} {{ p.min_price|number_format(2, ',', '.') }}</span>
                                                 {% else %}
-                                                    <span class="sp-price">${{ p.min_price|number_format(2, '.', ',') }} - ${{ p.max_price|number_format(2, '.', ',') }}</span>
+                                                    <span class="sp-price">{{ currency_symbol }} {{ p.min_price|number_format(2, ',', '.') }} - {{ currency_symbol }} {{ p.max_price|number_format(2, ',', '.') }}</span>
                                                 {% endif %}
                                             {% else %}
                                                 <span class="sp-muted">—</span>
                                             {% endif %}
                                         {% else %}
                                             {% if p.display_price is defined %}
-                                                <span class="sp-price">${{ p.display_price|number_format(2, '.', ',') }}</span>
+                                                <span class="sp-price">{{ currency_symbol }} {{ p.display_price|number_format(2, ',', '.') }}</span>
                                             {% else %}
-                                                <span class="sp-price">${{ p.price|number_format(2, '.', ',') }}</span>
+                                                <span class="sp-price">{{ currency_symbol }} {{ p.price|number_format(2, ',', '.') }}</span>
                                             {% endif %}
                                         {% endif %}
                                     </td>

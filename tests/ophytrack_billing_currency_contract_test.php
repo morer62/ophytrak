@@ -21,6 +21,8 @@ $assertSame = static function (mixed $expected, mixed $actual, string $message) 
 };
 
 $assertSame('BRL', ProductProfileService::billingCurrency(), 'OPHYTRACK must declare BRL as its billing currency.');
+$assertSame('BRL', ProductProfileService::operationalCurrency(), 'OPHYTRACK Store and logistics operations must use BRL.');
+$assertSame('R$', ProductProfileService::currencySymbol(), 'OPHYTRACK monetary amounts must use the Brazilian-real symbol.');
 $assertSame(['store_delivery_tracking'], ProductProfileService::allowedAddonSlugs(), 'OPHYTRACK must sell Store + Logistics as its single launch plan.');
 $assertSame(true, ProductProfileService::includedWithStoreLogistics('inventory_storage'), 'Warehouse must be included with Store + Logistics.');
 $assertSame(true, ProductProfileService::includedWithStoreLogistics('marketplace_connectors'), 'Marketplace connectors must be included with Store + Logistics.');
@@ -40,17 +42,41 @@ $assertSame(true, str_contains($stripeService, 'paymentIntents->create('), 'Save
 $cardsController = (string)file_get_contents($root . '/src/views/panel/level2/cards/index.php');
 $assertSame(true, str_contains($cardsController, '"billing_zip" => $verifiedSetup["billing_zip"]'), 'Saved Stripe cards must satisfy the existing non-null billing_zip column.');
 
+foreach ([
+    'src/Services/StoreManualOrderService.php',
+    'src/views/public/commerce/store/checkout/index.php',
+    'src/views/public/commerce/store/order-access/index.php',
+    'src/views/panel/level2/planner-hub/settings/payment-providers/index.php',
+] as $operationalFile) {
+    $source = (string)file_get_contents($root . '/' . $operationalFile);
+    $assertSame(false, (bool)preg_match('/[\'\"](?:USD|EUR|GBP)[\'\"]/', $source), $operationalFile . ' must not persist or submit a non-BRL currency.');
+}
+
 $loader = new Twig\Loader\FilesystemLoader($root . '/src/views');
 $twig = new Twig\Environment($loader);
 foreach (['path', 'trans', 'asset', 'asset_for', 'url', 'csrf_token'] as $functionName) {
     $twig->addFunction(new Twig\TwigFunction($functionName, static fn (...$arguments) => ''));
 }
+$twig->addFilter(new Twig\TwigFilter('json_decode', static fn ($value) => is_string($value) ? (json_decode($value, true) ?: []) : $value));
 foreach ([
     'panel/level2/cards/index.twig',
     'panel/level2/home/index.twig',
     'panel/level2/membership/manage/index.twig',
     'panel/level2/membership/modules/review/index.twig',
     'panel/level2/planner-hub/no-access/index.twig',
+    'panel/shared/store/manual-order-form.twig',
+    'panel/shared/store/sales-report.twig',
+    'panel/shared/store/order-history.twig',
+    'panel/level2/planner-hub/store/orders/home/index.twig',
+    'panel/level2/planner-hub/store/orders/home/compact-table.twig',
+    'panel/level2/planner-hub/store/products/home/index.twig',
+    'panel/level2/planner-hub/store/products/details/index.twig',
+    'panel/level2/planner-hub/store/payments/home/index.twig',
+    'panel/level2/planner-hub/settings/payment-providers/index.twig',
+    'public/commerce/store/home/index.twig',
+    'public/commerce/store/cart/index.twig',
+    'public/commerce/store/checkout/index.twig',
+    'public/commerce/store/order-access/index.twig',
     'public/planner-hub/index.twig',
 ] as $template) {
     try {

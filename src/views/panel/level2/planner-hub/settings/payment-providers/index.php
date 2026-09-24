@@ -9,6 +9,7 @@ use App\Utils\Router;
 use App\Utils\ErrorLogging;
 use App\Repositories\PaymentProvidersRepository;
 use App\Services\Payment\PaymentProviderFactory;
+use App\Services\ProductProfileService;
 
 $router = new Router();
 
@@ -60,7 +61,7 @@ $router->post(function () {
         $publicKey = trim($_POST['public_key'] ?? '');
         $webhookSecret = trim($_POST['webhook_secret'] ?? '');
         $environment = $_POST['environment'] ?? 'sandbox';
-        $currency = $_POST['currency'] ?? 'USD';
+        $currency = ProductProfileService::operationalCurrency();
         $merchantEmail = trim($_POST['merchant_email'] ?? '') ?: null;
         $locationId = trim($_POST['location_id'] ?? '') ?: null;
         
@@ -294,7 +295,7 @@ $router->post(function () {
         $publicKey = trim($_POST['public_key'] ?? '');
         $webhookSecret = trim($_POST['webhook_secret'] ?? '');
         $environment = $_POST['environment'] ?? 'sandbox';
-        $currency = $_POST['currency'] ?? 'USD';
+        $currency = ProductProfileService::operationalCurrency();
         $merchantEmail = trim($_POST['merchant_email'] ?? '') ?: null;
         $locationId = trim($_POST['location_id'] ?? '') ?: null;
         

@@ -398,7 +398,7 @@ body{
                     </div>
                     <div class="summary-row">
                         <span>Subtotal</span>
-                        <strong id="summarySubtotal">$0.00</strong>
+                        <strong id="summarySubtotal">{{ currency_symbol }} 0,00</strong>
                     </div>
                     <div class="summary-row discount" id="summaryDiscountRow" style="display:none;">
                         <span>Coupon discount</span>
@@ -406,7 +406,7 @@ body{
                     </div>
                     <div class="summary-row total">
                         <span>{{ trans('ui.total') }}</span>
-                        <strong id="summaryTotal">$0.00</strong>
+                        <strong id="summaryTotal">{{ currency_symbol }} 0,00</strong>
                     </div>
 
                     <div class="coupon-inline">
@@ -514,6 +514,9 @@ document.addEventListener('DOMContentLoaded', function () {
         return Number.isFinite(n) ? n : fallback;
     }
 
+    const moneyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: '{{ currency_code|e('js') }}' });
+    const money = value => moneyFormatter.format(toFloat(value, 0));
+
     function formatUSPhoneDisplay(value) {
         const digits = String(value || '').replace(/\D/g, '').slice(0, 10);
         const area = digits.slice(0, 3);
@@ -609,12 +612,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         summaryItemsCount.textContent = totals.itemsCount;
         summaryQuantityTotal.textContent = totals.quantityTotal;
-        summarySubtotal.textContent = `$${totals.subtotal.toFixed(2)}`;
-        summaryTotal.textContent = `$${totals.total.toFixed(2)}`;
+        summarySubtotal.textContent = money(totals.subtotal);
+        summaryTotal.textContent = money(totals.total);
 
         if (totals.discount > 0) {
             summaryDiscountRow.style.display = 'flex';
-            summaryDiscount.textContent = `-$${totals.discount.toFixed(2)}`;
+            summaryDiscount.textContent = `-${money(totals.discount)}`;
         } else {
             summaryDiscountRow.style.display = 'none';
             summaryDiscount.textContent = '-$0.00';
@@ -664,7 +667,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 `).join('')}
                             </div>
 
-                            <div class="cart-item-price">$${toFloat(item.unit_price || item.price || 0, 0).toFixed(2)} each</div>
+                            <div class="cart-item-price">${money(toFloat(item.unit_price || item.price || 0, 0))} each</div>
                         </div>
 
                         <div class="cart-item-actions">

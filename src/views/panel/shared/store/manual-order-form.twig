@@ -70,7 +70,7 @@
               <select class="form-select store-product" name="product_id[]" required>
                 <option value="">{{ trans('store_manual.select_product') }}</option>
                 {% for product in products %}
-                  <option value="{{ product.id }}" data-price="{{ product.effective_price }}" data-variations='{{ product.variations|json_encode|e('html_attr') }}'>{{ product.name }} - ${{ product.effective_price|number_format(2) }}</option>
+                  <option value="{{ product.id }}" data-price="{{ product.effective_price }}" data-variations='{{ product.variations|json_encode|e('html_attr') }}'>{{ product.name }} - {{ currency_symbol }} {{ product.effective_price|number_format(2, ',', '.') }}</option>
                 {% endfor %}
               </select>
               <div class="row g-2 mt-2">
@@ -83,7 +83,7 @@
                   <input class="form-control store-qty" type="number" min="1" value="1" name="quantity[]" required>
                 </div>
               </div>
-              <div class="small text-muted mt-2 store-line-total">{{ trans('store_manual.line_total') }}: $0.00</div>
+              <div class="small text-muted mt-2 store-line-total">{{ trans('store_manual.line_total') }}: {{ currency_symbol }} 0,00</div>
             </div>
           </div>
           <div class="row g-3 mt-3">
@@ -106,13 +106,13 @@
               </select>
             </div>
             <div class="input-group">
-              <span class="input-group-text" id="feePrefix">$</span>
+              <span class="input-group-text" id="feePrefix">{{ currency_symbol }}</span>
               <input class="form-control money-field" name="fee_value" id="feeValue" type="number" step="0.01" min="0" value="0" disabled>
               <span class="input-group-text d-none" id="feeSuffix">%</span>
             </div>
             <input class="form-control mt-2" name="fee_label" placeholder="{{ trans('store_manual.fee_label_placeholder') }}">
           </div>
-          <div class="alert alert-info mt-3 mb-0"><strong>{{ trans('ui.total') }}:</strong> <span id="manualOrderTotal">$0.00</span></div>
+          <div class="alert alert-info mt-3 mb-0"><strong>{{ trans('ui.total') }}:</strong> <span id="manualOrderTotal">{{ currency_symbol }} 0,00</span></div>
         </div>
       </div>
     </section></div>
@@ -201,7 +201,8 @@
   const totalNode = document.getElementById('manualOrderTotal');
   let currentStep = 1;
   let calculated = { subtotal: 0, delivery: 0, discount: 0, fee: 0, total: 0 };
-  const money = value => '$' + Number(value || 0).toFixed(2);
+  const moneyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: '{{ currency_code|e('js') }}' });
+  const money = value => moneyFormatter.format(Number(value || 0));
   const refreshLine = line => {
     const product = line.querySelector('.store-product');
     const variation = line.querySelector('.store-variation');

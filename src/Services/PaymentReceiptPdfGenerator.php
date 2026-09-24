@@ -45,7 +45,7 @@ class PaymentReceiptPdfGenerator
 
         $providersRepo = new PaymentProvidersRepository();
         $activeProvider = $providersRepo->getActiveProviderForOwner($order->id_owner);
-        $currencyCode = $activeProvider ? strtoupper($activeProvider->currency ?? 'USD') : 'USD';
+        $currencyCode = ProductProfileService::operationalCurrency();
 
         // Process logo path and convert to base64 for DomPDF
         $logoBase64 = '';

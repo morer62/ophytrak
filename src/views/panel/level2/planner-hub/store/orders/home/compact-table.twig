@@ -38,7 +38,7 @@
                         {{ trans('store_orders.view_details') }}
                     </button>
                 </td>
-                <td class="text-end fw-semibold text-nowrap">${{ o.total|number_format(2, '.', ',') }}</td>
+                <td class="text-end fw-semibold text-nowrap">{{ currency_symbol }} {{ o.total|number_format(2, ',', '.') }}</td>
                 <td>
                     <span class="badge {{ o.payment_status == 'PAID' ? 'bg-success' : (o.payment_status == 'FAILED' ? 'bg-danger' : 'bg-warning text-dark') }}">
                         {{ paymentStatusLabels[o.payment_status]|default(o.payment_status) }}
@@ -94,7 +94,7 @@
                                     data-sender-city="{{ businessProfile.city|default('') }}" data-sender-state="{{ businessProfile.state|default('') }}"
                                     data-sender-postal="{{ businessProfile.zip|default('') }}" data-sender-country="{{ businessProfile.country|default('') }}"
                                     data-carrier-name="{{ o.delivery_assignee_name ?: trans('store_orders.label_logistics') }}"
-                                    data-total="${{ o.total|number_format(2, '.', ',') }}" data-url="{{ path('store/order-access?token=' ~ o.public_token) }}">
+                                    data-total="{{ currency_symbol }} {{ o.total|number_format(2, ',', '.') }}" data-url="{{ path('store/order-access?token=' ~ o.public_token) }}">
                                 {{ trans('store_orders.print_label') }}
                             </button>
                         </div>

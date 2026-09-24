@@ -24,6 +24,7 @@ use App\Services\StoreOwnerResolverService;
 use App\Services\StorefrontAccessService;
 use App\Services\CurrencyPricingService;
 use App\Services\PaymentAvailabilityService;
+use App\Services\ProductProfileService;
 use App\Services\Payment\PaymentProviderFactory;
 use App\Utils\LocationUtils;
 
@@ -97,7 +98,7 @@ function sendCheckoutOrderDetailsEmail(
         $rows .= "<tr>
             <td style=\"padding:8px;border-bottom:1px solid #eee;\">{$name}</td>
             <td style=\"padding:8px;border-bottom:1px solid #eee;text-align:center;\">{$qty}</td>
-            <td style=\"padding:8px;border-bottom:1px solid #eee;text-align:right;\">$ {$line}</td>
+            <td style=\"padding:8px;border-bottom:1px solid #eee;text-align:right;\">R$ {$line}</td>
         </tr>";
     }
 
@@ -158,7 +159,7 @@ function chargeSquarePayment(
 ): array {
     $accessToken = trim((string)($provider->api_key ?? ''));
     $locationId = trim((string)($provider->location_id ?? ''));
-    $currency = strtoupper((string)($provider->currency ?? 'USD'));
+    $currency = ProductProfileService::operationalCurrency();
 
     if ($accessToken === '' || $locationId === '') {
         $missing = [];
@@ -473,7 +474,7 @@ function recordStoreCheckoutPaymentMethodPreferences(
 function chargeStripePayment(object $provider, string $token, int $amountCents, string $email, string $note = ''): array
 {
     $secretKey = trim((string)($provider->api_key ?? ''));
-    $currency = strtolower((string)($provider->currency ?? 'usd'));
+    $currency = strtolower(ProductProfileService::operationalCurrency());
 
     if ($secretKey === '') {
         return [
@@ -514,7 +515,7 @@ function chargeStripeCustomerPayment(
     string $note = ''
 ): array {
     $secretKey = trim((string)($provider->api_key ?? ''));
-    $currency = strtolower((string)($provider->currency ?? 'usd'));
+    $currency = strtolower(ProductProfileService::operationalCurrency());
 
     if ($secretKey === '') {
         return [
@@ -563,7 +564,7 @@ $router->get(function () {
     $availabilityService = new PaymentAvailabilityService();
     $paymentAvailability = $storeAvailable && $ownerId > 0
         ? $availabilityService->evaluate($ownerId, 0.0, [
-            'display_currency' => $_GET['currency'] ?? ($_COOKIE['ophyra_display_currency'] ?? 'USD'),
+            'display_currency' => ProductProfileService::operationalCurrency(),
             'country' => $_GET['country'] ?? ($_COOKIE['ophyra_country'] ?? 'US'),
         ])
         : null;
@@ -596,9 +597,9 @@ $router->get(function () {
         "square_environment" => $squareEnvironment,
         "stripe_public_key" => $stripePublicKey,
         "paypal_client_id" => $activeProviderType === 'paypal' ? (string)($activeProvider->api_key ?? '') : '',
-        "provider_currency" => $paymentAvailability['payment_currency'] ?? ($activeProvider ? strtoupper((string)($activeProvider->currency ?? 'USD')) : 'USD'),
-        "display_currency" => $paymentAvailability['display_currency'] ?? 'USD',
-        "display_currencies" => (new CurrencyPricingService())->supportedDisplayCurrencies(),
+        "provider_currency" => ProductProfileService::operationalCurrency(),
+        "display_currency" => ProductProfileService::operationalCurrency(),
+        "display_currencies" => [ProductProfileService::operationalCurrency()],
         "payment_availability" => $paymentAvailabilityForView,
         "bank_transfer_available" => true,
         "recovery_token" => $recoveryToken,
@@ -755,7 +756,7 @@ $router->post(function () {
     $total = round($subtotal - $discount, 2);
     $couponCodeFromCart = trim((string)($cart->coupon_code ?? ''));
     $couponIdFromCart = (int)($cart->id_coupon ?? 0);
-    $displayCurrency = strtoupper(trim((string)($payload['display_currency'] ?? $_COOKIE['ophyra_display_currency'] ?? 'USD')));
+    $displayCurrency = ProductProfileService::operationalCurrency();
     $billingCountry = strtoupper(trim((string)($payload['billing_country'] ?? $_COOKIE['ophyra_country'] ?? 'US')));
     $availabilityService = new PaymentAvailabilityService();
     $paymentAvailability = $availabilityService->evaluate($ownerId, $total, [
@@ -1278,10 +1279,10 @@ $router->post(function () {
         return;
     }
 
-    $paymentAmount = (float)($paymentAvailability['payment_amount'] ?? $total);
-    $paymentCurrency = (string)($paymentAvailability['payment_currency'] ?? ($activeProvider->currency ?? 'USD'));
-    $displayAmount = (float)($paymentAvailability['display_amount'] ?? $total);
-    $displayCurrencyForRecord = (string)($paymentAvailability['display_currency'] ?? 'USD');
+    $paymentAmount = $total;
+    $paymentCurrency = ProductProfileService::operationalCurrency();
+    $displayAmount = $total;
+    $displayCurrencyForRecord = ProductProfileService::operationalCurrency();
 
     if ($isBankTransfer) {
         $paymentAmount = $displayAmount;
@@ -1516,7 +1517,7 @@ $router->post(function () {
         'raw_response' => $paymentResponse['raw'] ?? null,
         'paid_at' => $isBankTransfer ? null : date('Y-m-d H:i:s'),
         'base_amount' => $total,
-        'base_currency' => 'USD',
+        'base_currency' => ProductProfileService::operationalCurrency(),
         'display_amount' => $displayAmount,
         'display_currency' => strtoupper($displayCurrencyForRecord),
         'payment_amount' => $paymentAmount,

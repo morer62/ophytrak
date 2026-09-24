@@ -208,7 +208,7 @@
 
             {% if total %}
                 <span class="success-badge">
-                    Total Paid: ${{ total|number_format(2, '.', ',') }}
+                    Total Paid: {{ currency_symbol }} {{ total|number_format(2, ',', '.') }}
                 </span>
             {% endif %}
 

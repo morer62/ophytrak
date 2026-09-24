@@ -44,7 +44,7 @@
                                     </td>
                                     <td>{{ c.pricing_mode }}</td>
                                     <td>{{ c.meals_count }}</td>
-                                    <td>${{ c.total|number_format(2, '.', ',') }}</td>
+                                    <td>{{ currency_symbol }} {{ c.total|number_format(2, ',', '.') }}</td>
                                     <td>
                                         {% if c.status == 'CONVERTED' %}
                                             <span class="badge bg-success">CONVERTED</span>

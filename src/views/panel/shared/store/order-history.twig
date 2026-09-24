@@ -78,7 +78,7 @@
                     <span class="text-muted">{{ trans('store_history.no_items') }}</span>
                   {% endfor %}
                 </td>
-                <td>${{ o.total|number_format(2, '.', ',') }}</td>
+                <td>{{ currency_symbol }} {{ o.total|number_format(2, ',', '.') }}</td>
                 <td class="small">
                   {% if o.latest_payment %}
                     <div>{{ o.latest_payment.payment_method|default('payment')|replace({'_':' '})|title }}</div>

@@ -39,7 +39,7 @@ class OrderInvoicePdfGenerator
 
         $providersRepo = new PaymentProvidersRepository();
         $activeProvider = $providersRepo->getActiveProviderForOwner($order->id_owner);
-        $currencyCode = $activeProvider ? strtoupper($activeProvider->currency ?? 'USD') : 'USD';
+        $currencyCode = ProductProfileService::operationalCurrency();
 
         $items = $assignedRepo->getAllBy(["id_order" => $order->id]);
         $subtotal = 0.0;

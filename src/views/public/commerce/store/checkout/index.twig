@@ -6,7 +6,7 @@
 <script type="text/javascript" src="https://{{ square_environment == 'production' ? 'web' : 'sandbox.web' }}.squarecdn.com/v1/square.js"></script>
 {% endif %}
 {% if active_provider_type == 'paypal' and paypal_client_id %}
-<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id|url_encode }}&currency={{ provider_currency|default('USD')|url_encode }}"></script>
+<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id|url_encode }}&currency={{ currency_code|url_encode }}"></script>
 {% endif %}
 <style>
 :root{
@@ -377,26 +377,19 @@ body{
                     </div>
                     <div class="summary-row">
                         <span>Subtotal</span>
-                        <strong id="checkoutSubtotal">$0.00</strong>
+                        <strong id="checkoutSubtotal">{{ currency_symbol }} 0,00</strong>
                     </div>
                     <div class="summary-row discount" id="checkoutDiscountRow" style="display:none;">
                         <span>Coupon discount</span>
-                        <strong id="checkoutDiscount">-$0.00</strong>
+                        <strong id="checkoutDiscount">-{{ currency_symbol }} 0,00</strong>
                     </div>
                     <div class="summary-row total">
                         <span>{{ trans('ui.total') }}</span>
-                        <strong id="checkoutTotal">$0.00</strong>
+                        <strong id="checkoutTotal">{{ currency_symbol }} 0,00</strong>
                     </div>
                 </div>
 
-                <div class="field">
-                    <label for="display_currency">Display currency</label>
-                    <select id="display_currency" class="form-select">
-                        {% for currency_code in display_currencies|default(['USD']) %}
-                            <option value="{{ currency_code }}" {% if currency_code == display_currency|default('USD') %}selected{% endif %}>{{ currency_code }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                <input id="display_currency" type="hidden" value="{{ currency_code }}">
 
                 <div class="field">
                     <label for="guest_name">Full name</label>
@@ -681,10 +674,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const discount = Number(cart.discount || cart.coupon_discount || 0);
         const total = Number(cart.total || subtotal);
         const pricing = cart.pricing || {};
-        const currency = pricing.display_currency || displayCurrencyInput?.value || 'USD';
-        const displaySubtotal = currency === 'USD' ? subtotal : Number(subtotal * Number(pricing.display_exchange_rate || 1));
-        const displayDiscount = currency === 'USD' ? discount : Number(discount * Number(pricing.display_exchange_rate || 1));
-        const displayTotal = Number(pricing.display_amount || total);
+        const currency = '{{ currency_code|e('js') }}';
+        const displaySubtotal = subtotal;
+        const displayDiscount = discount;
+        const displayTotal = total;
 
         itemsCountEl.textContent = itemsCount;
         quantityTotalEl.textContent = quantityTotal;
@@ -700,7 +693,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function formatCurrency(amount, currency) {
-        return `${currency} ${Number(amount || 0).toFixed(currency === 'JPY' || currency === 'CLP' ? 0 : 2)}`;
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: '{{ currency_code|e('js') }}' }).format(Number(amount || 0));
     }
 
     function renderItems(items) {
@@ -727,10 +720,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                         ? item.variation_options.map(opt => `<span class="checkout-item-chip">${opt.attribute_name}: ${opt.attribute_value}</span>`).join('')
                                         : ''
                                 }
-                                <div>${item.quantity} x $${Number(item.unit_price || 0).toFixed(2)}</div>
+                                <div>${item.quantity} x ${formatCurrency(item.unit_price, '{{ currency_code|e('js') }}')}</div>
                             </div>
                         </div>
-                        <div class="checkout-item-total">$${Number(item.line_total || 0).toFixed(2)}</div>
+                        <div class="checkout-item-total">${formatCurrency(item.line_total, '{{ currency_code|e('js') }}')}</div>
                     </div>
                 `).join('')}
             </div>
@@ -751,7 +744,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     action: 'summary',
                     session_token: sessionToken,
                     recovery_token: RECOVERY_TOKEN,
-                    display_currency: displayCurrencyInput?.value || 'USD',
+                    display_currency: '{{ currency_code|e('js') }}',
                     billing_country: billingCountryInput?.value || 'US'
                 })
             });
@@ -982,7 +975,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             action: 'paypal_create_order',
                             session_token: sessionToken,
                             recovery_token: RECOVERY_TOKEN,
-                            display_currency: displayCurrencyInput?.value || 'USD',
+                            display_currency: '{{ currency_code|e('js') }}',
                             billing_country: billingCountryInput?.value || 'US'
                         })
                     });
@@ -1104,7 +1097,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     auto_charge_consent: autoChargeConsentInput && autoChargeConsentInput.checked ? 1 : 0,
                     payment_method: selectedPaymentMethod,
                     customer_token: paymentData.token,
-                    display_currency: displayCurrencyInput?.value || 'USD',
+                    display_currency: '{{ currency_code|e('js') }}',
                     guest_name: guestNameInput.value.trim(),
                     guest_email: guestEmailInput.value.trim(),
                     guest_phone: guestPhoneInput.value.trim(),
