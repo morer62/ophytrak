@@ -34,7 +34,8 @@ class StoreDeliveryLocationLogsRepository extends StoreRepository
         $this->db->bind(':permission_status', trim((string)($metadata['permission_status'] ?? 'granted')) ?: 'granted');
         $this->db->bind(':device_id', trim((string)($metadata['device_id'] ?? '')) ?: null);
         $this->db->bind(':context', trim((string)($metadata['context'] ?? 'store_delivery')) ?: 'store_delivery');
-        return (bool)$this->db->execute();
+        $this->db->execute();
+        return true;
     }
 
     public function getLatestByOrder(int $orderId, ?int $ownerId = null): ?object

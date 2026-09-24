@@ -40,7 +40,7 @@ class CarrierPackageRepository extends StoreRepository
         return[true,'Custody request sent to the seller.']; */
     }
 
-    public function claimByQr(int $carrierOwner,int $userId,string $token,?string $photoUrl=null,?float $lat=null,?float $lng=null): array
+    public function claimByQr(int $carrierOwner,int $userId,string $token,?string $photoUrl=null,?float $lat=null,?float $lng=null,string $method='SECURE_QR'): array
     {
         if(!$this->isCarrier($carrierOwner))return[false,'The selected workspace is not a carrier organization.',null];
         $package=$this->findBySecureToken($token);if(!$package)return[false,'The QR is invalid or no longer identifies a package.',null];
@@ -60,7 +60,7 @@ class CarrierPackageRepository extends StoreRepository
         $this->db->bind(':carrier',$carrierOwner);$this->db->bind(':user',$userId);$this->db->bind(':id',(int)$package->id);$this->db->execute();
         $this->assign((int)$package->id,$carrierOwner,$userId,$userId,'PICKUP');
         (new OphytrackPackageBillingRepository())->recordForCustody($package,$carrierOwner);
-        $meta=['photo_url'=>$photoUrl,'latitude'=>$lat,'longitude'=>$lng,'method'=>'SECURE_QR'];
+        $meta=['photo_url'=>$photoUrl,'latitude'=>$lat,'longitude'=>$lng,'method'=>$method];
         $this->event($package,$carrierOwner,$userId,'QR_CUSTODY_ACCEPTED','PICKED_UP','Carrier accepted custody through secure QR scan','', $meta);
         $this->notify((int)$package->id_owner,'Carrier picked up '.$package->package_code.' by secure QR scan','panel/planner-hub/store/orders/home?package='.urlencode((string)$package->package_code));
         return[true,'Package added to your carrier workspace.',$package];
@@ -98,7 +98,7 @@ class CarrierPackageRepository extends StoreRepository
     public function sellerUseOwnTeam(int $packageId,int $sellerOwner,int $userId): bool
     {
         $this->db->query("SELECT * FROM store_packages WHERE id=:id AND id_owner=:seller LIMIT 1");$this->db->bind(':id',$packageId);$this->db->bind(':seller',$sellerOwner);$p=$this->db->fetchOne();if(!$p)return false;
-        $this->db->query("UPDATE store_packages SET current_custodian_owner_id=:seller,current_custodian_user_id=NULL,logistics_mode='SELF_DELIVERY',current_location_label=IF(custody_status='PICKUP_ASSIGNED','With seller',current_location_label),custody_status=IF(custody_status='PICKUP_ASSIGNED','WITH_SELLER',custody_status),updated_at=NOW() WHERE id=:id");$this->db->bind(':seller',$sellerOwner);$this->db->bind(':id',$packageId);$this->db->execute();
+        $this->db->query("UPDATE store_packages SET current_custodian_owner_id=:seller,current_custodian_user_id=NULL,logistics_mode='INTERNAL',current_location_label=IF(custody_status='PICKUP_ASSIGNED','With seller',current_location_label),custody_status=IF(custody_status='PICKUP_ASSIGNED','WITH_SELLER',custody_status),updated_at=NOW() WHERE id=:id");$this->db->bind(':seller',$sellerOwner);$this->db->bind(':id',$packageId);$this->db->execute();
         $this->db->query("UPDATE store_package_carrier_assignments SET status='CANCELLED',updated_at=NOW() WHERE id_store_package=:package AND status NOT IN ('COMPLETED','CANCELLED')");$this->db->bind(':package',$packageId);$this->db->execute();
         (new OphytrackPackageBillingRepository())->recordForOwnTeam($p);
         return true;
@@ -136,20 +136,29 @@ class CarrierPackageRepository extends StoreRepository
     public function advance(int $packageId,int $carrierOwner,int $userId,string $action,string $notes='',?string $photo=null,array $meta=[]): array
     {
         $map=['picked_up'=>['PICKED_UP','With carrier pickup team'],'received_hub'=>['RECEIVED_AT_HUB','At carrier warehouse'],'sorted_hub'=>['SORTED_AT_HUB','Sorted by delivery region'],'out_for_delivery'=>['OUT_FOR_DELIVERY','With carrier delivery employee'],'customer_absent'=>['CUSTOMER_ABSENT','Delivery incident: customer absent'],'customer_rejected'=>['CUSTOMER_REJECTED','Delivery incident: customer rejected package'],'delivery_cancelled'=>['DELIVERY_CANCELLED','Delivery incident: cancelled'],'delivered'=>['DELIVERED','Delivered to customer']];if(!isset($map[$action]))return[false,'Invalid carrier action.'];
-        $this->db->query("SELECT * FROM store_packages WHERE id=:id AND current_custodian_owner_id=:carrier LIMIT 1");$this->db->bind(':id',$packageId);$this->db->bind(':carrier',$carrierOwner);$p=$this->db->fetchOne();if(!$p)return[false,'Package is not under this carrier custody.'];
+        $this->db->query("SELECT * FROM store_packages WHERE id=:id AND current_custodian_owner_id=:carrier AND current_custodian_user_id=:user LIMIT 1");$this->db->bind(':id',$packageId);$this->db->bind(':carrier',$carrierOwner);$this->db->bind(':user',$userId);$p=$this->db->fetchOne();if(!$p)return[false,'Package is not assigned to you under this carrier custody.'];
         $allowed=['PICKUP_ASSIGNED'=>['picked_up'],'WITH_SELLER'=>['picked_up'],'PICKED_UP'=>['received_hub'],'RECEIVED_AT_HUB'=>['sorted_hub'],'SORTED_AT_HUB'=>['out_for_delivery'],'CUSTOMER_ABSENT'=>['received_hub','out_for_delivery'],'CUSTOMER_REJECTED'=>['received_hub'],'DELIVERY_CANCELLED'=>['received_hub'],'OUT_FOR_DELIVERY'=>['delivered','customer_absent','customer_rejected','delivery_cancelled']];
         if(!in_array($action,$allowed[(string)$p->custody_status]??[],true))return[false,'This step is not allowed from the current package stage.'];
         [$status,$location]=$map[$action];if(!$photo)return[false,'A package or delivery evidence photo is required.'];
         $this->db->query("UPDATE store_packages SET current_custodian_user_id=:user,custody_status=:status,current_status=:status,current_location_label=:location,last_event_at=NOW(),updated_at=NOW() WHERE id=:id");$this->db->bind(':user',$userId);$this->db->bind(':status',$status);$this->db->bind(':location',$location);$this->db->bind(':id',$packageId);$this->db->execute();
         $meta['photo_url']=$photo;$this->event($p,$carrierOwner,$userId,strtoupper($action),$status,$location,$notes,$meta);
+        if(is_numeric($meta['latitude']??null)&&is_numeric($meta['longitude']??null)){
+            (new StoreDeliveryLocationLogsRepository())->addLocation((int)$p->id_owner,(int)$p->id_store_order,null,$userId,$action==='delivered'?'DELIVERED':($action==='out_for_delivery'?'OUT_FOR_DELIVERY':'LOCATION_UPDATE'),(float)$meta['latitude'],(float)$meta['longitude'],['platform'=>'web_mobile_carrier','source'=>'carrier_stage','permission_status'=>'granted','context'=>'carrier_delivery']);
+        }
         if($action==='out_for_delivery')(new StoreOrdersRepository())->updateStatus((int)$p->id_store_order,StoreOrdersRepository::STATUS_OUT_FOR_DELIVERY);
         if($action==='customer_absent')(new StoreOrdersRepository())->updateStatus((int)$p->id_store_order,StoreOrdersRepository::STATUS_DELIVERY_ATTEMPTED);
         if(in_array($action,['customer_rejected','delivery_cancelled'],true))(new StoreOrdersRepository())->updateStatus((int)$p->id_store_order,StoreOrdersRepository::STATUS_RETURNED_TO_BUSINESS);
-        if($action==='delivered')(new StoreOrdersRepository())->updateStatus((int)$p->id_store_order,StoreOrdersRepository::STATUS_DELIVERED);
+        if($action==='delivered'){(new StoreOrdersRepository())->updateStatus((int)$p->id_store_order,StoreOrdersRepository::STATUS_DELIVERED);(new OphytrackDriverPayoutRepository())->recordDelivered($packageId,$userId,$carrierOwner);}
         return[true,'Package workflow updated.'];
+    }
+
+    public function recordLiveLocation(int $packageId,int $carrierOwner,int $userId,float $lat,float $lng,?float $accuracy=null):bool
+    {
+        $this->db->query("SELECT id_owner,id_store_order FROM store_packages WHERE id=:id AND current_custodian_owner_id=:carrier AND current_custodian_user_id=:user AND custody_status='OUT_FOR_DELIVERY' LIMIT 1");$this->db->bind(':id',$packageId);$this->db->bind(':carrier',$carrierOwner);$this->db->bind(':user',$userId);$p=$this->db->fetchOne();if(!$p)return false;
+        return (new StoreDeliveryLocationLogsRepository())->addLocation((int)$p->id_owner,(int)$p->id_store_order,null,$userId,'LOCATION_UPDATE',$lat,$lng,['accuracy'=>$accuracy,'platform'=>'web_mobile_carrier','source'=>'browser_geolocation_watch','permission_status'=>'granted','context'=>'carrier_delivery_live']);
     }
 
     private function assign(int $package,int $carrier,int $user,int $by,string $role): void {$this->db->query("INSERT INTO store_package_carrier_assignments (id_store_package,carrier_owner_id,assigned_user_id,assigned_by_user_id,assignment_role,status,assigned_at,created_at,updated_at) VALUES (:package,:carrier,:user,:by,:role,'IN_PROGRESS',NOW(),NOW(),NOW())");$this->db->bind(':package',$package);$this->db->bind(':carrier',$carrier);$this->db->bind(':user',$user);$this->db->bind(':by',$by);$this->db->bind(':role',$role);$this->db->execute();}
     private function notify(int $userId,string $message,string $link): void {try{$this->db->query("INSERT INTO notifications (id_user,mensaje,link,leido,timestamp) VALUES (:user,:message,:link,'NO',NOW())");$this->db->bind(':user',$userId);$this->db->bind(':message',mb_substr($message,0,120));$this->db->bind(':link',$link);$this->db->execute();}catch(\Throwable $e){error_log('Carrier notification failed: '.$e->getMessage());}}
-    private function event(object $p,int $carrier,int $user,string $type,string $to,string $location,string $notes='',array $meta=[]): void {$this->db->query("INSERT INTO store_package_events (id_owner,id_store_package,id_store_order,id_user,event_type,status_from,status_to,location_label,notes,metadata_json,created_at) VALUES (:owner,:package,:order,:user,:type,:from,:to,:location,:notes,:meta,NOW())");$this->db->bind(':owner',(int)($p->id_owner??0));$this->db->bind(':package',(int)($p->id_store_package??$p->id));$this->db->bind(':order',(int)$p->id_store_order);$this->db->bind(':user',$user);$this->db->bind(':type',$type);$this->db->bind(':from',(string)($p->custody_status??''));$this->db->bind(':to',$to);$this->db->bind(':location',$location);$this->db->bind(':notes',$notes?:null);$this->db->bind(':meta',$meta?json_encode($meta,JSON_UNESCAPED_UNICODE):null);$this->db->execute();}
+    private function event(object $p,int $carrier,int $user,string $type,string $to,string $location,string $notes='',array $meta=[]): int {$this->db->query("INSERT INTO store_package_events (id_owner,id_store_package,id_store_order,id_user,event_type,status_from,status_to,location_label,notes,metadata_json,created_at) VALUES (:owner,:package,:order,:user,:type,:from,:to,:location,:notes,:meta,NOW())");$this->db->bind(':owner',(int)($p->id_owner??0));$this->db->bind(':package',(int)($p->id_store_package??$p->id));$this->db->bind(':order',(int)$p->id_store_order);$this->db->bind(':user',$user);$this->db->bind(':type',$type);$this->db->bind(':from',(string)($p->custody_status??''));$this->db->bind(':to',$to);$this->db->bind(':location',$location);$this->db->bind(':notes',$notes?:null);$this->db->bind(':meta',$meta?json_encode($meta,JSON_UNESCAPED_UNICODE):null);$this->db->execute();return(int)$this->db->lastId();}
 }

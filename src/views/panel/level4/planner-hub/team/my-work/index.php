@@ -6,6 +6,8 @@ use App\Repositories\StoreOrderTasksRepository;
 use App\Repositories\StoreOrderWorkflowRepository;
 use App\Repositories\StoreOrdersRepository;
 use App\Repositories\InstitutionProfileRepository;
+use App\Repositories\OphytrackDriverPayoutRepository;
+use App\Repositories\StorePackagesRepository;
 use App\Repositories\UserRepository;
 use App\Services\EmailService;
 use App\Services\LoginService;
@@ -214,6 +216,8 @@ $router->post(function () {
                 && $ordersRepo->updateStatus((int)$task->id_store_order, StoreOrdersRepository::STATUS_DELIVERED);
             if ($ok) {
                 $workflowRepo->markDeliveryProof((int)$task->id_store_order, (int)$user->getId(), $photoUrl, $notes, true, $receiver);
+                $package=(new StorePackagesRepository())->ensurePrimary($ownerId,(int)$task->id_store_order,StoreOrdersRepository::STATUS_DELIVERED);
+                if($package)(new OphytrackDriverPayoutRepository())->recordDelivered((int)$package->id,(int)$user->getId());
                 $notifyDeliveryStatus = 'delivered';
             }
             $eventType = 'DELIVERED';

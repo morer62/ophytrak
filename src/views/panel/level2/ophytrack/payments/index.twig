@@ -8,19 +8,20 @@
     <p class="text-muted">{{ trans('carrier_ui.billing_help')|replace({'{cutoff}':cutoffDay,'{payment}':paymentDay}) }}</p>
   </div>
   {% if not dbReady %}<div class="alert alert-warning">{{ trans('carrier_ui.billing_db_required') }}</div>{% endif %}
-  <div class="row g-3 mb-4">
+  {% if not isDriver %}<div class="row g-3 mb-4">
     {% set cards = [
-      ['platform_due', billingSummary.platform_due, 'border-danger', 'text-danger'],
-      ['carrier_due', billingSummary.carrier_due, '', ''],
-      ['receivable', billingSummary.receivable, '', 'text-success'],
-      ['overdue', billingSummary.overdue, billingSummary.overdue > 0 ? 'border-danger' : '', 'text-danger']
+      {'label':'platform_due','amount':billingSummary.platform_due,'border':'border-danger','color':'text-danger'},
+      {'label':'carrier_due','amount':billingSummary.carrier_due,'border':'','color':''},
+      {'label':'receivable','amount':billingSummary.receivable,'border':'','color':'text-success'},
+      {'label':'overdue','amount':billingSummary.overdue,'border':billingSummary.overdue > 0 ? 'border-danger' : '','color':'text-danger'}
     ] %}
-    {% for label, amount, border, color in cards %}
-      <div class="col-md-3"><div class="card {{ border }} h-100"><div class="card-body">
-        <span>{{ trans('carrier_ui.' ~ label) }}</span><strong class="d-block fs-3 {{ color }}">R$ {{ amount|number_format(2,',','.') }}</strong>
+    {% for card in cards %}
+      <div class="col-md-3"><div class="card {{ card.border }} h-100"><div class="card-body">
+        <span>{{ trans('carrier_ui.' ~ card.label) }}</span><strong class="d-block fs-3 {{ card.color }}">R$ {{ card.amount|number_format(2,',','.') }}</strong>
       </div></div></div>
     {% endfor %}
   </div>
+  {% if billingSummary.platform_due > 0 %}<div class="alert alert-danger d-flex flex-wrap justify-content-between align-items-center gap-2"><div><strong>{{ trans('payment_center.platform_balance') }}</strong><div>{{ trans('payment_center.platform_balance_help') }}</div></div><form method="post">{{ macros.csrf() }}<input type="hidden" name="action" value="pay_platform_stripe"><button class="btn btn-danger" {{ billingSummary.platform_due < 0.50 ? 'disabled' : '' }}>{{ trans('payment_center.pay_stripe') }} · R$ {{ billingSummary.platform_due|number_format(2,',','.') }}</button></form></div>{% endif %}
   <div class="card border-0 shadow-sm"><div class="card-body"><div class="table-responsive">
     <table class="table align-middle"><thead><tr>
       <th>{{ trans('carrier_ui.package') }}</th><th>{{ trans('carrier_ui.charge') }}</th><th>{{ trans('carrier_ui.counterparty') }}</th>
@@ -52,5 +53,12 @@
     {% else %}<tr><td colspan="7" class="text-center text-muted py-5">{{ trans('carrier_ui.no_charges') }}</td></tr>{% endfor %}
     </tbody></table>
   </div></div></div>
+  {% endif %}
+  <div class="card border-0 shadow-sm mt-4"><div class="card-body"><h2 class="h5">{{ trans('payment_center.driver_settlements') }}</h2><p class="text-muted">{{ isDriver ? trans('payment_center.driver_review_help') : trans('payment_center.business_payout_help') }}</p><div class="table-responsive"><table class="table align-middle"><thead><tr><th>{{ trans('carrier_ui.package') }}</th><th>{{ trans('payment_center.driver') }}</th><th>{{ trans('carrier_ui.charge') }}</th><th>{{ trans('carrier_ui.status') }}</th><th>{{ trans('carrier_ui.action') }}</th></tr></thead><tbody>
+  {% for p in driverPayouts %}<tr><td>{{ p.package_code }}</td><td>{{ isDriver ? p.payer_name : (p.driver_name ~ ' ' ~ p.driver_lastname) }}</td><td>R$ {{ p.amount_brl|number_format(2,',','.') }}</td><td><span class="badge {{ p.status == 'ACCEPTED' ? 'bg-success' : (p.status == 'REJECTED' ? 'bg-danger' : 'bg-warning text-dark') }}">{{ p.status|replace({'_':' '}) }}</span></td><td>
+    {% if not isDriver and p.status in ['PENDING','REJECTED'] %}<button class="btn btn-sm btn-outline-dark" data-bs-toggle="collapse" data-bs-target="#driverProof{{ p.id }}">{{ trans('carrier_ui.upload_proof') }}</button><div class="collapse mt-2" id="driverProof{{ p.id }}"><form method="post" enctype="multipart/form-data">{{ macros.csrf() }}<input type="hidden" name="action" value="driver_submit_proof"><input type="hidden" name="payout_id" value="{{ p.id }}"><input class="form-control form-control-sm mb-2" type="file" name="driver_payment_proof" accept="image/jpeg,image/png,image/webp,application/pdf" required><input class="form-control form-control-sm mb-2" name="payment_reference" placeholder="{{ trans('carrier_ui.payment_reference') }}"><button class="btn btn-sm btn-success">{{ trans('carrier_ui.submit_proof') }}</button></form></div>
+    {% elseif isDriver and p.status == 'PROOF_SUBMITTED' %}<a class="btn btn-sm btn-outline-secondary" href="{{ p.payment_proof_url }}" target="_blank" rel="noopener">{{ trans('billing_actions.view_proof') }}</a><form method="post" class="d-inline">{{ macros.csrf() }}<input type="hidden" name="action" value="driver_review"><input type="hidden" name="payout_id" value="{{ p.id }}"><button class="btn btn-sm btn-success" name="decision" value="accept">{{ trans('payment_center.accept') }}</button><button class="btn btn-sm btn-outline-danger" name="decision" value="reject">{{ trans('payment_center.reject') }}</button></form>{% else %}—{% endif %}
+  </td></tr>{% else %}<tr><td colspan="5" class="text-center text-muted py-4">{{ trans('payment_center.no_driver_payouts') }}</td></tr>{% endfor %}
+  </tbody></table></div></div></div>
 </main>
 {% endblock %}
