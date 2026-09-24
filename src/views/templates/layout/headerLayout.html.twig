@@ -219,9 +219,9 @@
             <div class="dropdown-menu dropdown-menu-end ophyra-create-menu" aria-labelledby="ophyraCreateDropdown">
               {% if product_mode == 'ophytrack' %}
                 <div class="dropdown-header">{{ trans('nav.quick_create') }}</div>
-                <a class="dropdown-item" href="{{ path('panel/planner-hub/store/orders/manual') }}">{{ trans('nav.create_store_order') }}</a>
+                {% if not is_carrier_organization %}<a class="dropdown-item" href="{{ path('panel/planner-hub/store/orders/manual') }}">{{ trans('nav.create_store_order') }}</a>
                 <a class="dropdown-item" href="{{ path('panel/planner-hub/management/users/create?return_to=store_manual_order') }}">{{ trans('nav.create_client') }}</a>
-                <a class="dropdown-item" href="{{ path('panel/planner-hub/store/products/create') }}">{{ trans('nav.create_product') }}</a>
+                <a class="dropdown-item" href="{{ path('panel/planner-hub/store/products/create') }}">{{ trans('nav.create_product') }}</a>{% endif %}
                 <a class="dropdown-item" href="{{ path('panel/planner-hub/management/users/create') }}">{{ trans('nav.invite_team_member') }}</a>
               {% elseif headerHasServices %}
                 <div class="dropdown-header">{{ trans('nav.quick_create') }}</div>

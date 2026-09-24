@@ -297,6 +297,16 @@ class Kernel
 
                     $currentProductPath = implode('/', $urlViews);
                     if (\App\Services\ProductProfileService::isOphytrack()
+                        && (int)$user->getLevel() === 2
+                        && in_array($currentProductPath, [
+                            'panel/planner-hub/store/orders/manual',
+                            'panel/planner-hub/store/products/create',
+                        ], true)
+                        && (new \App\Repositories\CarrierPackageRepository())->isCarrier((int)$user->getOwner())) {
+                        \App\Utils\MessageUtil::setMessage('Carrier organizations manage shipments and delivery team members, not direct store sales.');
+                        LocationUtils::redirectInternal('panel/home');
+                    }
+                    if (\App\Services\ProductProfileService::isOphytrack()
                         && (str_starts_with($currentProductPath, 'panel/planner-hub/management/users/contracts')
                             || str_starts_with($currentProductPath, 'panel/planner-hub/team/contracts'))) {
                         \App\Utils\MessageUtil::setMessage('Employment contracts are not required in OPHYTRACK.');

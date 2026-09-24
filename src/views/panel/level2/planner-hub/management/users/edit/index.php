@@ -16,6 +16,7 @@ use App\Utils\MessageUtil;
 use App\Utils\Router;
 use App\Utils\TemplateResponse;
 use App\Services\ProductProfileService;
+use App\Repositories\CarrierPackageRepository;
 
 $router = new Router();
 
@@ -49,6 +50,12 @@ $router->get(function () {
     if (!$user) {
         MessageUtil::setMessage("User not found.");
         LocationUtils::redirectInternal("panel/planner-hub/management/users");
+    }
+    $isCarrierOrganization = ProductProfileService::isOphytrack()
+        && (new CarrierPackageRepository())->isCarrier((int)$currentOwnerId);
+    if ($isCarrierOrganization && (int)$user->level !== 4) {
+        MessageUtil::setMessage('Carrier organizations only manage their delivery team.');
+        LocationUtils::redirectInternal('panel/planner-hub/management/users');
     }
 
     $canAccess = false;
@@ -97,7 +104,8 @@ $router->get(function () {
         "institution_hourly_rate" => $institution_hourly_rate,
         "contract_detail" => $contract_detail,
         "is_primary_company" => $isPrimaryCompany,
-        "crm_categories" => $categories
+        "crm_categories" => $categories,
+        "is_carrier_organization" => $isCarrierOrganization
     ]);
 });
 
@@ -131,6 +139,12 @@ $router->post(function () {
         MessageUtil::setMessage("User not found.");
         LocationUtils::redirectInternal("panel/planner-hub/management/users");
     }
+    $isCarrierOrganization = ProductProfileService::isOphytrack()
+        && (new CarrierPackageRepository())->isCarrier((int)$currentOwnerId);
+    if ($isCarrierOrganization && (int)$user->level !== 4) {
+        MessageUtil::setMessage('Carrier organizations only manage their delivery team.');
+        LocationUtils::redirectInternal('panel/planner-hub/management/users');
+    }
 
     $canEdit = false;
     
@@ -152,6 +166,10 @@ $router->post(function () {
     $formType = $_POST["form_type"] ?? "update";
 
     if ($formType === "convert_to_client") {
+        if ($isCarrierOrganization) {
+            MessageUtil::setMessage('Carrier organizations cannot convert team members into clients.');
+            LocationUtils::redirectInternal('panel/planner-hub/management/users');
+        }
         if (!$isPrimaryCompany) {
             MessageUtil::setMessage("Only the user's primary company can convert this member to a client.");
             LocationUtils::redirectInternal("panel/planner-hub/management/users/edit/?id=" . $id);

@@ -11,6 +11,7 @@ use App\Utils\Router;
 use App\Utils\LocationUtils;
 use App\Utils\MessageUtil;
 use App\Services\ProductProfileService;
+use App\Repositories\CarrierPackageRepository;
 
 $router = new Router();
 
@@ -57,6 +58,14 @@ $router->get(function () {
     $managementContext = (new \App\Services\ManagementOwnerContextService())->resolve($user, $userInstitutionService, $institutionRepo);
     $institutionId = $managementContext['institution_id'];
     $currentOwnerId = $managementContext['owner_id'];
+    $isCarrierOrganization = ProductProfileService::isOphytrack()
+        && (new CarrierPackageRepository())->isCarrier((int)$currentOwnerId);
+    if ($isCarrierOrganization) {
+        $activeTab = 'members';
+        $filters = [];
+        if ($memberName) $filters['name'] = $memberName;
+        if ($memberEmail) $filters['email'] = $memberEmail;
+    }
     
     $teamMembers = [];
     $clients = [];
@@ -103,7 +112,9 @@ $router->get(function () {
             }
         }
         
-        $clients = $clientsUsersRepo->getClientsByOwner($currentOwnerId, $filters);
+        if (!$isCarrierOrganization) {
+            $clients = $clientsUsersRepo->getClientsByOwner($currentOwnerId, $filters);
+        }
         
         $currentInstitution = $userInstitutionService->getCurrentInstitutionContext($user->getId());
     } else {
@@ -114,6 +125,10 @@ $router->get(function () {
 
     if (isset($_GET["export"]) && in_array($_GET["export"], ["members", "clients"], true)) {
         $type = $_GET["export"];
+        if ($isCarrierOrganization && $type === 'clients') {
+            MessageUtil::setMessage('Carrier organizations only manage their delivery team.');
+            LocationUtils::redirectInternal('panel/planner-hub/management/users');
+        }
         $format = $_GET["format"] ?? "csv";
 
         $baseName = "users_export_" . $type . "_" . date("Ymd_His");
@@ -197,7 +212,8 @@ $router->get(function () {
         "filter_client_name" => $clientName,
         "filter_client_email" => $clientEmail,
         "current_institution" => $currentInstitution,
-        "available_institutions" => $availableInstitutions
+        "available_institutions" => $availableInstitutions,
+        "is_carrier_organization" => $isCarrierOrganization
     ]);
 });
 
@@ -224,8 +240,15 @@ $router->post(function () {
     $institutionRepo = new \App\Repositories\InstitutionProfileRepository();
     $managementContext = (new \App\Services\ManagementOwnerContextService())->resolve($user, $userInstitutionService, $institutionRepo);
     $currentOwnerId = (int) ($managementContext['owner_id'] ?? 0);
+    $isCarrierOrganization = ProductProfileService::isOphytrack()
+        && (new CarrierPackageRepository())->isCarrier($currentOwnerId);
     if (!$currentInstitutionId) {
         $currentInstitutionId = $managementContext['institution_id'] ?? null;
+    }
+
+    if ($isCarrierOrganization && (isset($_POST['unlink_client']) || isset($_POST['delete_client']))) {
+        MessageUtil::setMessage('Carrier organizations only manage their delivery team.');
+        LocationUtils::redirectInternal('panel/planner-hub/management/users');
     }
 
     if (isset($_POST["unlink_client"])) {
@@ -298,6 +321,11 @@ $router->post(function () {
             
             $targetUser = $repo->getOne(["id" => $id]);
             
+            if ($targetUser && $isCarrierOrganization && (int)$targetUser->level !== 4) {
+                MessageUtil::setMessage('Carrier organizations only manage their delivery team.');
+                LocationUtils::redirectInternal('panel/planner-hub/management/users');
+            }
+
             if ($targetUser) {
                 $userInstitutionRecord = $userInstitutionsRepo->getUserInstitutionRecord($id, $currentInstitutionId);
 

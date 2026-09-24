@@ -73,7 +73,7 @@
             <p class="text-muted mb-0">{{ trans('store_orders.subtitle') }}</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ path('panel/planner-hub/store/orders/manual') }}" class="btn btn-success">{{ trans('store_orders.create_order') }}</a>
+            {% if not is_carrier_organization %}<a href="{{ path('panel/planner-hub/store/orders/manual') }}" class="btn btn-success">{{ trans('store_orders.create_order') }}</a>{% endif %}
             <a href="{{ path('panel/planner-hub/store/products/create') }}" class="btn btn-outline-success">{{ trans('nav.add_product') }}</a>
             <div class="dropdown">
                 <button class="btn btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown">{{ trans('nav.more_actions') }}</button>
@@ -428,7 +428,7 @@
                     <h5 class="mb-2">{{ trans('store_orders.no_orders_found') }}</h5>
                     <p class="text-muted">{{ trans('nav.no_store_orders_help') }}</p>
                     <div class="d-flex flex-wrap gap-2 justify-content-center">
-                        <a href="{{ path('panel/planner-hub/store/orders/manual') }}" class="btn btn-success">{{ trans('nav.create_first_store_order') }}</a>
+                        {% if not is_carrier_organization %}<a href="{{ path('panel/planner-hub/store/orders/manual') }}" class="btn btn-success">{{ trans('nav.create_first_store_order') }}</a>{% endif %}
                         <a href="{{ path('panel/planner-hub/store/products/create') }}" class="btn btn-outline-success">{{ trans('nav.add_products') }}</a>
                         {% if public_profile_url %}<a href="{{ public_profile_url }}" target="_blank" class="btn btn-outline-dark">{{ trans('nav.storefront_setup') }}</a>{% endif %}
                     </div>

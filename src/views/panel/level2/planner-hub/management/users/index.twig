@@ -4,12 +4,12 @@
 {% block body %}
 <div class="ophyra-page-header">
     <div>
-        <div class="ophyra-page-kicker">Team & Clients</div>
+        <div class="ophyra-page-kicker">{{ is_carrier_organization ? 'OPHYTRACK' : 'Team & Clients' }}</div>
         <h1 class="h3 mb-1">
             <i class="align-middle" data-feather="users"></i>
-            People Operations
+            {{ is_carrier_organization ? trans('carrier_ui.drivers') : 'People Operations' }}
         </h1>
-        <p class="text-muted mb-0">Manage staff, client records, access and communication from one place.</p>
+        <p class="text-muted mb-0">{{ is_carrier_organization ? trans('carrier_ui.dashboard_help') : 'Manage staff, client records, access and communication from one place.' }}</p>
     </div>
 </div>
 
@@ -23,10 +23,10 @@
                 <i class="align-middle" data-feather="plus"></i> {{ trans('planner_hub.add_new_user') }}
             </a>
 
-            <a href="{{ path(product_mode == 'ophytrack' ? 'panel/planner-hub/store/orders/manual' : 'panel/planner-hub/management/orders/orders/create') }}" class="btn btn-dark">
+            {% if not is_carrier_organization %}<a href="{{ path(product_mode == 'ophytrack' ? 'panel/planner-hub/store/orders/manual' : 'panel/planner-hub/management/orders/orders/create') }}" class="btn btn-dark">
                 <i data-feather="plus"></i>
                 {{ product_mode == 'ophytrack' ? trans('nav.create_store_order') : trans('planner_hub.create_new_estimate') }}
-            </a>
+            </a>{% endif %}
         </div>
 
         <ul class="nav nav-tabs mb-4" id="userTabs" role="tablist">
@@ -35,11 +35,11 @@
                     <i data-feather="users"></i> {{ trans('planner_hub.team_members') }}
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
+            {% if not is_carrier_organization %}<li class="nav-item" role="presentation">
                 <button class="nav-link" id="clients-tab" data-bs-toggle="tab" data-bs-target="#clients" type="button" role="tab" aria-controls="clients" aria-selected="false">
                     <i data-feather="briefcase"></i> {{ trans('planner_hub.clients') }}
                 </button>
-            </li>
+            </li>{% endif %}
         </ul>
 
         <div class="tab-content" id="userTabsContent">
@@ -67,7 +67,7 @@
                                 <th>{{ trans('planner_hub.name') }}</th>
                                 <th>{{ trans('planner_hub.email') }}</th>
                                 <th>{{ trans('planner_hub.phone') }}</th>
-                                <th>{{ trans('planner_hub.role') }}</th>
+                                {% if product_mode != 'ophytrack' %}<th>{{ trans('planner_hub.role') }}</th>{% endif %}
                                 <th>{{ trans('planner_hub.hourly_rate') }}</th>
                                 <th>{{ trans('planner_hub.relationship') }}</th>
                                 {% if product_mode != 'ophytrack' %}<th>Contract</th>{% endif %}
@@ -82,13 +82,13 @@
                                     <td>{{ member.name }} {{ member.lastname }}</td>
                                     <td>{{ member.email }}</td>
                                     <td>{{ member.phone }}</td>
-                                    <td>
+                                    {% if product_mode != 'ophytrack' %}<td>
                                         {% if member.role_name %}
                                             <span class="badge bg-info">{{ member.role_name }}</span>
                                         {% else %}
                                             <span class="text-muted">{{ trans('planner_hub.no_role') }}</span>
                                         {% endif %}
-                                    </td>
+                                    </td>{% endif %}
                                     <td>
                                         {% if member.institution_hourly_rate %}
                                             ${{ member.institution_hourly_rate|number_format(2) }}/hr
@@ -157,7 +157,7 @@
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="clients" role="tabpanel" aria-labelledby="clients-tab">
+            {% if not is_carrier_organization %}<div class="tab-pane fade" id="clients" role="tabpanel" aria-labelledby="clients-tab">
                 <form method="get" class="row g-2 mb-4">
                     <input type="hidden" name="active_tab" value="clients">
                     <div class="col-md-4">
@@ -226,7 +226,7 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </div>{% endif %}
         </div>
     </div>
 </div>
@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const activeTab = urlParams.get('active_tab');
     
-    if (activeTab === 'clients') {
+    if (activeTab === 'clients' && document.getElementById('clients-tab')) {
         const clientsTab = document.getElementById('clients-tab');
         const clientsPane = document.getElementById('clients');
         const membersTab = document.getElementById('members-tab');
