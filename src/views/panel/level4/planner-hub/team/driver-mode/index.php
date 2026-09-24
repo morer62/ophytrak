@@ -100,7 +100,8 @@ $router->get(function () {
         'carrierCollectedPackages' => array_values(array_filter($carrierPackages,static fn($p)=>(string)$p->custody_status==='PICKED_UP')),
         'carrierWarehousePackages' => array_values(array_filter($carrierPackages,static fn($p)=>in_array((string)$p->custody_status,['RECEIVED_AT_HUB','SORTED_AT_HUB'],true))),
         'carrierRoutePackages' => array_values(array_filter($carrierPackages,static fn($p)=>(string)$p->custody_status==='OUT_FOR_DELIVERY')),
-        'carrierClosedPackages' => array_values(array_filter($carrierPackages,static fn($p)=>in_array((string)$p->custody_status,['DELIVERED','CUSTOMER_ABSENT','CUSTOMER_REJECTED','DELIVERY_CANCELLED'],true))),
+        'carrierCancelledPackages' => $isCarrierOrganization?$carrierRepo->getCancelledReturnsForCarrier($ownerId,$isCarrierOwner?null:(int)$user->getId()):[],
+        'carrierClosedPackages' => array_values(array_filter($carrierPackages,static fn($p)=>in_array((string)$p->custody_status,['DELIVERED','CUSTOMER_ABSENT','CUSTOMER_REJECTED'],true))),
         'deliveryManifests'=>$manifests,'activeManifest'=>$activeManifest,'manifestItems'=>$manifestItems,'manifestDbReady'=>$manifestRepo->isReady(),
     ]);
 });

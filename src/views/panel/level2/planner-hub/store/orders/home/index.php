@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Services\ModuleGuardService;
 
@@ -213,6 +213,7 @@ $router->get(function () {
         "packageSearch" => $packageSearch,
         "packageSearchAttempted" => $packageSearchAttempted,
         "carrierCustodyRequests" => $carrierRepo->pendingForSeller($ownerId),
+        "cancelledCarrierReturns" => $carrierRepo->getCancelledReturnsForSeller($ownerId),
         "isCarrierOrganization" => $isCarrierOrganization,
         "carrierPackages" => $isCarrierOrganization ? $carrierRepo->getForCarrier($ownerId) : [],
         "carrierOrganizations" => $associatedCarriers,
@@ -237,6 +238,12 @@ $router->post(function () {
     $session = LoginService::getSession();
 
     $action = $_POST['action'] ?? '';
+    if ($action === 'seller_receive_cancelled_qr') {
+        [$ok,$message,$package]=(new CarrierPackageRepository())->sellerReceiveCancelledByQr((int)$session->getOwner(),(int)$session->getId(),trim((string)($_POST['qr_token']??'')));
+        $isAjax=strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH']??''))==='xmlhttprequest';
+        if($isAjax){header('Content-Type: application/json; charset=UTF-8');http_response_code($ok?200:422);echo json_encode(['success'=>$ok,'message'=>$message,'package_id'=>$package->id??null],JSON_UNESCAPED_UNICODE);exit;}
+        MessageUtil::setMessage($message);LocationUtils::reload();
+    }
     if ($action === 'carrier_custody_decision') {
         $requestId=(int)($_POST['request_id']??0);$decision=strtoupper(trim((string)($_POST['decision']??'')));
         [$ok,$message]=(new CarrierPackageRepository())->decideRequest($requestId,(int)$session->getOwner(),(int)$session->getId(),$decision==='APPROVE');

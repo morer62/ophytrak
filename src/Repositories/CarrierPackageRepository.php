@@ -57,7 +57,7 @@ class CarrierPackageRepository extends StoreRepository
         if(!(new CarrierRelationshipRepository())->isAssociated((int)$package->id_owner,$carrierOwner))return[false,'This carrier is not authorized by the seller for this package.',null];
         if(in_array((string)$package->custody_status,['DELIVERED','CLOSED'],true))return[false,'This package is already closed or delivered.',null];
         if((int)($package->current_custodian_owner_id??0)===$carrierOwner){
-            if(in_array((string)$package->custody_status,['CUSTOMER_ABSENT','CUSTOMER_REJECTED','DELIVERY_CANCELLED'],true)){
+            if(in_array((string)$package->custody_status,['CUSTOMER_ABSENT','CUSTOMER_REJECTED'],true)){
                 $this->db->query("UPDATE store_packages SET current_custodian_user_id=:user,custody_status='RECEIVED_AT_HUB',current_status='RECEIVED_AT_HUB',current_location_label='Returned to carrier warehouse for a new attempt',last_event_at=NOW(),updated_at=NOW() WHERE id=:id AND current_custodian_owner_id=:carrier");$this->db->bind(':user',$userId);$this->db->bind(':id',(int)$package->id);$this->db->bind(':carrier',$carrierOwner);$this->db->execute();$this->event($package,$carrierOwner,$userId,'QR_RETURNED_TO_HUB','RECEIVED_AT_HUB','Returned to carrier warehouse for a new delivery attempt','',['latitude'=>$lat,'longitude'=>$lng]);return[true,'Package returned to the warehouse and is ready for a new delivery attempt.',$package];
             }
             if((string)$package->custody_status==='PICKED_UP'){
@@ -66,6 +66,8 @@ class CarrierPackageRepository extends StoreRepository
             if(in_array((string)$package->custody_status,['RECEIVED_AT_HUB','SORTED_AT_HUB'],true)){
                 [$added,$message,$manifest]=(new DeliveryManifestRepository())->addPackage($carrierOwner,$userId,(int)$package->id);if(!$added)return[false,$message,null];$this->assign((int)$package->id,$carrierOwner,$userId,$userId,'DELIVERY');$this->event($package,$carrierOwner,$userId,'QR_MANIFEST_STAGED','SORTED_AT_HUB','Package added to delivery manifest','',['manifest_id'=>(int)($manifest->id??0),'latitude'=>$lat,'longitude'=>$lng]);return[true,$message,$package];
             }
+            if((string)$package->custody_status==='OUT_FOR_DELIVERY')return[true,'Package found in the delivery route. Review its data and choose delivery or cancellation.',$package];
+            if((string)$package->custody_status==='CANCELLED_RETURN_PENDING')return[false,'This cancelled package is awaiting return confirmation from the seller.',null];
             return[false,'This QR has already been processed for the current package stage.',null];
         }
         if((int)($package->current_custodian_owner_id??0)>0 && (int)$package->current_custodian_owner_id!==(int)$package->id_owner && (int)$package->current_custodian_owner_id!==$carrierOwner)return[false,'This package is under another carrier custody.',null];
@@ -148,7 +150,7 @@ class CarrierPackageRepository extends StoreRepository
 
     public function advance(int $packageId,int $carrierOwner,int $userId,string $action,string $notes='',?string $photo=null,array $meta=[]): array
     {
-        $map=['picked_up'=>['PICKED_UP','With carrier pickup team'],'received_hub'=>['RECEIVED_AT_HUB','At carrier warehouse'],'sorted_hub'=>['SORTED_AT_HUB','Sorted by delivery region'],'out_for_delivery'=>['OUT_FOR_DELIVERY','With carrier delivery employee'],'customer_absent'=>['CUSTOMER_ABSENT','Delivery incident: customer absent'],'customer_rejected'=>['CUSTOMER_REJECTED','Delivery incident: customer rejected package'],'delivery_cancelled'=>['DELIVERY_CANCELLED','Delivery incident: cancelled'],'delivered'=>['DELIVERED','Delivered to customer']];if(!isset($map[$action]))return[false,'Invalid carrier action.'];
+        $map=['picked_up'=>['PICKED_UP','With carrier pickup team'],'received_hub'=>['RECEIVED_AT_HUB','At carrier warehouse'],'sorted_hub'=>['SORTED_AT_HUB','Sorted by delivery region'],'out_for_delivery'=>['OUT_FOR_DELIVERY','With carrier delivery employee'],'customer_absent'=>['CUSTOMER_ABSENT','Delivery incident: customer absent'],'customer_rejected'=>['CUSTOMER_REJECTED','Delivery incident: customer rejected package'],'delivery_cancelled'=>['CANCELLED_RETURN_PENDING','Cancelled by carrier; awaiting physical return to seller'],'delivered'=>['DELIVERED','Delivered to customer']];if(!isset($map[$action]))return[false,'Invalid carrier action.'];
         $this->db->query("SELECT * FROM store_packages WHERE id=:id AND current_custodian_owner_id=:carrier AND current_custodian_user_id=:user LIMIT 1");$this->db->bind(':id',$packageId);$this->db->bind(':carrier',$carrierOwner);$this->db->bind(':user',$userId);$p=$this->db->fetchOne();if(!$p)return[false,'Package is not assigned to you under this carrier custody.'];
         $allowed=['PICKUP_ASSIGNED'=>['picked_up'],'WITH_SELLER'=>['picked_up'],'PICKED_UP'=>['received_hub'],'RECEIVED_AT_HUB'=>['sorted_hub'],'SORTED_AT_HUB'=>['out_for_delivery'],'CUSTOMER_ABSENT'=>['received_hub','out_for_delivery'],'CUSTOMER_REJECTED'=>['received_hub'],'DELIVERY_CANCELLED'=>['received_hub'],'OUT_FOR_DELIVERY'=>['delivered','customer_absent','customer_rejected','delivery_cancelled']];
         if(!in_array($action,$allowed[(string)$p->custody_status]??[],true))return[false,'This step is not allowed from the current package stage.'];
@@ -164,6 +166,30 @@ class CarrierPackageRepository extends StoreRepository
         if($action==='delivered'){(new StoreOrdersRepository())->updateStatus((int)$p->id_store_order,StoreOrdersRepository::STATUS_DELIVERED);(new OphytrackDriverPayoutRepository())->recordDelivered($packageId,$userId,$carrierOwner);}
         if(in_array($action,['delivered','customer_absent','customer_rejected','delivery_cancelled'],true))(new DeliveryManifestRepository())->recordOutcome($packageId,$action,(string)($meta['failure_code']??$action));
         return[true,'Package workflow updated.'];
+    }
+
+    public function getCancelledReturnsForSeller(int $sellerOwner):array
+    {
+        $this->db->query("SELECT p.*,o.public_token,o.guest_name,o.guest_email,o.guest_phone,o.shipping_address_1,o.shipping_city,o.shipping_state,o.shipping_zip,ip.company_name AS carrier_name FROM store_packages p JOIN store_orders o ON o.id=p.id_store_order AND o.id_owner=p.id_owner LEFT JOIN institution_profile ip ON ip.id_owner=p.current_custodian_owner_id WHERE p.id_owner=:seller AND p.custody_status IN ('CANCELLED_RETURN_PENDING','CANCELLED_RETURNED_TO_SELLER') ORDER BY p.last_event_at DESC");$this->db->bind(':seller',$sellerOwner);return$this->db->fetchAll();
+    }
+
+    public function getCancelledReturnsForCarrier(int $carrierOwner,?int $userId=null):array
+    {
+        $userSql=$userId?' AND a.assigned_user_id=:user':'';
+        $this->db->query("SELECT DISTINCT p.*,o.guest_name,o.guest_email,o.guest_phone,o.shipping_address_1,o.shipping_city,o.shipping_state,o.shipping_zip,ip.company_name AS seller_name FROM store_packages p JOIN store_orders o ON o.id=p.id_store_order AND o.id_owner=p.id_owner JOIN store_package_carrier_assignments a ON a.id_store_package=p.id AND a.carrier_owner_id=:carrier LEFT JOIN institution_profile ip ON ip.id_owner=p.id_owner WHERE p.custody_status IN ('CANCELLED_RETURN_PENDING','CANCELLED_RETURNED_TO_SELLER','DELIVERY_CANCELLED') {$userSql} ORDER BY p.last_event_at DESC");$this->db->bind(':carrier',$carrierOwner);if($userId)$this->db->bind(':user',$userId);return$this->db->fetchAll();
+    }
+
+    public function sellerReceiveCancelledByQr(int $sellerOwner,int $userId,string $token):array
+    {
+        $package=$this->findBySecureToken($token);if(!$package||(int)$package->id_owner!==$sellerOwner)return[false,'This QR does not belong to the current seller workspace.',null];
+        if((string)$package->custody_status==='CANCELLED_RETURNED_TO_SELLER')return[false,'This cancelled package was already received and closed.',null];
+        if((string)$package->custody_status!=='CANCELLED_RETURN_PENDING')return[false,'This package is not awaiting a cancelled return.',null];
+        $carrierOwner=(int)($package->current_custodian_owner_id??0);
+        $this->db->query("UPDATE store_packages SET current_custodian_owner_id=:seller,current_custodian_user_id=:user,custody_status='CANCELLED_RETURNED_TO_SELLER',current_status='CANCELLED',current_location_label='Cancelled package physically received by seller',last_event_at=NOW(),updated_at=NOW() WHERE id=:id AND id_owner=:seller_scope AND custody_status='CANCELLED_RETURN_PENDING'");$this->db->bind(':seller',$sellerOwner);$this->db->bind(':user',$userId);$this->db->bind(':id',(int)$package->id);$this->db->bind(':seller_scope',$sellerOwner);$this->db->execute();if($this->db->rowCount()<1)return[false,'The package changed status before confirmation.',null];
+        $this->db->query("UPDATE store_package_carrier_assignments SET status='COMPLETED',completed_at=NOW(),updated_at=NOW() WHERE id_store_package=:package AND status NOT IN ('COMPLETED','CANCELLED')");$this->db->bind(':package',(int)$package->id);$this->db->execute();
+        $this->event($package,$carrierOwner,$userId,'SELLER_CANCELLED_RETURN_RECEIVED','CANCELLED_RETURNED_TO_SELLER','Cancelled package physically received by seller','Seller confirmed the physical return by secure QR.',['carrier_owner_id'=>$carrierOwner]);
+        (new StoreOrdersRepository())->updateStatus((int)$package->id_store_order,StoreOrdersRepository::STATUS_CANCELLED);
+        return[true,'Cancelled package received and removed from circulation.',$package];
     }
 
     public function recordLiveLocation(int $packageId,int $carrierOwner,int $userId,float $lat,float $lng,?float $accuracy=null):bool
