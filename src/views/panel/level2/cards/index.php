@@ -90,38 +90,51 @@ $router->post(function () {
             LocationUtils::redirectInternal("panel/cards");
         }
 
-        // Agregar tarjeta
-        $token = $_POST["token"] ?? "";
-        $cardInfo = json_decode($_POST["card_info"] ?? '{}', true);
+        $stripe = new StripeService();
+        $action = trim((string)($_POST['action'] ?? ''));
 
-        if (!$token || empty($cardInfo)) {
-            TranslationService::detectLocale();
+        if ($action === 'create_setup_intent') {
+            $setup = $stripe->createCardSetupIntent((string)$user->getEmail(), [
+                'user_id' => (string)$cardOwnerId,
+                'product' => 'ophytrack',
+                'purpose' => $activationFlow ? 'membership_activation' : 'saved_dashboard_card',
+            ]);
+            if (!$setup || empty($setup['client_secret'])) {
+                return JsonResponse::createResponse([
+                    'success' => false,
+                    'message' => TranslationService::trans('planner_hub.card_validation_failed'),
+                ], 502);
+            }
+
             return JsonResponse::createResponse([
-                "success" => false,
-                "message" => TranslationService::trans('planner_hub.token_card_required')
+                'success' => true,
+                'client_secret' => $setup['client_secret'],
             ]);
         }
 
-        $stripe = new StripeService();
-        $customer = $stripe->createCustomerWithCard($token, $user->getEmail());
-
-        if (!$customer) {
-            TranslationService::detectLocale();
+        if ($action !== 'save_setup_intent') {
             return JsonResponse::createResponse([
-                "success" => false,
-                "message" => TranslationService::trans('planner_hub.card_validation_failed')
-            ], 420);
+                'success' => false,
+                'message' => TranslationService::trans('planner_hub.token_card_required'),
+            ], 400);
         }
 
-        // If there is no main card, this one becomes the main card.
+        $verifiedSetup = $stripe->verifiedCardFromSetupIntent(trim((string)($_POST['setup_intent_id'] ?? '')));
+        if (!$verifiedSetup || !hash_equals((string)$cardOwnerId, (string)($verifiedSetup['user_id'] ?? ''))) {
+            return JsonResponse::createResponse([
+                'success' => false,
+                'message' => TranslationService::trans('billing.payment_method_verify_failed'),
+            ], 422);
+        }
+
         $main = $activationFlow || $repo->countCards($cardOwnerId) === 0 ? "yes" : "no";
 
         $saved = $repo->add([
             "id_user" => $cardOwnerId,
-            "brand" => $cardInfo["brand"],
-            "last4" => $cardInfo["last4"],
-            "exp" => $cardInfo["exp"],
-            "token" => $customer,
+            "brand" => $verifiedSetup["brand"],
+            "last4" => $verifiedSetup["last4"],
+            "exp" => $verifiedSetup["exp"],
+            "token" => $verifiedSetup["reference"],
             "main_card" => $main
         ]);
 
@@ -155,10 +168,12 @@ $router->post(function () {
                 ? LocationUtils::pathFor('panel/planner-hub/no-access?module=store_delivery_tracking&activation_ready=1&locale=' . urlencode(TranslationService::getCurrentLocale()))
                 : null,
         ]);
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
+        error_log('Level2 cards payment-method setup failed: ' . $e->getMessage());
+        TranslationService::detectLocale();
         return JsonResponse::createResponse([
             "success" => false,
-            "message" => $e->getMessage()
+            "message" => TranslationService::trans('wallet.save_card_error')
         ], 500);
     }
 });

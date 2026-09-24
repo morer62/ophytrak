@@ -152,23 +152,31 @@
         loadingText.style.display = "block";
         errorBox.textContent = "";
 
-        const { token, error } = await stripe.createToken(card);
-        if (error) {
-            errorBox.textContent = error.message;
+        try {
+        const setupRequest = new FormData();
+        setupRequest.append('action', 'create_setup_intent');
+        const setupResponse = await fetch(location.href, { method: 'POST', body: setupRequest });
+        const setupResult = await setupResponse.json();
+        if (!setupResponse.ok || !setupResult.success || !setupResult.client_secret) {
+            errorBox.textContent = setupResult.message || '{{ trans('wallet.save_card_error')|e('js') }}';
             submitBtn.disabled = false;
             loadingText.style.display = "none";
             return;
         }
 
-        const cardInfo = {
-            brand: token.card.brand,
-            last4: token.card.last4,
-            exp: token.card.exp_month + "/" + token.card.exp_year
-        };
+        const { setupIntent, error } = await stripe.confirmCardSetup(setupResult.client_secret, {
+            payment_method: { card }
+        });
+        if (error || !setupIntent || setupIntent.status !== 'succeeded') {
+            errorBox.textContent = error ? error.message : '{{ trans('billing.payment_method_verify_failed')|e('js') }}';
+            submitBtn.disabled = false;
+            loadingText.style.display = "none";
+            return;
+        }
 
         const formData = new FormData();
-        formData.append("token", token.id);
-        formData.append("card_info", JSON.stringify(cardInfo));
+        formData.append('action', 'save_setup_intent');
+        formData.append('setup_intent_id', setupIntent.id);
 
         const res = await fetch(location.href, {
             method: "POST",
@@ -184,6 +192,11 @@
         errorBox.textContent = result.message || '{{ trans('wallet.save_card_error')|e('js') }}';
         submitBtn.disabled = false;
         loadingText.style.display = "none";
+        } catch (requestError) {
+            errorBox.textContent = '{{ trans('wallet.save_card_error')|e('js') }}';
+            submitBtn.disabled = false;
+            loadingText.style.display = "none";
+        }
     });
 </script>
 {% endblock %}

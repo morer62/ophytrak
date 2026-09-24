@@ -8,6 +8,7 @@ use Stripe\StripeClient;
 
 class StripeService
 {
+    private const SAVED_METHOD_SEPARATOR = '|';
     private string $stripeBaseUrl;
     private string $apiKey;
     private const ZERO_DECIMAL_CURRENCIES = [
@@ -50,6 +51,74 @@ class StripeService
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    public function createCardSetupIntent(string $email, array $metadata = []): ?array
+    {
+        try {
+            $client = new StripeClient($this->apiKey);
+            $customer = $client->customers->create([
+                'email' => $email,
+                'metadata' => $metadata,
+            ]);
+            $intent = $client->setupIntents->create([
+                'customer' => $customer->id,
+                'payment_method_types' => ['card'],
+                'usage' => 'off_session',
+                'metadata' => $metadata,
+            ]);
+
+            return [
+                'id' => (string)$intent->id,
+                'client_secret' => (string)$intent->client_secret,
+            ];
+        } catch (\Throwable $e) {
+            error_log('StripeService::createCardSetupIntent(): ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function verifiedCardFromSetupIntent(string $setupIntentId): ?array
+    {
+        if (!str_starts_with($setupIntentId, 'seti_')) return null;
+
+        try {
+            $client = new StripeClient($this->apiKey);
+            $intent = $client->setupIntents->retrieve($setupIntentId, []);
+            if ((string)$intent->status !== 'succeeded' || empty($intent->customer) || empty($intent->payment_method)) {
+                return null;
+            }
+
+            $paymentMethodId = is_string($intent->payment_method)
+                ? $intent->payment_method
+                : (string)$intent->payment_method->id;
+            $customerId = is_string($intent->customer) ? $intent->customer : (string)$intent->customer->id;
+            $paymentMethod = $client->paymentMethods->retrieve($paymentMethodId, []);
+            if ((string)$paymentMethod->customer !== $customerId || (string)$paymentMethod->type !== 'card' || !$paymentMethod->card) {
+                return null;
+            }
+
+            return [
+                'reference' => $paymentMethodId . self::SAVED_METHOD_SEPARATOR . $customerId,
+                'user_id' => (string)($intent->metadata->user_id ?? ''),
+                'brand' => (string)$paymentMethod->card->brand,
+                'last4' => (string)$paymentMethod->card->last4,
+                'exp' => (int)$paymentMethod->card->exp_month . '/' . (int)$paymentMethod->card->exp_year,
+            ];
+        } catch (\Throwable $e) {
+            error_log('StripeService::verifiedCardFromSetupIntent(): ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    private function parseSavedPaymentMethodReference(string $reference): ?array
+    {
+        $parts = explode(self::SAVED_METHOD_SEPARATOR, $reference, 2);
+        if (count($parts) !== 2 || !str_starts_with($parts[0], 'pm_') || !str_starts_with($parts[1], 'cus_')) {
+            return null;
+        }
+
+        return ['payment_method' => $parts[0], 'customer' => $parts[1]];
     }
 
     public function createCustomerWithCardOnConnectedAccount($cardToken, $email, $name, $accountId)
@@ -182,6 +251,22 @@ class StripeService
     public function createChargeV1(string $token, float $amount, string $currency = "usd", array $metadata = []): bool|string
     {
         $client = new StripeClient($this->apiKey);
+
+        $savedMethod = $this->parseSavedPaymentMethodReference($token);
+        if ($savedMethod) {
+            $intent = $client->paymentIntents->create([
+                'amount' => $this->toMinorUnits($amount, $currency),
+                'currency' => strtolower($currency),
+                'customer' => $savedMethod['customer'],
+                'payment_method' => $savedMethod['payment_method'],
+                'payment_method_types' => ['card'],
+                'confirm' => true,
+                'off_session' => false,
+                'metadata' => $metadata,
+            ]);
+
+            return (string)$intent->status === 'succeeded' ? (string)$intent->id : false;
+        }
 
         $charge = $client->charges->create([
             "amount" => $this->toMinorUnits($amount, $currency),

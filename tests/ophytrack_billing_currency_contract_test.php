@@ -32,6 +32,12 @@ $assertSame(169.0, $pricing->getModulePrice('store_logistics', 'BRL'), 'The laun
 $assertSame(75.0, $pricing->getModulePrice('inventory_storage', 'BRL'), 'The inventory BRL launch price must remain available.');
 $assertSame(59.0, $pricing->getModulePrice('marketplace_connectors', 'BRL'), 'The connectors BRL launch price must remain available.');
 
+$cardsTemplate = (string)file_get_contents($root . '/src/views/panel/level2/cards/index.twig');
+$stripeService = (string)file_get_contents($root . '/src/Services/StripeService.php');
+$assertSame(false, str_contains($cardsTemplate, 'stripe.createToken('), 'Level 2 card setup must not use legacy Stripe card tokens.');
+$assertSame(true, str_contains($cardsTemplate, 'stripe.confirmCardSetup('), 'Level 2 card setup must confirm a SetupIntent.');
+$assertSame(true, str_contains($stripeService, 'paymentIntents->create('), 'Saved membership cards must be charged with PaymentIntents.');
+
 $loader = new Twig\Loader\FilesystemLoader($root . '/src/views');
 $twig = new Twig\Environment($loader);
 foreach (['path', 'trans', 'asset', 'asset_for', 'url', 'csrf_token'] as $functionName) {

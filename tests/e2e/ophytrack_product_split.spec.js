@@ -151,5 +151,8 @@ test('locked logistics guides a new seller through activation', async ({ page })
   await activateLink.click();
   await expect(page).toHaveURL(/membership\/modules\/review/);
   await expect(page.locator('a[href*="activation_flow=store_delivery_tracking"]')).toHaveCount(0);
-  await expect(page.locator('form').filter({ has: page.locator('input[name="action"][value="confirm_pay"]') }).locator('button[type="submit"]')).toBeVisible();
+  const confirmPayment = page.locator('form').filter({ has: page.locator('input[name="action"][value="confirm_pay"]') }).locator('button[type="submit"]');
+  await expect(confirmPayment).toBeVisible();
+  await confirmPayment.click();
+  await expect(page).toHaveURL(/membership\/modules\/success/, { timeout: 30000 });
 });
