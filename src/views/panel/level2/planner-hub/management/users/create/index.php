@@ -23,6 +23,8 @@ use App\Repositories\UserInstitutionsRepository;
 use App\Repositories\TeamMemberContractTemplatesRepository;
 use App\Repositories\TeamMemberContractsRepository;
 use App\Repositories\PasswordResetRepository;
+use App\Repositories\CarrierPackageRepository;
+use App\Services\ProductProfileService;
 
 function sendSecureAccountInvitation(string $email, string $name, string $userType): bool
 {
@@ -109,6 +111,14 @@ $router->get(function () {
     $newClientForEstimate = $_SESSION["new_client_for_estimate"] ?? null;
     unset($_SESSION["new_client_for_estimate"]);
     $returnTo = ($_GET['return_to'] ?? '') === 'store_manual_order' ? 'store_manual_order' : '';
+    $sessionUser = LoginService::getSession();
+    $managementContext = (new \App\Services\ManagementOwnerContextService())->resolve(
+        $sessionUser,
+        new UserInstitutionService(),
+        new InstitutionProfileRepository()
+    );
+    $isCarrierOrganization = ProductProfileService::isOphytrack()
+        && (new CarrierPackageRepository())->isCarrier((int)($managementContext['owner_id'] ?? $sessionUser->getIdOwner()));
 
     $categories = $categoryRepo->getAllBy([
         ...LoginService::getUserIdAsArray(),
@@ -122,6 +132,7 @@ $router->get(function () {
         "candidate" => $candidate,
         "newClientForEstimate" => $newClientForEstimate,
         "returnTo" => $returnTo,
+        "isCarrierOrganization" => $isCarrierOrganization,
         "team_contract_templates" => (function () {
             try {
                 $sessionUser = LoginService::getSession();
@@ -158,6 +169,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email']) && isset($_P
         $institutionRepo = new InstitutionProfileRepository();
         $email = trim($_POST["email"] ?? "");
         $userType = $_POST["user_type"] ?? "";
+
+        $validationUser = LoginService::getSession();
+        $validationContext = (new \App\Services\ManagementOwnerContextService())->resolve($validationUser, $userInstitutionService, $institutionRepo);
+        $isCarrierOrganization = ProductProfileService::isOphytrack()
+            && (new CarrierPackageRepository())->isCarrier((int)($validationContext['owner_id'] ?? $validationUser->getIdOwner()));
+        if ($isCarrierOrganization && $userType !== '4') {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Carrier organizations can only add team members.']);
+            exit;
+        }
         
         if (empty($email) || empty($userType)) {
             header('Content-Type: application/json');
@@ -340,6 +361,18 @@ $router->post(function () {
     $currentInstitutionId = $managementContext['institution_id'];
     $currentInstitution = $managementContext['institution'];
 
+    $isCarrierOrganization = ProductProfileService::isOphytrack()
+        && (new CarrierPackageRepository())->isCarrier((int)$currentOwnerId);
+    if ($isCarrierOrganization && (string)($_POST['level'] ?? '') !== '4') {
+        MessageUtil::setMessage('Carrier organizations can only add team members.');
+        LocationUtils::redirectInternal('panel/planner-hub/management/users/create');
+    }
+
+    if (ProductProfileService::isOphytrack()) {
+        $_POST['role_id'] = '';
+        $_POST['link_role_id'] = '';
+    }
+
     if (!$currentInstitution) {
         MessageUtil::setMessage("Error: You must create an institution profile before creating users. Please complete your institution profile first.");
         LocationUtils::redirectInternal("panel/planner-hub/institution-profile");
@@ -385,7 +418,7 @@ $router->post(function () {
         $linkContractDetail = isset($_POST["link_contract_detail"]) && !empty($_POST["link_contract_detail"]) ? $_POST["link_contract_detail"] : null;
         $linkContractTemplateId = isset($_POST["link_contract_template_id"]) && $_POST["link_contract_template_id"] !== '' ? (int)$_POST["link_contract_template_id"] : 0;
         
-        if (!$linkRoleId) {
+        if (!$linkRoleId && !ProductProfileService::isOphytrack()) {
             MessageUtil::setMessage("Error: Role is required when linking a team member.");
             LocationUtils::redirectInternal("panel/planner-hub/management/users");
         }
