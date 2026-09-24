@@ -1,7 +1,12 @@
 ﻿<nav id="sidebar" class="sidebar js-sidebar">
   <div class="sidebar-content js-simplebar">
-    <a class="sidebar-brand" href="{{ path('panel/home') }}">
-      {% if product_mode == 'ophytrack' %}<img src="{{ asset_for(brand.logo) }}" alt="OPHYTRACK" style="width:190px;max-width:100%;height:auto"><small style="display:block;margin-top:8px;color:#9fb4c9">{{ trans('sidebar.welcome') }} {{ user.name }}</small>{% else %}<span class="align-middle">{{ trans('sidebar.welcome') }} {{user.name}}</span>{% endif %}
+    <a class="sidebar-brand{{ product_mode == 'ophytrack' ? ' sidebar-brand--ophytrack' : '' }}" href="{{ path('panel/home') }}">
+      {% if product_mode == 'ophytrack' %}
+        <img class="sidebar-brand__ophytrack-logo" src="{{ asset_for(brand.logo) }}" alt="OPHYTRACK">
+        <small class="sidebar-brand__welcome">{{ trans('sidebar.welcome') }} {{ user.name }}</small>
+      {% else %}
+        <span class="align-middle">{{ trans('sidebar.welcome') }} {{user.name}}</span>
+      {% endif %}
     </a>
 
     {% if user.level in [1, 2] %}
