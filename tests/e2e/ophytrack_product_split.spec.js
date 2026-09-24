@@ -163,6 +163,14 @@ test('locked logistics guides a new seller through activation', async ({ page })
   }
 
   const clientEmail = `qa.client.modal.${runId}@example.test`;
+  await page.goto(`${baseURL}/panel/home?locale=es`, { waitUntil: 'domcontentloaded' });
+  await page.locator('#ophyraCreateDropdown').click();
+  const quickCreateMenu = page.locator('.ophyra-create-menu');
+  await expect(quickCreateMenu).toContainText('Pedido de tienda');
+  await expect(quickCreateMenu).not.toContainText(/presupuesto|servicio/i);
+  await expect(quickCreateMenu.locator('a[href*="/store/orders/manual"]')).toBeVisible();
+  await expect(quickCreateMenu.locator('a[href*="/management/orders/orders/create"]')).toHaveCount(0);
+
   await page.goto(`${baseURL}/panel/planner-hub/management/users/create?locale=es`, { waitUntil: 'domcontentloaded' });
   await page.locator('#startFlowCard button').click();
   await page.locator('.user-type-card[data-type="5"]').click();

@@ -23,9 +23,9 @@
                 <i class="align-middle" data-feather="plus"></i> {{ trans('planner_hub.add_new_user') }}
             </a>
 
-            <a href="{{ path('panel/planner-hub/management/orders/orders/create') }}" class="btn btn-dark">
+            <a href="{{ path(product_mode == 'ophytrack' ? 'panel/planner-hub/store/orders/manual' : 'panel/planner-hub/management/orders/orders/create') }}" class="btn btn-dark">
                 <i data-feather="plus"></i>
-                {{ trans('planner_hub.create_new_estimate') }}
+                {{ product_mode == 'ophytrack' ? trans('nav.create_store_order') : trans('planner_hub.create_new_estimate') }}
             </a>
         </div>
 
