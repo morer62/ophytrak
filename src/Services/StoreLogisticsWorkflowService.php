@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Repositories\StoreOrderTasksRepository;
 use App\Repositories\StoreOrderWorkflowRepository;
 use App\Repositories\StoreOrdersRepository;
+use App\Repositories\CarrierPackageRepository;
 
 class StoreLogisticsWorkflowService
 {
@@ -107,7 +108,8 @@ class StoreLogisticsWorkflowService
         }
 
         $workflow = $this->workflowRepo->getByOrder($orderId);
-        $hasDeliveryAssignee = $workflow && (int)($workflow->delivery_user_id ?? 0) > 0;
+        $hasDeliveryAssignee = ($workflow && (int)($workflow->delivery_user_id ?? 0) > 0)
+            || (new CarrierPackageRepository())->hasExternalCarrierForOrder($ownerId, $orderId);
         $nextStatus = $hasDeliveryAssignee
             ? StoreOrdersRepository::STATUS_READY_FOR_DELIVERY
             : StoreOrdersRepository::STATUS_READY;

@@ -343,14 +343,14 @@
                                         {% if o.assignment_required %}
                                             <div class="alert alert-warning py-2 px-2 mb-2 assignment-alert">
                                                 <strong>{{ trans('store_orders.assignment_needed') }}</strong>
-                                                <button type="button" class="btn btn-sm btn-warning d-block mt-2" data-bs-toggle="modal" data-bs-target="#assignDeliveryModal" data-order-id="{{ o.id }}" data-delivery-user-id="{{ o.delivery_user_id }}" data-kitchen-user-id="{{ o.kitchen_user_id }}" data-allow-close="{{ o.allow_team_close_delivery }}" data-allow-chat="{{ o.allow_chat_with_client }}">{{ trans('store_orders.assign_now') }}</button>
+                                                <button type="button" class="btn btn-sm btn-warning d-block mt-2" data-bs-toggle="modal" data-bs-target="#assignDeliveryModal" data-order-id="{{ o.id }}" data-delivery-user-id="{{ o.delivery_user_id }}" data-carrier-owner-id="{{ o.external_carrier_owner_id }}" data-kitchen-user-id="{{ o.kitchen_user_id }}" data-allow-close="{{ o.allow_team_close_delivery }}" data-allow-chat="{{ o.allow_chat_with_client }}">{{ trans('store_orders.assign_now') }}</button>
                                             </div>
                                         {% endif %}
                                         <div><strong>{{ trans('store_orders.preparation_user') }}:</strong> <span class="badge {{ o.kitchen_user_id ? 'bg-success' : 'bg-secondary' }}">{{ o.preparation_assignee_name ?: trans('store_orders.unassigned') }}</span></div>
                                         {% if o.kitchen_user_id %}
                                             <a href="{{ path('panel/chat?to=' ~ o.kitchen_user_id) }}" class="btn btn-sm btn-outline-success mt-1">{{ trans('store_orders.message_preparation') }}</a>
                                         {% endif %}
-                                        <div class="mt-2"><strong>{{ trans('store_orders.delivery_user') }}:</strong> <span class="badge {{ o.delivery_user_id ? 'bg-success' : 'bg-secondary' }}">{{ o.delivery_assignee_name ?: trans('store_orders.unassigned') }}</span></div>
+                                        <div class="mt-2"><strong>{{ trans('store_orders.delivery_user') }}:</strong> <span class="badge {{ (o.delivery_user_id or o.external_carrier_owner_id) ? 'bg-success' : 'bg-secondary' }}">{{ o.delivery_assignee_name ?: (o.external_carrier_name ?: trans('store_orders.unassigned')) }}</span></div>
                                         {% if o.delivery_user_id %}
                                             <a href="{{ path('panel/chat?to=' ~ o.delivery_user_id) }}" class="btn btn-sm btn-outline-success mt-1">{{ trans('store_orders.message_driver') }}</a>
                                         {% endif %}
@@ -360,6 +360,7 @@
                                                 data-bs-target="#assignDeliveryModal"
                                                 data-order-id="{{ o.id }}"
                                                 data-delivery-user-id="{{ o.delivery_user_id }}"
+                                                data-carrier-owner-id="{{ o.external_carrier_owner_id }}"
                                                 data-kitchen-user-id="{{ o.kitchen_user_id }}"
                                                 data-allow-close="{{ o.allow_team_close_delivery }}"
                                                 data-allow-chat="{{ o.allow_chat_with_client }}">
@@ -597,24 +598,35 @@
                             <pre class="small bg-dark text-light p-2 mt-2 rounded" style="max-height:260px;overflow:auto;white-space:pre-wrap" id="assignOperationsDebugText"></pre>
                         </details>
                         <div class="mb-3">
-                            <label class="form-label">{{ trans('store_orders.preparation_user') }}</label>
+                            <label class="form-label fw-semibold">{{ trans('store_orders.preparation_user') }}</label>
                             <select class="form-select" name="kitchen_user_id" id="assignKitchenUserSelect">
                                 <option value="">{{ trans('store_orders.unassigned') }}</option>
-                                <option value="{{ managerUserId }}">{{ trans('store_orders.assign_to_me') }} — {{ managerUserName }}</option>
+                                <option value="{{ managerUserId }}">{{ trans('store_orders.preparation_to_me') }} — {{ managerUserName }}</option>
                                 {% for u in teamUsers %}
                                     <option value="{{ u.id_user }}">{{ (u.name ~ ' ' ~ u.lastname)|trim }}{% if u.email %} ({{ u.email }}){% endif %}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3 border rounded-3 p-3">
+                            <label class="form-label fw-semibold">{{ trans('store_orders.who_will_ship') }}</label>
+                            <div class="form-check"><input class="form-check-input" type="radio" name="delivery_assignment_type" id="deliveryTypeTeam" value="own_team" checked><label class="form-check-label" for="deliveryTypeTeam">{{ trans('store_orders.own_delivery_team') }}</label></div>
+                            <div class="form-check mb-3"><input class="form-check-input" type="radio" name="delivery_assignment_type" id="deliveryTypeCarrier" value="carrier"><label class="form-check-label" for="deliveryTypeCarrier">{{ trans('store_orders.shipping_company') }}</label></div>
+                            <div id="ownTeamDeliveryFields">
                             <label class="form-label">{{ trans('store_orders.delivery_user') }}</label>
                             <select class="form-select" name="delivery_user_id" id="assignDeliveryUserSelect">
                                 <option value="">{{ trans('store_orders.unassigned') }}</option>
-                                <option value="{{ managerUserId }}">{{ trans('store_orders.assign_to_me') }} — {{ managerUserName }}</option>
-                                {% for u in teamUsers %}
+                                <option value="{{ managerUserId }}">{{ trans('store_orders.delivery_to_me') }} — {{ managerUserName }}</option>
+                                {% for u in deliveryUsers %}
                                     <option value="{{ u.id_user }}">{{ (u.name ~ ' ' ~ u.lastname)|trim }}{% if u.email %} ({{ u.email }}){% endif %}</option>
                                 {% endfor %}
                             </select>
+                            </div>
+                            <div id="carrierDeliveryFields" class="d-none">
+                                <label class="form-label">{{ trans('store_orders.choose_shipping_company') }}</label>
+                                <select class="form-select" name="carrier_owner_id" id="assignCarrierOwnerSelect"><option value="">{{ trans('store_orders.select_shipping_company') }}</option>{% for carrier in carrierOrganizations %}<option value="{{ carrier.carrier_owner_id }}">{{ carrier.company_name }}{% if carrier.city %} — {{ carrier.city }}{% endif %}</option>{% endfor %}</select>
+                                {% if carrierOrganizations is empty %}<div class="alert alert-info mt-2 mb-0">{{ trans('store_orders.no_shipping_companies') }}</div>{% endif %}
+                                <a class="btn btn-sm btn-outline-primary mt-2" href="{{ path('panel/planner-hub/store/carriers') }}">{{ trans('store_orders.manage_shipping_companies') }}</a>
+                            </div>
                         </div>
                         {% if teamUsers is empty %}
                             <div class="alert alert-info">
@@ -867,19 +879,33 @@
                     const orderId = button.getAttribute('data-order-id') || '';
                     const deliveryId = button.getAttribute('data-delivery-user-id') || '';
                     const kitchenId = button.getAttribute('data-kitchen-user-id') || '';
+                    const carrierId = button.getAttribute('data-carrier-owner-id') || '';
                     const idInput = document.getElementById('assignDeliveryOrderId');
                     const select = document.getElementById('assignDeliveryUserSelect');
                     const kitchenSelect = document.getElementById('assignKitchenUserSelect');
                     if (idInput) idInput.value = orderId;
                     if (select) select.value = deliveryId;
                     if (kitchenSelect) kitchenSelect.value = kitchenId;
+                    const modeRadio = document.querySelector('[name="delivery_assignment_type"][value="' + (carrierId ? 'carrier' : 'own_team') + '"]');
+                    if (modeRadio) modeRadio.checked = true;
+                    const carrierSelect = document.getElementById('assignCarrierOwnerSelect');
+                    if (carrierSelect) carrierSelect.value = carrierId;
+                    toggleDeliveryAssignmentFields();
                     document.getElementById('assignAllowClose').checked = button.getAttribute('data-allow-close') === '1';
                     document.getElementById('assignAllowChat').checked = button.getAttribute('data-allow-chat') === '1';
                 });
                 document.getElementById('assignBothToMe')?.addEventListener('click', function () {
+                    document.getElementById('deliveryTypeTeam').checked = true;
+                    toggleDeliveryAssignmentFields();
                     document.getElementById('assignKitchenUserSelect').value = '{{ managerUserId }}';
                     document.getElementById('assignDeliveryUserSelect').value = '{{ managerUserId }}';
                 });
+                function toggleDeliveryAssignmentFields() {
+                    const carrierMode = document.getElementById('deliveryTypeCarrier')?.checked;
+                    document.getElementById('ownTeamDeliveryFields')?.classList.toggle('d-none', !!carrierMode);
+                    document.getElementById('carrierDeliveryFields')?.classList.toggle('d-none', !carrierMode);
+                }
+                document.querySelectorAll('[name="delivery_assignment_type"]').forEach(function (radio) { radio.addEventListener('change', toggleDeliveryAssignmentFields); });
                 const assignmentForm = document.getElementById('assignOperationsForm');
                 if (assignmentForm) assignmentForm.addEventListener('submit', async function (event) {
                     event.preventDefault();

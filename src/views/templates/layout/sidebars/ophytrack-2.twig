@@ -8,6 +8,7 @@
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/store/products/home' : storeGate) }}"><i data-feather="box"></i><span>{{ trans('nav.products') }}</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/store/orders/home?status=IN_PREPARATION' : storeGate) }}"><i data-feather="clipboard"></i><span>{{ trans('nav.fulfillment') }}</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/store/orders/home?status=OUT_FOR_DELIVERY' : storeGate) }}"><i data-feather="truck"></i><span>{{ trans('nav.delivery') }}</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/store/carriers' : storeGate) }}"><i data-feather="link-2"></i><span>{{ trans('nav.shipping_companies') }}</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/store/reports/sales' : storeGate) }}"><i data-feather="bar-chart-2"></i><span>{{ trans('nav.reports') }}</span></a></li>
 <li class="sidebar-header">{{ trans('nav.operations') }}</li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasWarehouse ? 'panel/planner-hub/management/storage' : 'panel/planner-hub/no-access?module=inventory_storage&required=inventory_storage') }}"><i data-feather="archive"></i><span>{{ trans('nav.warehouse') }}</span></a></li>

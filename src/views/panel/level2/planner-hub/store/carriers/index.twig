@@ -1,0 +1,17 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+{% block body %}
+<main class="container-fluid py-4" style="max-width:1100px">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div><span class="text-uppercase text-success small fw-bold">{{ trans('carrier_relations.kicker') }}</span><h1 class="h3 mb-1">{{ trans('carrier_relations.title') }}</h1><p class="text-muted mb-0">{{ trans('carrier_relations.help') }}</p></div>
+    <a class="btn btn-outline-secondary" href="{{ path('panel/planner-hub/store/orders/home') }}">{{ trans('carrier_relations.back_orders') }}</a>
+  </div>
+  {% if not dbReady %}<div class="alert alert-warning">{{ trans('carrier_relations.db_required') }}</div>{% endif %}
+  <div class="row g-4">
+    <div class="col-lg-7"><section class="card border-0 shadow-sm h-100"><div class="card-body"><h2 class="h5">{{ trans('carrier_relations.connected') }}</h2><p class="text-muted">{{ trans('carrier_relations.connected_help') }}</p>
+      {% for carrier in associatedCarriers %}<div class="border rounded-3 p-3 mb-2 d-flex justify-content-between align-items-center gap-3"><div><strong>{{ carrier.company_name }}</strong><div class="small text-muted">{{ [carrier.city,carrier.state,carrier.country]|filter(v => v)|join(', ') }}</div></div><form method="post">{{ macros.csrf() }}<input type="hidden" name="action" value="remove"><input type="hidden" name="carrier_owner_id" value="{{ carrier.carrier_owner_id }}"><button class="btn btn-sm btn-outline-danger">{{ trans('carrier_relations.remove') }}</button></form></div>{% else %}<div class="alert alert-info mb-0">{{ trans('carrier_relations.none') }}</div>{% endfor %}
+    </div></section></div>
+    <div class="col-lg-5"><section class="card border-0 shadow-sm"><div class="card-body"><h2 class="h5">{{ trans('carrier_relations.add') }}</h2><p class="text-muted">{{ trans('carrier_relations.add_help') }}</p><form method="post">{{ macros.csrf() }}<input type="hidden" name="action" value="add"><select class="form-select mb-3" name="carrier_owner_id" required {{ not dbReady ? 'disabled' : '' }}><option value="">{{ trans('carrier_relations.choose') }}</option>{% for carrier in availableCarriers %}<option value="{{ carrier.id_owner }}">{{ carrier.company_name }}{% if carrier.city %} — {{ carrier.city }}{% endif %}</option>{% endfor %}</select><button class="btn btn-primary w-100" {{ not dbReady ? 'disabled' : '' }}>{{ trans('carrier_relations.add_button') }}</button></form>{% if availableCarriers is empty and dbReady %}<p class="small text-muted mt-3 mb-0">{{ trans('carrier_relations.no_available') }}</p>{% endif %}</div></section></div>
+  </div>
+</main>
+{% endblock %}

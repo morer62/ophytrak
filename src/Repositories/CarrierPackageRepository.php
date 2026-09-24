@@ -66,10 +66,26 @@ class CarrierPackageRepository extends StoreRepository
     public function sellerAssignCarrier(int $packageId,int $sellerOwner,int $carrierOwner,int $userId): array
     {
         if(!$this->isCarrier($carrierOwner))return[false,'Select a valid carrier organization.'];
+        if(!(new CarrierRelationshipRepository())->isAssociated($sellerOwner,$carrierOwner))return[false,'Associate this carrier with the seller before assigning packages.'];
         $this->db->query("SELECT * FROM store_packages WHERE id=:id AND id_owner=:seller LIMIT 1");$this->db->bind(':id',$packageId);$this->db->bind(':seller',$sellerOwner);$p=$this->db->fetchOne();if(!$p)return[false,'Package not found in this seller workspace.'];
         if(in_array((string)$p->custody_status,['DELIVERED','CLOSED'],true))return[false,'A delivered or closed package cannot be assigned.'];
         $this->db->query("UPDATE store_packages SET current_custodian_owner_id=:carrier,current_custodian_user_id=NULL,custody_status='PICKUP_ASSIGNED',logistics_mode='EXTERNAL_CARRIER',current_location_label='Awaiting carrier pickup',custody_started_at=NOW(),last_event_at=NOW(),updated_at=NOW() WHERE id=:id");$this->db->bind(':carrier',$carrierOwner);$this->db->bind(':id',$packageId);$this->db->execute();
         $this->event($p,$carrierOwner,$userId,'CARRIER_ASSIGNED_BY_SELLER','PICKUP_ASSIGNED','Awaiting carrier pickup','Seller pre-authorized this carrier.',['carrier_owner_id'=>$carrierOwner]);return[true,'Carrier assigned. Its employee can now scan the secure QR and collect the package.'];
+    }
+
+    public function hasExternalCarrierForOrder(int $sellerOwner, int $orderId): bool
+    {
+        $this->db->query("SELECT id FROM store_packages WHERE id_owner=:seller AND id_store_order=:order AND logistics_mode='EXTERNAL_CARRIER' AND current_custodian_owner_id IS NOT NULL AND current_custodian_owner_id<>:seller_compare LIMIT 1");
+        $this->db->bind(':seller',$sellerOwner);$this->db->bind(':order',$orderId);$this->db->bind(':seller_compare',$sellerOwner);
+        return (bool)$this->db->fetchOne();
+    }
+
+    public function sellerUseOwnTeam(int $packageId,int $sellerOwner,int $userId): bool
+    {
+        $this->db->query("SELECT * FROM store_packages WHERE id=:id AND id_owner=:seller LIMIT 1");$this->db->bind(':id',$packageId);$this->db->bind(':seller',$sellerOwner);$p=$this->db->fetchOne();if(!$p)return false;
+        $this->db->query("UPDATE store_packages SET current_custodian_owner_id=:seller,current_custodian_user_id=NULL,logistics_mode='SELF_DELIVERY',current_location_label=IF(custody_status='PICKUP_ASSIGNED','With seller',current_location_label),custody_status=IF(custody_status='PICKUP_ASSIGNED','WITH_SELLER',custody_status),updated_at=NOW() WHERE id=:id");$this->db->bind(':seller',$sellerOwner);$this->db->bind(':id',$packageId);$this->db->execute();
+        $this->db->query("UPDATE store_package_carrier_assignments SET status='CANCELLED',updated_at=NOW() WHERE id_store_package=:package AND status NOT IN ('COMPLETED','CANCELLED')");$this->db->bind(':package',$packageId);$this->db->execute();
+        return true;
     }
 
     public function decideRequest(int $requestId,int $sellerOwner,int $decider,bool $approve): array
