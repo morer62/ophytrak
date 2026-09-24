@@ -12,9 +12,13 @@ class CarrierRelationshipRepository extends StoreRepository
 
     public function isReady(): bool
     {
-        $this->db->query("SELECT COUNT(*) AS total FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=:table");
-        $this->db->bind(':table', $this->table);
-        return (int)($this->db->fetchOne()->total ?? 0) === 1;
+        try {
+            $this->db->query("SELECT 1 FROM {$this->table} LIMIT 1");
+            $this->db->fetchOne();
+            return true;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     public function getAssociated(int $sellerOwnerId): array
@@ -40,6 +44,25 @@ class CarrierRelationshipRepository extends StoreRepository
         $this->db->bind(':seller', $sellerOwnerId);
         $this->db->bind(':seller_relation', $sellerOwnerId);
         return $this->db->fetchAll();
+    }
+
+    public function findAvailableByEmail(int $sellerOwnerId, string $email): ?object
+    {
+        if (!$this->isReady()) return null;
+        $email = strtolower(trim($email));
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) return null;
+        $this->db->query("SELECT ip.id_owner,ip.company_name,ip.email,ip.phone,ip.address_line1,ip.city,ip.state,ip.zip,ip.country,u.name,u.lastname,u.email AS account_email
+            FROM institution_profile ip
+            LEFT JOIN users u ON u.id=ip.id_owner
+            WHERE ip.organization_type='CARRIER' AND ip.id_owner<>:seller
+              AND (LOWER(ip.email)=:email OR LOWER(u.email)=:account_email)
+              AND NOT EXISTS (SELECT 1 FROM {$this->table} r WHERE r.seller_owner_id=:seller_relation AND r.carrier_owner_id=ip.id_owner AND r.status='ACTIVE')
+            LIMIT 1");
+        $this->db->bind(':seller', $sellerOwnerId);
+        $this->db->bind(':email', $email);
+        $this->db->bind(':account_email', $email);
+        $this->db->bind(':seller_relation', $sellerOwnerId);
+        return $this->db->fetchOne() ?: null;
     }
 
     public function getSellersForCarrier(int $carrierOwnerId): array
