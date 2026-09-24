@@ -82,7 +82,7 @@ test('membership billing is locked to Brazilian reais', async ({ page }) => {
 });
 
 test('locked logistics guides a new seller through activation', async ({ page }) => {
-  test.setTimeout(60000);
+  test.setTimeout(90000);
   const runId = Date.now().toString();
   const email = `qa.activation.${runId}@example.test`;
 
@@ -155,4 +155,10 @@ test('locked logistics guides a new seller through activation', async ({ page })
   await expect(confirmPayment).toBeVisible();
   await confirmPayment.click();
   await expect(page).toHaveURL(/membership\/modules\/success/, { timeout: 30000 });
+
+  for (const locale of ['es', 'pt', 'fr', 'en']) {
+    await page.goto(`${baseURL}/panel/planner-hub/store/orders/home?status=OUT_FOR_DELIVERY&locale=${locale}`, { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('body')).not.toContainText(/(?:store_orders|store_logistics|planner_hub|ui)\.[a-z0-9_.-]+/i);
+    await expect(page.locator('body')).not.toContainText(/Ãƒ.|Ã‚.|Ã¢â‚¬|ï¿½/);
+  }
 });
