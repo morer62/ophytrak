@@ -3,6 +3,7 @@
 use App\Repositories\StoreDeliveryLocationLogsRepository;
 use App\Repositories\StoreOrderTasksRepository;
 use App\Repositories\CarrierPackageRepository;
+use App\Repositories\DeliveryManifestRepository;
 use App\Services\LoginService;
 use App\Services\ModuleGuardService;
 use App\Services\UserWorkspaceContextService;
@@ -11,6 +12,9 @@ use App\Utils\TemplateResponse;
 use App\Utils\FileUtils;
 use App\Utils\LocationUtils;
 use App\Utils\MessageUtil;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 $router = new Router();
 ModuleGuardService::requireModule('store_delivery_tracking');
@@ -22,7 +26,12 @@ $router->get(function () {
         : ['selectedOwnerId' => (int)($user->getOwner() ?: $user->getId())];
     $ownerId = (int)($teamContext['selectedOwnerId'] ?? ($user->getOwner() ?: $user->getId()));
     $carrierRepo = new CarrierPackageRepository();
+    $manifestRepo = new DeliveryManifestRepository();
     $isCarrierOrganization = $ownerId > 0 && $carrierRepo->isCarrier($ownerId);
+    if($isCarrierOrganization && isset($_GET['export_manifest'])){
+        $manifestId=max(0,(int)$_GET['export_manifest']);$items=$manifestRepo->getItems($manifestId,$ownerId,(int)$user->getLevel()===2?0:(int)$user->getId());if(!$items){http_response_code(404);exit('Manifest not found.');}
+        $spreadsheet=new Spreadsheet();$sheet=$spreadsheet->getActiveSheet();$sheet->setTitle('Relatorio Export');$sheet->fromArray(['Recipient Name','Address','City','State','Zip'],null,'A1');$row=2;foreach($items as $item){$sheet->fromArray([(string)($item->guest_name?:$item->guest_email),(string)trim($item->shipping_address_1.($item->shipping_address_2?' '.$item->shipping_address_2:'')),(string)$item->shipping_city,(string)$item->shipping_state,(string)$item->shipping_zip],null,'A'.$row++);}$sheet->getStyle('A1:E1')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');$sheet->getStyle('A1:E1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0B7A69');foreach(range('A','E')as$column)$sheet->getColumnDimension($column)->setAutoSize(true);header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');header('Content-Disposition: attachment; filename="ophytrack-manifest-'.$manifestId.'.xlsx"');header('Cache-Control: max-age=0');(new Xlsx($spreadsheet))->save('php://output');exit;
+    }
 
     $storeTasks = $ownerId > 0
         ? (new StoreOrderTasksRepository())->getForAssignee($ownerId, (int)$user->getId())
@@ -75,6 +84,7 @@ $router->get(function () {
         }
     }
 
+    $isCarrierOwner=(int)$user->getLevel()===2;$carrierPackages=$isCarrierOrganization?$carrierRepo->getForCarrier($ownerId,$isCarrierOwner?null:(int)$user->getId()):[];$manifests=$isCarrierOrganization?($isCarrierOwner?$manifestRepo->getForCarrier($ownerId):$manifestRepo->getForDriver($ownerId,(int)$user->getId())):[];$activeManifest=null;$manifestItems=[];foreach($manifests as $candidate){if(in_array((string)$candidate->status,['DRAFT','GENERATED','IN_PROGRESS'],true)){$activeManifest=$candidate;$manifestItems=$manifestRepo->getItems((int)$candidate->id,$ownerId,$isCarrierOwner?0:(int)$user->getId());break;}}
     return TemplateResponse::render(__DIR__ . '/index.twig', [
         'teamContext' => $teamContext,
         'deliveryTasks' => $deliveryTasks,
@@ -86,7 +96,12 @@ $router->get(function () {
         'assignedPackageTokens' => $assignedPackageTokens,
         'scannedPackageId' => max(0, (int)($_GET['scanned_package'] ?? 0)),
         'isCarrierOrganization' => $isCarrierOrganization,
-        'carrierPackages' => $isCarrierOrganization ? $carrierRepo->getForCarrier($ownerId, (int)$user->getId()) : [],
+        'carrierPackages' => $carrierPackages,
+        'carrierCollectedPackages' => array_values(array_filter($carrierPackages,static fn($p)=>(string)$p->custody_status==='PICKED_UP')),
+        'carrierWarehousePackages' => array_values(array_filter($carrierPackages,static fn($p)=>in_array((string)$p->custody_status,['RECEIVED_AT_HUB','SORTED_AT_HUB'],true))),
+        'carrierRoutePackages' => array_values(array_filter($carrierPackages,static fn($p)=>(string)$p->custody_status==='OUT_FOR_DELIVERY')),
+        'carrierClosedPackages' => array_values(array_filter($carrierPackages,static fn($p)=>in_array((string)$p->custody_status,['DELIVERED','CUSTOMER_ABSENT','CUSTOMER_REJECTED','DELIVERY_CANCELLED'],true))),
+        'deliveryManifests'=>$manifests,'activeManifest'=>$activeManifest,'manifestItems'=>$manifestItems,'manifestDbReady'=>$manifestRepo->isReady(),
     ]);
 });
 
@@ -96,6 +111,7 @@ $router->post(function () {
     $respond=function(bool $ok,string $message,array $extra=[])use($isAjax):void{if($isAjax){header('Content-Type: application/json; charset=UTF-8');http_response_code($ok?200:422);echo json_encode(array_merge(['success'=>$ok,'message'=>$message],$extra),JSON_UNESCAPED_UNICODE);exit;}MessageUtil::setMessage($message);LocationUtils::reload();};
     if(!$repo->isCarrier($ownerId)){MessageUtil::setMessage('The selected workspace is not a carrier organization.');LocationUtils::reload();}
     $action=trim((string)($_POST['action']??''));
+    if($action==='generate_manifest'){$manifestRepo=new DeliveryManifestRepository();[$ok,$message]=$manifestRepo->generate((int)($_POST['manifest_id']??0),$ownerId,(int)$user->getLevel()===2?0:(int)$user->getId());$respond($ok,$message);}
     if($action==='carrier_qr_preview'){
         [$ok,$message,$package]=$repo->previewClaimByQr($ownerId,trim((string)($_POST['qr_token']??'')));
         $respond($ok,$message,$package?['package'=>[
@@ -113,7 +129,6 @@ $router->post(function () {
     }
     if($action==='carrier_qr_claim'){
         $qrPhoto='';if(FileUtils::hasFile($_FILES,'qr_photo')){$file=$_FILES['qr_photo'];if(!in_array((string)($file['type']??''),['image/jpeg','image/png','image/webp'],true)||(int)($file['size']??0)>8*1024*1024){$message='QR evidence must be JPG, PNG or WEBP up to 8 MB.';if(strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH']??''))==='xmlhttprequest'){header('Content-Type: application/json');http_response_code(422);echo json_encode(['success'=>false,'message'=>$message]);exit;}MessageUtil::setMessage($message);LocationUtils::reload();}$qrPhoto=FileUtils::saveFile($file,'store-carrier-evidence');}
-        if($qrPhoto===''){header('Content-Type: application/json');http_response_code(422);echo json_encode(['success'=>false,'message'=>'A live QR camera photo is required to accept custody.']);exit;}
         [$ok,$message,$package]=$repo->claimByQr($ownerId,(int)$user->getId(),trim((string)($_POST['qr_token']??'')),$qrPhoto,is_numeric($_POST['latitude']??null)?(float)$_POST['latitude']:null,is_numeric($_POST['longitude']??null)?(float)$_POST['longitude']:null);
         if(strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH']??''))==='xmlhttprequest'){header('Content-Type: application/json');http_response_code($ok?200:422);echo json_encode(['success'=>$ok,'message'=>$message,'package_id'=>$package->id??null]);exit;}MessageUtil::setMessage($message);LocationUtils::reload();
     }
@@ -124,7 +139,7 @@ $router->post(function () {
     }
     if($action==='carrier_advance'){
         $photo='';if(FileUtils::hasFile($_FILES,'evidence_photo')){$file=$_FILES['evidence_photo'];if(!in_array((string)($file['type']??''),['image/jpeg','image/png','image/webp'],true)||(int)($file['size']??0)>8*1024*1024){$respond(false,'Evidence must be JPG, PNG or WEBP up to 8 MB.');}$photo=FileUtils::saveFile($file,'store-carrier-evidence');}
-        $stage=trim((string)($_POST['carrier_stage']??''));$notes=trim((string)($_POST['notes']??''));$meta=['receiver_type'=>trim((string)($_POST['receiver_type']??'')),'receiver_name'=>trim((string)($_POST['receiver_name']??'')),'document_type'=>trim((string)($_POST['document_type']??'')),'document_number'=>trim((string)($_POST['document_number']??'')),'latitude'=>$_POST['latitude']??null,'longitude'=>$_POST['longitude']??null];
+        $stage=trim((string)($_POST['carrier_stage']??''));$notes=trim((string)($_POST['notes']??''));$meta=['receiver_type'=>trim((string)($_POST['receiver_type']??'')),'receiver_name'=>trim((string)($_POST['receiver_name']??'')),'document_type'=>trim((string)($_POST['document_type']??'')),'document_number'=>trim((string)($_POST['document_number']??'')),'failure_code'=>trim((string)($_POST['failure_code']??'')),'latitude'=>$_POST['latitude']??null,'longitude'=>$_POST['longitude']??null];
         if(in_array($stage,['customer_absent','customer_rejected','delivery_cancelled'],true)&&$notes===''){$respond(false,'Describe the delivery incident.');}
         if($stage==='delivered'&&($meta['receiver_name']===''||$meta['document_number']==='')){$respond(false,'Receiver name and document are required.');}
         [$ok,$message]=$repo->advance((int)($_POST['package_id']??0),$ownerId,(int)$user->getId(),$stage,$notes,$photo,$meta);$respond($ok,$message);
