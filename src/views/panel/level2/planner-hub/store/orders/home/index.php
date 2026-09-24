@@ -190,11 +190,12 @@ $router->get(function () {
         $order->primary_package = $packagesRepo->ensurePrimary($ownerId, (int)$order->id, (string)$order->status);
         $order->external_carrier_owner_id = ((string)($order->primary_package->logistics_mode ?? '') === 'EXTERNAL_CARRIER') ? (int)($order->primary_package->current_custodian_owner_id ?? 0) : 0;
         $order->external_carrier_name = $order->external_carrier_owner_id > 0 ? ($associatedCarriersById[$order->external_carrier_owner_id] ?? '') : '';
+        $order->awaiting_carrier_qr = (string)($order->primary_package->current_location_label ?? '') === 'Awaiting authorized carrier QR scan';
         $order->assignment_required = in_array(strtoupper((string)$order->status), [
             StoreOrdersRepository::STATUS_IN_PREPARATION,
             StoreOrdersRepository::STATUS_READY_FOR_DELIVERY,
             StoreOrdersRepository::STATUS_OUT_FOR_DELIVERY,
-        ], true) && ($order->kitchen_user_id <= 0 || ($order->delivery_user_id <= 0 && $order->external_carrier_owner_id <= 0));
+        ], true) && ($order->kitchen_user_id <= 0 || ($order->delivery_user_id <= 0 && $order->external_carrier_owner_id <= 0 && !$order->awaiting_carrier_qr));
     }
     unset($order);
 
@@ -497,22 +498,17 @@ $router->post(function () {
         $allowChat = isset($_POST['allow_chat_with_client']);
         $actorId = (int)$session->getId();
         $canAssignUser = static fn(?int $userId): bool => !$userId || $userId === $actorId || $storeRolesRepo->userBelongsToOwner($ownerId, $userId);
-        if (!in_array($deliveryMode, ['own_team','carrier'], true)) $respondAssignment(false, 'Select a valid delivery method.');
+        if (!in_array($deliveryMode, ['own_team','carrier_qr'], true)) $respondAssignment(false, 'Select a valid delivery method.');
         if (!$canAssignUser($deliveryUserId) || !$canAssignUser($kitchenUserId)) {
             $respondAssignment(false, 'Select team members from this workspace.');
         }
         try {
-            $carrierOwnerId = (int)($_POST['carrier_owner_id'] ?? 0);
-            $carrierRelationships = new CarrierRelationshipRepository();
-            if ($deliveryMode === 'carrier' && !$carrierRelationships->isAssociated($ownerId, $carrierOwnerId)) {
-                $respondAssignment(false, 'Select a shipping company associated with this business.');
-            }
-            if ($deliveryMode === 'carrier') $deliveryUserId = null;
+            if ($deliveryMode === 'carrier_qr') $deliveryUserId = null;
             $ok = (new StoreLogisticsWorkflowService())->assignOperations($ownerId, $orderId, $kitchenUserId, $deliveryUserId, $allowClose, $allowChat, $actorId);
             $package = (new StorePackagesRepository())->ensurePrimary($ownerId, $orderId, (string)$order->status);
-            if ($ok && $deliveryMode === 'carrier') {
-                [$ok] = (new CarrierPackageRepository())->sellerAssignCarrier((int)$package->id, $ownerId, $carrierOwnerId, $actorId);
-            } elseif ($ok) {
+            if ($ok && $deliveryMode === 'carrier_qr') {
+                $ok = (new CarrierPackageRepository())->sellerAwaitCarrierQr((int)$package->id, $ownerId);
+            } elseif ($ok && $deliveryUserId) {
                 $ok = (new CarrierPackageRepository())->sellerUseOwnTeam((int)$package->id, $ownerId, $actorId);
             }
             $respondAssignment($ok, $ok ? 'Store responsibilities updated.' : 'Failed to update Store responsibilities.', [
@@ -520,7 +516,7 @@ $router->post(function () {
                 'preparation_user_id' => $kitchenUserId,
                 'delivery_user_id' => $deliveryUserId,
                 'delivery_assignment_type' => $deliveryMode,
-                'carrier_owner_id' => $deliveryMode === 'carrier' ? $carrierOwnerId : null,
+                'carrier_owner_id' => null,
             ]);
         } catch (\Throwable $e) {
             error_log($requestId . ' Async Store assignment failed: ' . $e->getMessage());

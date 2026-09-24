@@ -4,6 +4,7 @@ use App\Repositories\StoreDeliveryLocationLogsRepository;
 use App\Repositories\StoreOrderTasksRepository;
 use App\Repositories\CarrierPackageRepository;
 use App\Services\LoginService;
+use App\Services\ModuleGuardService;
 use App\Services\UserWorkspaceContextService;
 use App\Utils\Router;
 use App\Utils\TemplateResponse;
@@ -12,6 +13,7 @@ use App\Utils\LocationUtils;
 use App\Utils\MessageUtil;
 
 $router = new Router();
+ModuleGuardService::requireModule('store_delivery_tracking');
 
 $router->get(function () {
     $user = LoginService::getSession();

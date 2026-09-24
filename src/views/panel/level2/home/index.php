@@ -14,6 +14,8 @@ use App\Repositories\UserRepository;
 use App\Repositories\InstitutionProfileRepository;
 use App\Repositories\UserInstitutionsRepository;
 use App\Repositories\CarrierPackageRepository;
+use App\Repositories\CarrierRelationshipRepository;
+use App\Repositories\StoreUserRolesRepository;
 use App\Utils\LocationUtils;
 use App\Utils\MessageUtil;
 use App\Utils\Router;
@@ -83,6 +85,8 @@ $router->get(function () {
     $businessProfileBuilderService = new BusinessProfileBuilderService();
     $operationsReportService = new BusinessOperationsReportService();
     $ownerId = (int)($user->getOwner() ?: $user->getId());
+    $carrierRepository = new CarrierPackageRepository();
+    $isCarrierOrganization = $carrierRepository->isCarrier($ownerId);
     $preferredCurrency = $currencyService->resolveCurrency($ownerId, $_GET['payment_currency'] ?? null);
     $requiresCurrencySetup = $currencyService->requiresSetup($ownerId);
     $reportPreset = trim((string)($_GET['report_preset'] ?? 'this_month'));
@@ -140,6 +144,11 @@ $router->get(function () {
         "businessProfile" => $businessProfileBuilderService->getBuilderData($user->getOwner()),
         "operationsReport" => $operationsReportService->build($user->getId(), $reportPreset, $reportFrom ?: null, $reportTo ?: null),
         "carrierCustodyRequests" => (new CarrierPackageRepository())->pendingForSeller($ownerId),
+        "isCarrierOrganization" => $isCarrierOrganization,
+        "carrierContactEmail" => $user->getEmail(),
+        "carrierRelationships" => $isCarrierOrganization ? (new CarrierRelationshipRepository())->getSellersForCarrier($ownerId) : [],
+        "carrierPackages" => $isCarrierOrganization ? $carrierRepository->getForCarrier($ownerId) : [],
+        "carrierTeam" => $isCarrierOrganization ? (new StoreUserRolesRepository())->getUsersByOwner($ownerId) : [],
     ]);
 });
 

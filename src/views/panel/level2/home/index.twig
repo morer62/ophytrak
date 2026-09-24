@@ -18,6 +18,20 @@
 {% set nextActionText = profileReady ? (hasAnyCore ? trans('nav.next_action_work') : trans('nav.next_action_workspace')) : trans('nav.next_action_profile') %}
 
 <main class="container py-4 level2-command-center">
+  {% if isCarrierOrganization %}
+  <section class="command-hero carrier-command-hero mb-4">
+    <div><p class="command-kicker command-kicker-light">{{ trans('carrier_ui.workspace') }}</p><h1>{{ trans('carrier_ui.dashboard_title') }}</h1><p>{{ trans('carrier_ui.dashboard_help') }}</p><div class="command-status-row"><span>{{ businessName }}</span><span>{{ carrierPackages|length }} {{ trans('carrier_ui.packages_in_custody') }}</span><span>{{ carrierTeam|length }} {{ trans('carrier_ui.drivers') }}</span></div></div>
+    <a href="{{ path('panel/planner-hub/team/driver-mode') }}" class="btn btn-light btn-lg fw-bold">{{ trans('carrier_ui.scan_package') }}</a>
+  </section>
+  {% if not hasStoreLogistics %}<section class="alert alert-warning border-0 shadow-sm mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3"><div><strong>{{ trans('carrier_license.title') }}</strong><div>{{ trans('carrier_license.help') }}</div></div><a class="btn btn-dark" href="{{ path('panel/membership/modules/review?module_slug=store_delivery_tracking&payment_currency=BRL') }}">{{ trans('carrier_license.activate') }}</a></section>{% endif %}
+  <section class="command-panel mb-4 carrier-contact-card"><div class="command-panel-head"><div><p class="command-kicker">{{ trans('carrier_ui.assignment_identity') }}</p><h2>{{ trans('carrier_ui.share_email') }}</h2><p>{{ trans('carrier_ui.share_email_help') }}</p></div><button type="button" class="btn btn-outline-dark fw-bold" data-copy-carrier-email>{{ trans('carrier_ui.copy_email') }}</button></div><div class="carrier-email-value" id="carrierContactEmail">{{ carrierContactEmail }}</div></section>
+  <div class="row g-4 mb-4">
+    <div class="col-lg-7"><section class="command-panel h-100"><p class="command-kicker">{{ trans('carrier_ui.active_operation') }}</p><h2>{{ trans('carrier_ui.packages_in_custody') }}</h2><div class="snapshot-grid mt-3"><a class="snapshot-card" href="{{ path('panel/planner-hub/team/driver-mode') }}"><span>{{ trans('carrier_ui.total_packages') }}</span><strong>{{ carrierPackages|length }}</strong></a><a class="snapshot-card" href="{{ path('panel/planner-hub/management/users?context=store') }}"><span>{{ trans('carrier_ui.drivers') }}</span><strong>{{ carrierTeam|length }}</strong></a><a class="snapshot-card" href="{{ path('panel/ophytrack/payments') }}"><span>{{ trans('carrier_ui.pending_payments') }}</span><strong>BRL</strong></a></div><div class="d-flex flex-wrap gap-2 mt-3"><a class="btn btn-dark" href="{{ path('panel/planner-hub/team/driver-mode') }}">{{ trans('carrier_ui.open_scanner') }}</a><a class="btn btn-outline-dark" href="{{ path('panel/planner-hub/store/orders/home') }}">{{ trans('carrier_ui.view_shipments') }}</a><a class="btn btn-outline-dark" href="{{ path('panel/planner-hub/team/chat?context=store') }}">{{ trans('carrier_ui.customer_chat') }}</a></div></section></div>
+    <div class="col-lg-5"><section class="command-panel h-100"><p class="command-kicker">{{ trans('carrier_ui.business_relations') }}</p><h2>{{ carrierRelationships|length }} {{ trans('carrier_ui.connected_businesses') }}</h2><p>{{ trans('carrier_ui.relations_help') }}</p><div class="mt-3">{% for relation in carrierRelationships %}<div class="border rounded-3 p-3 mb-2"><strong>{{ relation.company_name }}</strong><small class="text-muted d-block">{{ relation.email }}</small></div>{% else %}<div class="alert alert-info">{{ trans('carrier_ui.no_relations') }}</div>{% endfor %}</div></section></div>
+  </div>
+  <section class="command-panel mb-4"><p class="command-kicker">{{ trans('carrier_ui.how_it_works') }}</p><h2>{{ trans('carrier_ui.custody_flow') }}</h2><div class="carrier-flow mt-3"><div><b>1</b><strong>{{ trans('carrier_ui.flow_pickup') }}</strong><span>{{ trans('carrier_ui.flow_pickup_help') }}</span></div><div><b>2</b><strong>{{ trans('carrier_ui.flow_warehouse') }}</strong><span>{{ trans('carrier_ui.flow_warehouse_help') }}</span></div><div><b>3</b><strong>{{ trans('carrier_ui.flow_driver') }}</strong><span>{{ trans('carrier_ui.flow_driver_help') }}</span></div><div><b>4</b><strong>{{ trans('carrier_ui.flow_delivery') }}</strong><span>{{ trans('carrier_ui.flow_delivery_help') }}</span></div></div></section>
+  <script>document.addEventListener('DOMContentLoaded',function(){document.querySelector('[data-copy-carrier-email]')?.addEventListener('click',async function(){await navigator.clipboard.writeText(document.getElementById('carrierContactEmail').textContent.trim());this.textContent={{ trans('carrier_ui.copied')|json_encode|raw }};});});</script>
+  {% else %}
   {% if carrierCustodyRequests|length %}
   <div class="modal fade" id="carrierDashboardRequestModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-warning-subtle"><h2 class="modal-title h5">{{ trans('store_orders.carrier_requests_title') }}</h2><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>{{ trans('store_orders.carrier_requests_help') }}</p>{% for request in carrierCustodyRequests %}<div class="border rounded-3 p-3 mb-2"><strong>{{ request.package_code }}</strong><div>{{ request.carrier_name }}</div><small class="text-muted">{{ request.name }} {{ request.lastname }} · {{ request.created_at|date('M j, Y g:i A') }}</small><form method="post" class="d-flex gap-2 mt-3"><input type="hidden" name="action" value="carrier_custody_decision"><input type="hidden" name="request_id" value="{{ request.id }}"><button class="btn btn-outline-danger flex-fill" name="decision" value="REJECT">{{ trans('ui.reject') }}</button><button class="btn btn-success flex-fill" name="decision" value="APPROVE">{{ trans('ui.accept') }}</button></form></div>{% endfor %}</div></div></div></div>
   <script>document.addEventListener('DOMContentLoaded',function(){if(window.bootstrap)bootstrap.Modal.getOrCreateInstance(document.getElementById('carrierDashboardRequestModal')).show();});</script>
@@ -286,6 +300,7 @@
     </div>
   </div>
   {% endif %}
+  {% endif %}
 </main>
 
 {% if requiresCurrencySetup and supportedBillingCurrencies|length > 1 %}
@@ -342,12 +357,15 @@
   .snapshot-card,.first-step-list a,.switch-view-list a,.switch-view-list button { background:#f8fafc; border:1px solid rgba(15,23,42,.08); border-radius:16px; color:#0f172a; display:block; padding:1rem; text-align:left; text-decoration:none; width:100%; }
   .snapshot-card span,.switch-view-list span { color:#64748b; display:block; font-size:.86rem; }
   .snapshot-card strong { display:block; font-size:1.6rem; margin-top:.35rem; }
+  .carrier-command-hero{background:radial-gradient(circle at 85% 15%,rgba(3,198,244,.3),transparent 35%),linear-gradient(135deg,#020a16,#083c62 58%,#087cff);}
+  .carrier-email-value{background:#eef8ff;border:1px dashed #087cff;border-radius:16px;color:#073b63;font-size:1.25rem;font-weight:900;margin-top:1rem;padding:1rem;word-break:break-all;}
+  .carrier-flow{display:grid;gap:1rem;grid-template-columns:repeat(4,1fr)}.carrier-flow div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:1rem}.carrier-flow b{align-items:center;background:#087cff;border-radius:50%;color:#fff;display:flex;height:30px;justify-content:center;margin-bottom:.7rem;width:30px}.carrier-flow strong,.carrier-flow span{display:block}.carrier-flow span{color:#64748b;font-size:.85rem;margin-top:.35rem}
   .snapshot-empty-cta { color:#0f766e; display:block; font-size:.8rem; font-weight:900; margin-top:.25rem; }
   .first-step-list,.switch-view-list { display:grid; gap:.7rem; margin-top:1rem; }
   .switch-view-list form { margin:0; }
   .switch-view-list button { cursor:pointer; }
   @media (max-width:1400px){ .quick-modules-grid{grid-template-columns:repeat(3,minmax(0,1fr));} }
-  @media (max-width:768px){ .currency-strip,.command-hero,.command-panel-head,.workspace-actions{align-items:stretch; flex-direction:column;} .command-hero .btn,.workspace-actions .btn{width:100%;} .quick-modules-grid{grid-template-columns:1fr;} .quick-module-card{min-height:auto;} }
+  @media (max-width:768px){ .currency-strip,.command-hero,.command-panel-head,.workspace-actions{align-items:stretch; flex-direction:column;} .command-hero .btn,.workspace-actions .btn{width:100%;} .quick-modules-grid,.carrier-flow{grid-template-columns:1fr;} .quick-module-card{min-height:auto;} }
 </style>
 {% endblock %}
 

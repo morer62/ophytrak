@@ -120,6 +120,7 @@ class TemplateResponse
         $moduleBaseActive = false;
         $activeModuleSlugs = [];
         $activeAddonSlugs = [];
+        $isCarrierOrganization = false;
 
         try {
             $session = LoginService::getSession();
@@ -132,6 +133,7 @@ class TemplateResponse
                     $activeModuleSlugs,
                     \App\Repositories\ModulesRepository::ADDON_SLUGS
                 ));
+                $isCarrierOrganization = (new \App\Repositories\CarrierPackageRepository())->isCarrier($ownerId);
             }
         } catch (Exception $e) {
             error_log("ERROR loading module access in TemplateResponse: " . $e->getMessage());
@@ -210,6 +212,7 @@ class TemplateResponse
             "module_base_active" => $moduleBaseActive,
             "active_module_slugs" => $activeModuleSlugs,
             "active_addon_slugs" => $activeAddonSlugs,
+            "is_carrier_organization" => $isCarrierOrganization,
             "product_mode" => ProductProfileService::mode(),
             "currency_code" => ProductProfileService::operationalCurrency(),
             "currency_symbol" => ProductProfileService::currencySymbol(),

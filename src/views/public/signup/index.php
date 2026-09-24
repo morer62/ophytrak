@@ -190,7 +190,7 @@ $router->post(function () {
     );
     if ($businessNature === 'carrier_logistics') {
         $institutionProfileRepository->update(['organization_type' => 'CARRIER'], ['id_owner' => $user_id]);
-        (new UserModulesRepository())->activateIncludedCarrierLogistics($user_id);
+        (new UserModulesRepository())->provisionCarrierLogisticsLicense($user_id);
     }
     (new LegalConsentService())->recordSignupConsents($user_id, (string)$_POST['email'], $detectedCountry ?: null, $preferredCurrency);
 

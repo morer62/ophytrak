@@ -118,6 +118,14 @@ class UserModulesRepository extends BaseRepository
         } catch (PDOException $e) { error_log('Carrier entitlement failed: '.$e->getMessage()); return false; }
     }
 
+    public function provisionCarrierLogisticsLicense(int $ownerId): bool
+    {
+        try {
+            $this->db->query("INSERT INTO user_modules (id_user,module_slug,status,billing_status,activation_source,activation_reason,is_included_in_base,price,created_at,updated_at) VALUES (:owner,'store_delivery_tracking','INACTIVE','pending_payment','carrier_license','Carrier organizations activate the same OPHYTRACK logistics license as sellers.',0,:price,NOW(),NOW()) ON DUPLICATE KEY UPDATE status=IF(activation_source='carrier_included','INACTIVE',status),billing_status=IF(activation_source='carrier_included','pending_payment',billing_status),activation_source='carrier_license',activation_reason='Carrier organizations activate the same OPHYTRACK logistics license as sellers.',is_included_in_base=0,price=:price_update,renewal_at=NULL,updated_at=NOW()");
+            $price=(float)($_ENV['STORE_LOGISTICS_PRICE_BRL']??169);$this->db->bind(':owner',$ownerId);$this->db->bind(':price',$price);$this->db->bind(':price_update',$price);$this->db->execute();return true;
+        }catch(PDOException $e){error_log('Carrier license provisioning failed: '.$e->getMessage());return false;}
+    }
+
     public function deactivateModuleBySlug(int $userId, string $moduleSlug): bool
     {
         return $this->setStatusBySlug($userId, $moduleSlug, self::STATUS_INACTIVE);

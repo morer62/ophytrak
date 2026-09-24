@@ -1,11 +1,15 @@
 const { test, expect } = require('@playwright/test');
 const baseURL=process.env.E2E_BASE_URL||'http://localhost/ophytrak';
-const runId=process.env.E2E_RUN_ID||Date.now().toString();
-const email=`qa.carrier.${runId}@example.test`;
-test('carrier signup includes logistics without billing',async({page},testInfo)=>{
-  await page.goto(`${baseURL}/signup`);await page.locator('[name="company_name"]').fill(`QA Carrier ${runId}`);await page.locator('[data-signup-next]').click();
+test('carrier signup gets a carrier workspace and activates the paid logistics license',async({page},testInfo)=>{
+  test.setTimeout(90000);const runId=Date.now().toString();const email=`qa.carrier.license.${runId}@example.test`;const password='OphyraQA!2026';
+  await page.goto(`${baseURL}/signup?locale=es`);await page.locator('[name="company_name"]').fill(`QA Carrier ${runId}`);await page.locator('[data-signup-next]').click();
   await page.locator('[name="business_nature"]').selectOption('carrier_logistics');await page.locator('[name="business_operation_type"]').selectOption('store_delivery_tracking');await page.locator('[data-signup-next]').click();
   await page.locator('[name="name"]').fill('Carrier');await page.locator('[name="lastname"]').fill('Owner');await page.locator('[name="email"]').fill(email);await page.locator('[name="phone_local_number"]').fill('2025550188');await page.locator('[data-signup-next]').click();
-  await page.locator('[name="password"]').fill('OphyraQA!2026');await page.locator('[name="passwordConfirmation"]').fill('OphyraQA!2026');await page.locator('[name="terms"]').check();await page.locator('[data-signup-submit]').click();await expect(page.locator('[data-signup-success-modal]')).toHaveClass(/is-open/,{timeout:30000});
-  await testInfo.attach('carrier-account.json',{body:Buffer.from(JSON.stringify({email,runId},null,2)),contentType:'application/json'});
+  await page.locator('[name="password"]').fill(password);await page.locator('[name="passwordConfirmation"]').fill(password);await page.locator('[name="terms"]').check();await page.locator('[data-signup-submit]').click();await expect(page.locator('[data-signup-success-modal]')).toHaveClass(/is-open/,{timeout:30000});
+  await page.goto(`${baseURL}/login?locale=es`);await page.locator('[name="email"]').fill(email);await page.locator('[name="password"]').fill(password);await page.locator('form').filter({has:page.locator('[name="email"]')}).locator('button[type="submit"]').click();
+  await page.goto(`${baseURL}/panel/planner-hub/institution-profile?locale=es`);await page.locator('[name="business_nature"]').selectOption('logistics_delivery');await page.locator('[name="address_line1"]').fill('100 Logistics Avenue');await page.locator('[name="city"]').fill('São Paulo');await page.locator('[name="state"]').fill('SP');await page.locator('[name="zip"]').fill('01001-000');await page.locator('[name="short_description"]').fill('Transportadora OPHYTRACK.');await page.locator('#businessProfileForm').getByRole('button',{name:/Guardar perfil|Save Profile/i}).click();
+  await page.goto(`${baseURL}/panel/home?locale=es`);await expect(page.locator('h1')).toHaveText('Control de envíos y custodia');await expect(page.locator('#carrierContactEmail')).toHaveText(email);await expect(page.locator('aside,nav').first()).not.toContainText('Productos');await expect(page.locator('body')).toContainText('Licencia de transportadora');
+  await page.goto(`${baseURL}/panel/planner-hub/team/driver-mode?locale=es`);await expect(page).toHaveURL(/no-access/);await expect(page.locator('body')).toContainText(/activar|módulo|licencia/i);
+  await page.goto(`${baseURL}/panel/ophytrack/payments?locale=es`);await expect(page.locator('h1')).toHaveText('Pagos pendientes');
+  await page.screenshot({path:testInfo.outputPath('carrier-dashboard-license-es.png'),fullPage:true});
 });

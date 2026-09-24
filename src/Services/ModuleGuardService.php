@@ -25,6 +25,13 @@ class ModuleGuardService
         }
 
         $ownerId = (int)($user->getOwner() ?: $user->getId());
+        if (ProductProfileService::isOphytrack() && filter_var($_ENV['OPHYTRACK_USAGE_BLOCK_OVERDUE'] ?? true, FILTER_VALIDATE_BOOL)) {
+            $billing = new \App\Repositories\OphytrackPackageBillingRepository();
+            if ($billing->isReady() && (float)($billing->summary($ownerId)['overdue'] ?? 0) > 0) {
+                MessageUtil::setMessage('Pay the overdue OPHYTRACK balance to restore operational access.', 'Payment required', 'warning');
+                LocationUtils::redirectInternal('panel/ophytrack/payments');
+            }
+        }
         $moduleAccessService = new ModuleAccessService();
 
         if ($moduleAccessService->canAccessAnyRouteModule($ownerId, $moduleSlugs)) {

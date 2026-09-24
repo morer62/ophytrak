@@ -42,6 +42,19 @@ class CarrierRelationshipRepository extends StoreRepository
         return $this->db->fetchAll();
     }
 
+    public function getSellersForCarrier(int $carrierOwnerId): array
+    {
+        if (!$this->isReady()) return [];
+        $this->db->query("SELECT r.seller_owner_id,r.created_at,ip.company_name,ip.city,ip.state,ip.country,u.email
+            FROM {$this->table} r
+            INNER JOIN institution_profile ip ON ip.id_owner=r.seller_owner_id
+            LEFT JOIN users u ON u.id=r.seller_owner_id
+            WHERE r.carrier_owner_id=:carrier AND r.status='ACTIVE'
+            ORDER BY ip.company_name");
+        $this->db->bind(':carrier', $carrierOwnerId);
+        return $this->db->fetchAll();
+    }
+
     public function isAssociated(int $sellerOwnerId, int $carrierOwnerId): bool
     {
         if (!$this->isReady()) return false;

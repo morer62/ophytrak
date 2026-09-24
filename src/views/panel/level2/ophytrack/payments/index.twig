@@ -1,0 +1,56 @@
+{% extends 'templates/base.admin.twig' %}
+{% import 'templates/macros.twig' as macros %}
+{% block body %}
+<main class="container-fluid py-4" style="max-width:1200px">
+  <div class="mb-4">
+    <span class="text-danger text-uppercase small fw-bold">{{ trans('carrier_ui.billing_control') }}</span>
+    <h1 class="h3">{{ trans('carrier_ui.pending_payments') }}</h1>
+    <p class="text-muted">{{ trans('carrier_ui.billing_help')|replace({'{cutoff}':cutoffDay,'{payment}':paymentDay}) }}</p>
+  </div>
+  {% if not dbReady %}<div class="alert alert-warning">{{ trans('carrier_ui.billing_db_required') }}</div>{% endif %}
+  <div class="row g-3 mb-4">
+    {% set cards = [
+      ['platform_due', billingSummary.platform_due, 'border-danger', 'text-danger'],
+      ['carrier_due', billingSummary.carrier_due, '', ''],
+      ['receivable', billingSummary.receivable, '', 'text-success'],
+      ['overdue', billingSummary.overdue, billingSummary.overdue > 0 ? 'border-danger' : '', 'text-danger']
+    ] %}
+    {% for label, amount, border, color in cards %}
+      <div class="col-md-3"><div class="card {{ border }} h-100"><div class="card-body">
+        <span>{{ trans('carrier_ui.' ~ label) }}</span><strong class="d-block fs-3 {{ color }}">R$ {{ amount|number_format(2,',','.') }}</strong>
+      </div></div></div>
+    {% endfor %}
+  </div>
+  <div class="card border-0 shadow-sm"><div class="card-body"><div class="table-responsive">
+    <table class="table align-middle"><thead><tr>
+      <th>{{ trans('carrier_ui.package') }}</th><th>{{ trans('carrier_ui.charge') }}</th><th>{{ trans('carrier_ui.counterparty') }}</th>
+      <th>{{ trans('carrier_ui.cycle') }}</th><th>{{ trans('carrier_ui.due') }}</th><th>{{ trans('carrier_ui.status') }}</th><th>{{ trans('carrier_ui.action') }}</th>
+    </tr></thead><tbody>
+    {% for c in charges %}
+      <tr>
+        <td>#{{ c.id_store_package }}</td>
+        <td><strong>R$ {{ c.amount_brl|number_format(2,',','.') }}</strong><small class="d-block text-muted">{{ c.charge_kind|replace({'_':' '}) }}</small></td>
+        <td>{{ c.charge_kind == 'CARRIER_SERVICE' ? c.carrier_name : 'OPHYTRACK' }}</td>
+        <td>{{ c.cycle_start }} – {{ c.cycle_end }}</td><td>{{ c.due_date }}</td>
+        <td><span class="badge {{ c.status == 'PAID' ? 'bg-success' : (c.status == 'PROOF_SUBMITTED' ? 'bg-info' : 'bg-warning text-dark') }}">{{ c.status|replace({'_':' '}) }}</span></td>
+        <td>
+          {% if c.payer_owner_id == ownerId and c.charge_kind == 'CARRIER_SERVICE' and c.status == 'PENDING' %}
+            {% if c.payee_has_online_payment %}<span class="badge bg-light text-success d-block mb-1">{{ trans('billing_actions.online_available') }}</span>{% endif %}
+            <button class="btn btn-sm btn-outline-dark" data-bs-toggle="collapse" data-bs-target="#proof{{ c.id }}">{{ trans('carrier_ui.upload_proof') }}</button>
+            <div class="collapse mt-2" id="proof{{ c.id }}"><form method="post" enctype="multipart/form-data">
+              {{ macros.csrf() }}<input type="hidden" name="charge_id" value="{{ c.id }}"><input type="hidden" name="action" value="submit_proof">
+              <input class="form-control form-control-sm mb-2" type="file" name="payment_proof" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+              <input class="form-control form-control-sm mb-2" name="payment_reference" placeholder="{{ trans('carrier_ui.payment_reference') }}">
+              <button class="btn btn-sm btn-success">{{ trans('carrier_ui.submit_proof') }}</button>
+            </form></div>
+          {% elseif c.payee_owner_id == ownerId and c.charge_kind == 'CARRIER_SERVICE' and c.status == 'PROOF_SUBMITTED' %}
+            <a class="btn btn-sm btn-outline-secondary mb-1" href="{{ c.payment_proof_url }}" target="_blank" rel="noopener">{{ trans('billing_actions.view_proof') }}</a>
+            <form method="post" class="d-inline">{{ macros.csrf() }}<input type="hidden" name="charge_id" value="{{ c.id }}"><input type="hidden" name="action" value="approve_proof"><button class="btn btn-sm btn-success">{{ trans('billing_actions.confirm_payment') }}</button></form>
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="7" class="text-center text-muted py-5">{{ trans('carrier_ui.no_charges') }}</td></tr>{% endfor %}
+    </tbody></table>
+  </div></div></div>
+</main>
+{% endblock %}

@@ -252,6 +252,8 @@ class Kernel
                                 || str_starts_with($path, 'panel/planner-hub/team/storage')
                             ) {
                                 \App\Services\ModuleGuardService::requireModule('inventory_storage', 'panel/planner-hub/no-access');
+                            } elseif (str_starts_with($path, 'panel/planner-hub/team/driver-mode')) {
+                                \App\Services\ModuleGuardService::requireModule('store_delivery_tracking', 'panel/planner-hub/no-access');
                             } elseif (str_starts_with($path, 'panel/planner-hub/management/chatia')) {
                                 \App\Services\ModuleGuardService::requireModule('ai_advisor', 'panel/planner-hub/no-access');
                             } elseif (str_starts_with($path, 'panel/event-invitations')

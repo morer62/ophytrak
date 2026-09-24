@@ -4,12 +4,27 @@
 {% set storeGate = hasStore ? '' : 'panel/planner-hub/no-access?module=store_logistics&required=store_delivery_tracking' %}
 <li class="sidebar-header">OPHYTRACK</li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/home') }}"><i data-feather="grid"></i><span>{{ trans('nav.dashboard') }}</span></a></li>
+{% if is_carrier_organization %}
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/team/driver-mode' : storeGate) }}"><i data-feather="camera"></i><span>{{ trans('carrier_ui.scan_packages') }}</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/store/orders/home' : storeGate) }}"><i data-feather="package"></i><span>{{ trans('carrier_ui.assigned_shipments') }}</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/management/storage' : storeGate) }}"><i data-feather="archive"></i><span>{{ trans('carrier_ui.carrier_warehouse') }}</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/management/users?context=store' : storeGate) }}"><i data-feather="users"></i><span>{{ trans('carrier_ui.drivers') }}</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/team/chat?context=store' : storeGate) }}"><i data-feather="message-circle"></i><span>{{ trans('carrier_ui.customer_chat') }}</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/store/carriers' : storeGate) }}"><i data-feather="link-2"></i><span>{{ trans('carrier_ui.business_relations') }}</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link text-danger" href="{{ path('panel/ophytrack/payments') }}"><i data-feather="alert-circle"></i><span>{{ trans('carrier_ui.pending_payments') }}</span></a></li>
+<li class="sidebar-header">{{ trans('nav.business') }}</li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/institution-profile') }}"><i data-feather="briefcase"></i><span>{{ trans('nav.public_profile') }}</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/membership/manage') }}"><i data-feather="layers"></i><span>{{ trans('carrier_ui.carrier_license') }}</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/settings/payment-providers') }}"><i data-feather="credit-card"></i><span>{{ trans('nav.payment_methods') }}</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/settings') }}"><i data-feather="settings"></i><span>{{ trans('nav.settings') }}</span></a></li>
+{% else %}
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/store/orders/home' : storeGate) }}"><i data-feather="package"></i><span>{{ trans('nav.store_orders') }}</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/store/products/home' : storeGate) }}"><i data-feather="box"></i><span>{{ trans('nav.products') }}</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/store/orders/home?status=IN_PREPARATION' : storeGate) }}"><i data-feather="clipboard"></i><span>{{ trans('nav.fulfillment') }}</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/store/orders/home?status=OUT_FOR_DELIVERY' : storeGate) }}"><i data-feather="truck"></i><span>{{ trans('nav.delivery') }}</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/store/carriers' : storeGate) }}"><i data-feather="link-2"></i><span>{{ trans('nav.shipping_companies') }}</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/store/reports/sales' : storeGate) }}"><i data-feather="bar-chart-2"></i><span>{{ trans('nav.reports') }}</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link text-danger" href="{{ path('panel/ophytrack/payments') }}"><i data-feather="alert-circle"></i><span>{{ trans('carrier_ui.pending_payments') }}</span></a></li>
 <li class="sidebar-header">{{ trans('nav.operations') }}</li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasWarehouse ? 'panel/planner-hub/management/storage' : 'panel/planner-hub/no-access?module=inventory_storage&required=inventory_storage') }}"><i data-feather="archive"></i><span>{{ trans('nav.warehouse') }}</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasMarketplace ? 'panel/planner-hub/marketplace-connectors' : 'panel/planner-hub/no-access?module=marketplace_connectors&required=marketplace_connectors') }}"><i data-feather="refresh-cw"></i><span>Marketplaces</span></a></li>
@@ -23,3 +38,4 @@
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/membership/manage') }}"><i data-feather="layers"></i><span>{{ trans('nav.modules_billing') }}</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/settings/payment-providers') }}"><i data-feather="credit-card"></i><span>{{ trans('nav.payment_methods') }}</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/settings') }}"><i data-feather="settings"></i><span>{{ trans('nav.settings') }}</span></a></li>
+{% endif %}
