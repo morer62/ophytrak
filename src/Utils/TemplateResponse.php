@@ -134,6 +134,11 @@ class TemplateResponse
                     \App\Repositories\ModulesRepository::ADDON_SLUGS
                 ));
                 $isCarrierOrganization = (new \App\Repositories\CarrierPackageRepository())->isCarrier($ownerId);
+            } elseif ($session && (int)$session->getLevel() === 4) {
+                $teamContext = (new \App\Services\UserWorkspaceContextService())->getTeamContext($session);
+                $ownerId = (int)($teamContext['selectedOwnerId'] ?? $session->getOwner());
+                $isCarrierOrganization = $ownerId > 0
+                    && (new \App\Repositories\CarrierPackageRepository())->isCarrier($ownerId);
             }
         } catch (Exception $e) {
             error_log("ERROR loading module access in TemplateResponse: " . $e->getMessage());

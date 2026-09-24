@@ -1102,7 +1102,11 @@
   .sidebar-link:hover,.sidebar-item.active>.sidebar-link{background:#087cff22!important;color:#fff!important}
   .btn-primary,.btn-success{background:linear-gradient(135deg,var(--ophytrack-cyan),var(--ophytrack-blue))!important;border-color:transparent!important}
   .command-hero{background:radial-gradient(circle at 90% 0,#087cff88,transparent 42%),linear-gradient(135deg,#020a16,#0a2a54)!important}
+  .ophytrack-scan-fab{align-items:center;background:linear-gradient(135deg,#03c6f4,#087cff);border:2px solid rgba(255,255,255,.8);border-radius:999px;bottom:22px;box-shadow:0 12px 30px rgba(2,10,22,.32);color:#fff!important;display:flex;font-size:.84rem;font-weight:800;gap:.55rem;padding:.82rem 1.05rem;position:fixed;right:22px;text-decoration:none;z-index:1035}
+  .ophytrack-scan-fab:hover{color:#fff!important;transform:translateY(-2px)}.ophytrack-scan-fab svg{height:20px;width:20px}
+  @media(max-width:575.98px){.ophytrack-scan-fab{bottom:18px;right:16px}.ophytrack-scan-fab span{display:none}.ophytrack-scan-fab{border-radius:50%;height:58px;justify-content:center;padding:0;width:58px}}
 </style>
+{% if is_carrier_organization and user.level in [2,4] and 'driver-mode' not in current_location %}<a class="ophytrack-scan-fab" href="{{ path('panel/planner-hub/team/driver-mode') }}" aria-label="{{ trans('store_logistics.scan_package_qr') }}" title="{{ trans('store_logistics.scan_package_qr') }}"><i data-feather="maximize"></i><span>{{ trans('store_logistics.scan_package_qr') }}</span></a>{% endif %}
 <script id="ophytrack-brand-guard">
 document.addEventListener('DOMContentLoaded',function(){
   document.title=document.title.replace(/Ophyra/gi,'OPHYTRACK');

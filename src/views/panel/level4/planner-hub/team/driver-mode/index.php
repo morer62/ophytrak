@@ -17,8 +17,10 @@ ModuleGuardService::requireModule('store_delivery_tracking');
 
 $router->get(function () {
     $user = LoginService::getSession();
-    $teamContext = (new UserWorkspaceContextService())->getTeamContext($user);
-    $ownerId = (int)($teamContext['selectedOwnerId'] ?? $user->getOwner());
+    $teamContext = (int)$user->getLevel() === 4
+        ? (new UserWorkspaceContextService())->getTeamContext($user)
+        : ['selectedOwnerId' => (int)($user->getOwner() ?: $user->getId())];
+    $ownerId = (int)($teamContext['selectedOwnerId'] ?? ($user->getOwner() ?: $user->getId()));
     $carrierRepo = new CarrierPackageRepository();
     $isCarrierOrganization = $ownerId > 0 && $carrierRepo->isCarrier($ownerId);
 
@@ -88,7 +90,7 @@ $router->get(function () {
 });
 
 $router->post(function () {
-    $user=LoginService::getSession();$context=(new UserWorkspaceContextService())->getTeamContext($user);$ownerId=(int)($context['selectedOwnerId']??$user->getOwner());$repo=new CarrierPackageRepository();
+    $user=LoginService::getSession();$context=(int)$user->getLevel()===4?(new UserWorkspaceContextService())->getTeamContext($user):['selectedOwnerId'=>(int)($user->getOwner()?:$user->getId())];$ownerId=(int)($context['selectedOwnerId']??($user->getOwner()?:$user->getId()));$repo=new CarrierPackageRepository();
     $isAjax=strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH']??''))==='xmlhttprequest';
     $respond=function(bool $ok,string $message,array $extra=[])use($isAjax):void{if($isAjax){header('Content-Type: application/json; charset=UTF-8');http_response_code($ok?200:422);echo json_encode(array_merge(['success'=>$ok,'message'=>$message],$extra),JSON_UNESCAPED_UNICODE);exit;}MessageUtil::setMessage($message);LocationUtils::reload();};
     if(!$repo->isCarrier($ownerId)){MessageUtil::setMessage('The selected workspace is not a carrier organization.');LocationUtils::reload();}
