@@ -40,6 +40,16 @@ class CarrierPackageRepository extends StoreRepository
         return[true,'Custody request sent to the seller.']; */
     }
 
+    public function previewClaimByQr(int $carrierOwner,string $token): array
+    {
+        if(!$this->isCarrier($carrierOwner))return[false,'The selected workspace is not a carrier organization.',null];
+        $package=$this->findBySecureToken($token);if(!$package)return[false,'The QR is invalid or no longer identifies a package.',null];
+        if(!(new CarrierRelationshipRepository())->isAssociated((int)$package->id_owner,$carrierOwner))return[false,'This carrier is not authorized by the seller for this package.',null];
+        if(in_array((string)$package->custody_status,['DELIVERED','CLOSED'],true))return[false,'This package is already closed or delivered.',null];
+        if((int)($package->current_custodian_owner_id??0)>0 && (int)$package->current_custodian_owner_id!==(int)$package->id_owner && (int)$package->current_custodian_owner_id!==$carrierOwner)return[false,'This package is under another carrier custody.',null];
+        return[true,'Package detected. Confirm to add it to your carrier workspace.',$package];
+    }
+
     public function claimByQr(int $carrierOwner,int $userId,string $token,?string $photoUrl=null,?float $lat=null,?float $lng=null,string $method='SECURE_QR'): array
     {
         if(!$this->isCarrier($carrierOwner))return[false,'The selected workspace is not a carrier organization.',null];

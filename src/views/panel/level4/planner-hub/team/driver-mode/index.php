@@ -96,6 +96,17 @@ $router->post(function () {
     $respond=function(bool $ok,string $message,array $extra=[])use($isAjax):void{if($isAjax){header('Content-Type: application/json; charset=UTF-8');http_response_code($ok?200:422);echo json_encode(array_merge(['success'=>$ok,'message'=>$message],$extra),JSON_UNESCAPED_UNICODE);exit;}MessageUtil::setMessage($message);LocationUtils::reload();};
     if(!$repo->isCarrier($ownerId)){MessageUtil::setMessage('The selected workspace is not a carrier organization.');LocationUtils::reload();}
     $action=trim((string)($_POST['action']??''));
+    if($action==='carrier_qr_preview'){
+        [$ok,$message,$package]=$repo->previewClaimByQr($ownerId,trim((string)($_POST['qr_token']??'')));
+        $respond($ok,$message,$package?['package'=>[
+            'id'=>(int)$package->id,
+            'code'=>(string)$package->package_code,
+            'seller'=>(string)($package->seller_name??''),
+            'recipient'=>trim((string)($package->guest_name??'')),
+            'address'=>trim(implode(', ',array_filter([(string)($package->shipping_address_1??''),(string)($package->shipping_city??''),(string)($package->shipping_state??''),(string)($package->shipping_zip??'')]))),
+            'status'=>(string)($package->custody_status??'WITH_SELLER'),
+        ]]:[]);
+    }
     if($action==='carrier_location'){$ok=$repo->recordLiveLocation((int)($_POST['package_id']??0),$ownerId,(int)$user->getId(),(float)($_POST['latitude']??0),(float)($_POST['longitude']??0),is_numeric($_POST['accuracy']??null)?(float)$_POST['accuracy']:null);$respond($ok,$ok?'Location updated.':'This package is not assigned to you for delivery.');}
     if($action==='carrier_manual_request'){
         [$ok,$message]=$repo->requestManualCustody($ownerId,(int)$user->getId(),trim((string)($_POST['package_code']??'')),trim((string)($_POST['notes']??'')));MessageUtil::setMessage($message);LocationUtils::reload();

@@ -315,7 +315,10 @@
                         {{ trans('store_logistics.scan_package_requirement') }}
                     </div>
                     <div id="packageQrReader" style="width:100%"></div>
+                    <label class="btn btn-outline-primary w-100 mt-3" for="packageQrPhotoInput"><i data-feather="image"></i> {{ trans('carrier_scan.scan_photo') }}</label>
+                    <input class="visually-hidden" id="packageQrPhotoInput" type="file" accept="image/*" capture="environment">
                     <div id="packageQrFeedback" class="alert d-none mt-3" role="alert"></div>
+                    <div id="packageQrPreview" class="card border-success d-none mt-3"><div class="card-body"><span class="badge bg-success mb-2">{{ trans('carrier_scan.detected') }}</span><h3 class="h5" id="packageQrPreviewCode"></h3><dl class="row small mb-3"><dt class="col-4">{{ trans('carrier_scan.seller') }}</dt><dd class="col-8" id="packageQrPreviewSeller"></dd><dt class="col-4">{{ trans('carrier_scan.recipient') }}</dt><dd class="col-8" id="packageQrPreviewRecipient"></dd><dt class="col-4">{{ trans('carrier_scan.address') }}</dt><dd class="col-8" id="packageQrPreviewAddress"></dd></dl><p class="fw-semibold">{{ trans('carrier_scan.attach_question') }}</p><div class="d-grid gap-2"><button type="button" class="btn btn-success" id="confirmPackageQrClaim">{{ trans('carrier_scan.attach_confirm') }}</button><button type="button" class="btn btn-outline-secondary" id="cancelPackageQrClaim">{{ trans('carrier_scan.scan_again') }}</button></div></div></div>
                     {% if isCarrierOrganization %}<hr><details><summary class="fw-semibold">{{ trans('carrier_fallback.title') }}</summary><p class="small text-muted mt-2">{{ trans('carrier_fallback.help') }}</p><form method="post" enctype="multipart/form-data" class="carrier-manual-claim-form"><input type="hidden" name="action" value="carrier_manual_secure_claim"><input type="hidden" name="latitude"><input type="hidden" name="longitude"><input class="form-control mb-2" name="secure_package_token" placeholder="{{ trans('carrier_fallback.code') }}" required><input class="form-control mb-2" type="file" name="manual_claim_photo" accept="image/jpeg,image/png,image/webp" capture="environment" required><button class="btn btn-outline-success w-100">{{ trans('carrier_fallback.accept') }}</button></form></details>{% endif %}
                 </div>
             </div>
@@ -329,6 +332,8 @@
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 let packageScanner = null;
+let packageScanBusy = false;
+let pendingPackageScan = null;
 const assignedPackageTokens = {{ assignedPackageTokens|json_encode|raw }};
 const isCarrierOrganization = {{ isCarrierOrganization ? 'true' : 'false' }};
 const scannedCarrierPackageId={{ scannedPackageId|default(0)|json_encode|raw }};
@@ -367,19 +372,27 @@ function captureLiveQrFrame() {
     return new Promise(function(resolve){canvas.toBlob(resolve,'image/jpeg',0.88);});
 }
 
-function openAssignedPackageFromQr(decodedText) {
+function setPackagePreviewValue(id,value){const element=document.getElementById(id);if(element)element.textContent=value||'-';}
+function resumePackageScanner(){packageScanBusy=false;pendingPackageScan=null;document.getElementById('packageQrPreview').classList.add('d-none');if(!packageScanner)return;if(packageScanner.getState&&packageScanner.getState()===3){try{packageScanner.resume();return;}catch(error){}}if(!packageScanner.isScanning)startPackageCamera();}
+
+function startPackageCamera(){if(!packageScanner||packageScanner.isScanning)return Promise.resolve();return packageScanner.start({facingMode:'environment'},{fps:15,aspectRatio:1.333333,disableFlip:false,qrbox:function(width,height){const edge=Math.max(220,Math.floor(Math.min(width,height)*0.78));return{width:edge,height:edge};}},openAssignedPackageFromQr).catch(function(){showPackageScanFeedback({{ trans('store_logistics.camera_permission_required')|json_encode|raw }},'warning');});}
+
+async function previewCarrierPackage(token,photo){
+    const data=new FormData();data.append('action','carrier_qr_preview');data.append('qr_token',token);
+    const response=await fetch(window.location.href,{method:'POST',body:data,credentials:'same-origin',headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}});
+    const payload=await response.json();if(!response.ok||!payload.success)throw new Error(payload.message||'Unable to read package');
+    pendingPackageScan={token:token,photo:photo};setPackagePreviewValue('packageQrPreviewCode',payload.package.code);setPackagePreviewValue('packageQrPreviewSeller',payload.package.seller);setPackagePreviewValue('packageQrPreviewRecipient',payload.package.recipient);setPackagePreviewValue('packageQrPreviewAddress',payload.package.address);document.getElementById('packageQrPreview').classList.remove('d-none');showPackageScanFeedback(payload.message,'success');
+}
+
+async function openAssignedPackageFromQr(decodedText,decodedResult,photoOverride) {
+    if(packageScanBusy)return;
     const token = extractPackageToken(decodedText);
     const row = Array.from(document.querySelectorAll('[data-public-token]')).find(function (candidate) {
         return candidate.dataset.publicToken && candidate.dataset.publicToken === token;
     });
     if (!row) {
         if (isCarrierOrganization && token) {
-            const claim = async function(position) {
-                const photo=await captureLiveQrFrame();if(!photo){showPackageScanFeedback({{ trans('store_logistics.qr_photo_failed')|json_encode|raw }},'danger');return;}
-                const data=new FormData();data.append('action','carrier_qr_claim');data.append('qr_token',token);data.append('qr_photo',photo,'qr-pickup.jpg');if(position){data.append('latitude',position.coords.latitude);data.append('longitude',position.coords.longitude);}
-                fetch(window.location.href,{method:'POST',body:data,credentials:'same-origin',headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}}).then(async function(response){const payload=await response.json();if(!response.ok||!payload.success)throw new Error(payload.message||'Unable to accept package');showPackageScanFeedback(payload.message,'success');setTimeout(function(){const next=new URL(window.location.href);next.searchParams.set('scanned_package',payload.package_id);window.location.href=next.toString()},450)}).catch(function(error){showPackageScanFeedback(error.message,'danger')});
-            };
-            if(navigator.geolocation)navigator.geolocation.getCurrentPosition(claim,function(){claim(null)},{enableHighAccuracy:true,timeout:7000});else claim(null);
+            packageScanBusy=true;try{if(packageScanner&&packageScanner.pause)packageScanner.pause(true);const photo=photoOverride||await captureLiveQrFrame();if(!photo)throw new Error({{ trans('store_logistics.qr_photo_failed')|json_encode|raw }});await previewCarrierPackage(token,photo);}catch(error){showPackageScanFeedback(error.message,'danger');resumePackageScanner();}
             return;
         }
         const assignment = assignedPackageTokens[token] || null;
@@ -407,18 +420,22 @@ function openAssignedPackageFromQr(decodedText) {
     }
 }
 
+document.getElementById('confirmPackageQrClaim').addEventListener('click',function(){if(!pendingPackageScan||!pendingPackageScan.photo)return;const button=this;button.disabled=true;const claim=function(position){const data=new FormData();data.append('action','carrier_qr_claim');data.append('qr_token',pendingPackageScan.token);data.append('qr_photo',pendingPackageScan.photo,'qr-pickup.jpg');if(position){data.append('latitude',position.coords.latitude);data.append('longitude',position.coords.longitude);}fetch(window.location.href,{method:'POST',body:data,credentials:'same-origin',headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}}).then(async function(response){const payload=await response.json();if(!response.ok||!payload.success)throw new Error(payload.message||'Unable to accept package');showPackageScanFeedback(payload.message,'success');setTimeout(function(){const next=new URL(window.location.href);next.searchParams.set('scanned_package',payload.package_id);window.location.href=next.toString()},350)}).catch(function(error){button.disabled=false;showPackageScanFeedback(error.message,'danger');});};if(navigator.geolocation)navigator.geolocation.getCurrentPosition(claim,function(){claim(null)},{enableHighAccuracy:true,timeout:5000});else claim(null);});
+document.getElementById('cancelPackageQrClaim').addEventListener('click',resumePackageScanner);
+document.getElementById('packageQrPhotoInput').addEventListener('change',async function(){const file=this.files&&this.files[0];if(!file||!packageScanner)return;packageScanBusy=true;try{if(packageScanner.isScanning)await packageScanner.stop();const decoded=await packageScanner.scanFile(file,true);packageScanBusy=false;await openAssignedPackageFromQr(decoded,null,file);}catch(error){packageScanBusy=false;showPackageScanFeedback(error.message||{{ trans('carrier_scan.photo_failed')|json_encode|raw }},'danger');}finally{this.value='';}});
+
 document.getElementById('packageScannerModal').addEventListener('shown.bs.modal', function () {
     if (!window.Html5Qrcode) {
         showPackageScanFeedback({{ trans('store_logistics.camera_unavailable')|json_encode|raw }}, 'warning');
         return;
     }
-    packageScanner = packageScanner || new Html5Qrcode('packageQrReader');
-    packageScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } }, openAssignedPackageFromQr)
-        .catch(function () { showPackageScanFeedback({{ trans('store_logistics.camera_permission_required')|json_encode|raw }}, 'warning'); });
+    packageScanner = packageScanner || new Html5Qrcode('packageQrReader',{formatsToSupport:[Html5QrcodeSupportedFormats.QR_CODE],verbose:false});
+    startPackageCamera();
 });
 
 document.getElementById('packageScannerModal').addEventListener('hidden.bs.modal', function () {
     if (packageScanner && packageScanner.isScanning) packageScanner.stop().catch(function () {});
+    packageScanBusy=false;pendingPackageScan=null;document.getElementById('packageQrPreview').classList.add('d-none');
 });
 
 function driverPostLocation(taskId, position) {

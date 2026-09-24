@@ -8790,6 +8790,7 @@
         "footer_product": "Plataforma de logística, tracking y entregas"
     },
     "billing_overview.payment_status_required": "Método de pago requerido",
+    "carrier_scan": {"scan_photo":"Escanear desde una foto","detected":"Paquete detectado","seller":"Vendedor","recipient":"Destinatario","address":"Destino","attach_question":"¿Deseas anexar este paquete a tu empresa de envíos como recibido?","attach_confirm":"Sí, recibir paquete","scan_again":"Escanear otro paquete","photo_failed":"No se pudo leer el QR de esta foto."},
     "billing_actions": {"online_available":"Pago en línea disponible con la transportadora","view_proof":"Ver comprobante","confirm_payment":"Confirmar pago"},
     "carrier_fallback": {"title":"¿La cámara no funciona? Usa el código seguro","help":"Ingresa el token seguro completo impreso junto al QR. La foto del paquete y la relación autorizada siguen siendo obligatorias.","code":"Token seguro del paquete","accept":"Aceptar con código seguro"},
     "payment_center": {"platform_balance":"Saldo de uso de OPHYTRACK","platform_balance_help":"Los cargos por paquete se acumulan en BRL. Stripe se habilita al alcanzar R$ 0,50.","pay_stripe":"Pagar con tarjeta guardada","driver_settlements":"Pagos a repartidores","driver_review_help":"Revisa el comprobante y acéptalo solamente después de confirmar el pago.","business_payout_help":"Sube el comprobante. El repartidor debe aceptarlo para cerrar el pago.","driver":"Repartidor / pagador","accept":"Aceptar","reject":"Rechazar","no_driver_payouts":"Todavía no hay pagos a repartidores."},
