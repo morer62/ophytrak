@@ -161,4 +161,24 @@ test('locked logistics guides a new seller through activation', async ({ page })
     await expect(page.locator('body')).not.toContainText(/(?:store_orders|store_logistics|planner_hub|ui)\.[a-z0-9_.-]+/i);
     await expect(page.locator('body')).not.toContainText(/Ãƒ.|Ã‚.|Ã¢â‚¬|ï¿½/);
   }
+
+  const clientEmail = `qa.client.modal.${runId}@example.test`;
+  await page.goto(`${baseURL}/panel/planner-hub/management/users/create?locale=es`, { waitUntil: 'domcontentloaded' });
+  await page.locator('#startFlowCard button').click();
+  await page.locator('.user-type-card[data-type="5"]').click();
+  await page.locator('#emailInput').fill(clientEmail);
+  await page.locator('#validateEmailBtn').click();
+  await expect(page.locator('#mainFormCard')).toBeVisible({ timeout: 15000 });
+  await page.locator('#create-user-form [name="name"]').fill('Cliente');
+  await page.locator('#create-user-form [name="lastname"]').fill('Logística');
+  await page.locator('#create-user-form [name="phone"]').fill('+5511999999999');
+  await page.locator('#create-user-form [name="password"]').fill(password);
+  await page.locator('#create-user-form [name="password_confirm"]').fill(password);
+  await page.locator('#create-user-form button[type="submit"]').click();
+  await expect(page.locator('#createEstimateModal')).toBeVisible({ timeout: 30000 });
+  await expect(page.locator('#createEstimateModal')).toContainText('Cliente creado');
+  await expect(page.locator('#createEstimateModal')).toContainText('¿Quieres crear ahora su primer pedido de tienda?');
+  await expect(page.locator('#createEstimateModal')).not.toContainText(/Ã|Â|â€|ï¿½/);
+  await page.locator('#createEstimateModal .btn-primary').click();
+  await expect(page).toHaveURL(/panel\/planner-hub\/store\/orders\/manual\?client_id=\d+/);
 });

@@ -7762,6 +7762,10 @@
         "import_orders": "Importar órdenes"
     },
     "store_orders": {
+        "client_created_title": "Cliente creado",
+        "client_created_success": "El cliente se creó correctamente:",
+        "client_created_order_prompt": "¿Quieres crear ahora su primer pedido de tienda?",
+        "client_created_order_action": "Sí, crear pedido",
         "package_control": "Control de paquetes",
         "find_package": "Buscar un paquete",
         "find_package_help": "Busca usando el identificador impreso en la etiqueta o el numero de pedido.",

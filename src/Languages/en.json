@@ -7753,6 +7753,10 @@
         "import_orders": "Import orders"
     },
     "store_orders": {
+        "client_created_title": "Client created",
+        "client_created_success": "The client was created successfully:",
+        "client_created_order_prompt": "Would you like to create their first store order now?",
+        "client_created_order_action": "Yes, create store order",
         "package_control": "Package control",
         "find_package": "Find a package",
         "find_package_help": "Search using the identifier printed on the label or the order number.",

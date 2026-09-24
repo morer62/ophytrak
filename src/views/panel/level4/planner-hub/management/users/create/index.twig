@@ -431,17 +431,17 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="createEstimateLabel">Create Estimate</h5>
+        <h5 class="modal-title" id="createEstimateLabel">{{ product_mode == 'ophytrack' ? trans('store_orders.client_created_title') : trans('auto_views.8a7a12144042ee70') }}</h5>
         <button type="button" class="btn-close" onclick="closeCreateEstimateModal()">×</button>
       </div>
       <div class="modal-body">
-        <p>Client <strong>{{ newClientForEstimate.name }} {{ newClientForEstimate.lastname }}</strong> ({{ newClientForEstimate.email }}) was created successfully.</p>
-        <p>Would you like to create an estimate for this client now?</p>
+        <p>{{ trans('store_orders.client_created_success') }} <strong>{{ newClientForEstimate.name }} {{ newClientForEstimate.lastname }}</strong> ({{ newClientForEstimate.email }}).</p>
+        <p>{{ product_mode == 'ophytrack' ? trans('store_orders.client_created_order_prompt') : trans('auto_views.b2707ede6e940333') }}</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeCreateEstimateModal()">No, later</button>
+        <button type="button" class="btn btn-secondary" onclick="closeCreateEstimateModal()">{{ trans('auto_views.7b20ff0fca14aed8') }}</button>
         <button type="button" class="btn btn-primary" onclick="createEstimateForClient()">
-            Yes, create estimate
+            {{ product_mode == 'ophytrack' ? trans('store_orders.client_created_order_action') : trans('auto_views.2dd0e89399b011ea') }}
         </button>
 
     </div>
@@ -919,7 +919,7 @@ function createEstimateForClient(){
 
 function goToCreateEstimate(clientId, clientEmail){
     const base = '{{ base_url|default("/vnv-venue") }}';
-    let url = base + '/panel/planner-hub/management/orders/orders/create?client_id=' + encodeURIComponent(clientId);
+    let url = base + '{{ product_mode == "ophytrack" ? "/panel/planner-hub/store/orders/manual" : "/panel/planner-hub/management/orders/orders/create" }}?client_id=' + encodeURIComponent(clientId);
     if (clientEmail) {
         url += '&client_email=' + encodeURIComponent(clientEmail);
     }
