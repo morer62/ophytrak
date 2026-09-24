@@ -84,6 +84,7 @@ $router->get(function () {
         'completedTasks' => $completedTasks,
         'allDeliveryTasks' => array_merge($deliveryTasks, $incidentTasks, $completedTasks),
         'assignedPackageTokens' => $assignedPackageTokens,
+        'scannedPackageId' => max(0, (int)($_GET['scanned_package'] ?? 0)),
         'isCarrierOrganization' => $isCarrierOrganization,
         'carrierPackages' => $isCarrierOrganization ? $carrierRepo->getForCarrier($ownerId, (int)$user->getId()) : [],
     ]);
