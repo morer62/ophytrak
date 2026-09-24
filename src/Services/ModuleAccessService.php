@@ -111,7 +111,19 @@ class ModuleAccessService
             $addonSlugs[] = $this->modulesRepository->getCanonicalSlug((string)$addonSlug);
         }
 
-        return array_values(array_unique(array_merge($baseSlugs, $addonSlugs)));
+        $activeSlugs = array_values(array_unique(array_merge($baseSlugs, $addonSlugs)));
+        if (ProductProfileService::isOphytrack() && (
+            in_array('store_delivery_tracking', $activeSlugs, true)
+            || in_array('store_logistics', $activeSlugs, true)
+        )) {
+            $activeSlugs = array_merge($activeSlugs, [
+                'inventory_storage',
+                'advanced_storage_qr_inventory',
+                'marketplace_connectors',
+            ]);
+        }
+
+        return array_values(array_unique($activeSlugs));
     }
 
     public function userHasModule(int $userId, string $moduleSlug): bool
@@ -121,6 +133,10 @@ class ModuleAccessService
         }
 
         $moduleSlug = $this->modulesRepository->normalizeSlug($moduleSlug);
+
+        if (ProductProfileService::includedWithStoreLogistics($moduleSlug)) {
+            $moduleSlug = 'store_delivery_tracking';
+        }
 
         if (in_array($moduleSlug, $this->getBaseModuleSlugs(), true)) {
             return true;
@@ -269,7 +285,15 @@ class ModuleAccessService
 
     private function moduleUnlocks(string $moduleSlug): array
     {
-        return match ($this->modulesRepository->normalizeSlug($moduleSlug)) {
+        $normalizedSlug = $this->modulesRepository->normalizeSlug($moduleSlug);
+        if (ProductProfileService::isOphytrack() && $normalizedSlug === 'store_delivery_tracking') {
+            return [
+                'Store', 'Products', 'Store orders', 'Fulfillment', 'Delivery tracking', 'Customers', 'Store reports',
+                'Warehouse', 'QR inventory', 'Shopify', 'Mercado Libre', 'TikTok Shop',
+            ];
+        }
+
+        return match ($normalizedSlug) {
             'services' => ['CRM', 'Clients', 'Orders', 'Contracts', 'Team', 'Payroll basics', 'Team Chat', 'Service reports'],
             'store_delivery_tracking' => ['Store', 'Products', 'Store orders', 'Fulfillment', 'Delivery tracking', 'Customers', 'Store reports'],
             'inventory_storage' => ['Advanced storage', 'QR inventory', 'Containers', 'Items', 'Equipment tracking'],

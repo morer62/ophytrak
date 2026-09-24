@@ -66,12 +66,34 @@
 
       <div class="d-flex flex-column flex-sm-row gap-2">
         <a href="{{ path('panel/membership/manage?payment_currency=' ~ selectedCurrency) }}" class="btn btn-dark btn-lg fw-bold">Review modules</a>
-        <a href="{{ path('panel/cards') }}" class="btn btn-outline-dark btn-lg fw-bold">Add payment method</a>
+        <a href="{{ path('panel/cards?activation_flow=store_delivery_tracking') }}" class="btn btn-outline-dark btn-lg fw-bold">{{ trans('billing.activation_payment_cta')|default('Add payment method') }}</a>
         <a href="{{ path('panel/onboarding') }}" class="btn btn-outline-secondary btn-lg fw-bold">Back to onboarding</a>
       </div>
     </div>
   </section>
 </main>
+
+<div class="modal fade" id="activationGuideModal" tabindex="-1" aria-labelledby="activationGuideTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+      <div class="p-4 p-md-5 text-center">
+        <div class="activation-guide-icon mx-auto mb-3"><i class="fa-solid {{ (activationReady or hasPaymentMethod) ? 'fa-rocket' : 'fa-lock-open' }}"></i></div>
+        {% if activationReady or hasPaymentMethod %}
+          <p class="text-uppercase fw-bold text-success small mb-2">{{ trans('billing.activation_ready_kicker')|default('Payment method ready') }}</p>
+          <h2 class="h3 fw-bold mb-3" id="activationGuideTitle">{{ trans('billing.activation_ready_title')|default('Activate Store + Logistics?') }}</h2>
+          <p class="text-muted mb-4">{{ trans('billing.activation_ready_body')|default('One plan unlocks your store, warehouse, marketplace connectors and delivery operation.') }}</p>
+          <a href="{{ path('panel/membership/modules/review?module_slug=store_delivery_tracking&payment_currency=' ~ selectedCurrency) }}" class="btn btn-dark btn-lg w-100 fw-bold">{{ trans('billing.activation_activate_cta')|default('Review and activate') }}</a>
+        {% else %}
+          <p class="text-uppercase fw-bold text-primary small mb-2">{{ trans('billing.activation_step_kicker')|default('Activation - Step 1 of 2') }}</p>
+          <h2 class="h3 fw-bold mb-3" id="activationGuideTitle">{{ trans('billing.activation_title')|default('Activate your logistics workspace') }}</h2>
+          <p class="text-muted mb-4">{{ trans('billing.activation_body')|default('First add a payment method. Then we will bring you back to confirm activation.') }}</p>
+          <a href="{{ path('panel/cards?activation_flow=store_delivery_tracking') }}" class="btn btn-dark btn-lg w-100 fw-bold">{{ trans('billing.activation_payment_cta')|default('Continue to payment method') }}</a>
+        {% endif %}
+        <button type="button" class="btn btn-link text-muted mt-2" data-bs-dismiss="modal">{{ trans('billing.activation_later')|default('Not now') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <style>
   .locked-module-panel {
@@ -85,6 +107,16 @@
       radial-gradient(circle at top right, rgba(45, 212, 191, .18), transparent 36%),
       linear-gradient(135deg, #ffffff, #f8fafc);
     box-shadow: 0 24px 80px rgba(15, 23, 42, .12);
+  }
+  .activation-guide-icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    color: #fff;
+    background: linear-gradient(135deg, #087cff, #0f766e);
+    font-size: 1.5rem;
   }
   .locked-module-icon {
     display: grid;
@@ -138,4 +170,10 @@
     }
   }
 </style>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('activationGuideModal');
+    if (modal && window.bootstrap) bootstrap.Modal.getOrCreateInstance(modal).show();
+  });
+</script>
 {% endblock %}

@@ -49,7 +49,16 @@ final class ProductProfileService
 
     public static function allowedAddonSlugs(): array
     {
-        return ['store_delivery_tracking', 'inventory_storage', 'marketplace_connectors'];
+        return ['store_delivery_tracking'];
+    }
+
+    public static function includedWithStoreLogistics(string $slug): bool
+    {
+        return self::isOphytrack() && in_array($slug, [
+            'inventory_storage',
+            'advanced_storage_qr_inventory',
+            'marketplace_connectors',
+        ], true);
     }
 
     public static function allowsAddon(string $slug): bool

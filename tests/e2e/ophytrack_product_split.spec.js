@@ -80,3 +80,56 @@ test('membership billing is locked to Brazilian reais', async ({ page }) => {
   expect(submittedCurrencies.length).toBeGreaterThan(0);
   expect(new Set(submittedCurrencies)).toEqual(new Set(['BRL']));
 });
+
+test('locked logistics guides a new seller through activation', async ({ page }) => {
+  const runId = Date.now().toString();
+  const email = `qa.activation.${runId}@example.test`;
+
+  await page.goto(`${baseURL}/signup`, { waitUntil: 'domcontentloaded' });
+  await page.locator('[name="company_name"]').fill(`QA Activation ${runId}`);
+  await page.locator('[data-signup-next]').click();
+  await page.locator('[name="business_nature"]').selectOption('commerce_operations');
+  await page.locator('[name="business_operation_type"]').selectOption('store_delivery_tracking');
+  await page.locator('[data-signup-next]').click();
+  await page.locator('[name="name"]').fill('Activation');
+  await page.locator('[name="lastname"]').fill('Seller');
+  await page.locator('[name="email"]').fill(email);
+  await page.locator('[name="phone_local_number"]').fill('2025550177');
+  await page.locator('[data-signup-next]').click();
+  await page.locator('[name="password"]').fill(password);
+  await page.locator('[name="passwordConfirmation"]').fill(password);
+  await page.locator('[name="terms"]').check();
+  await page.locator('[data-signup-submit]').click();
+  await expect(page.locator('[data-signup-success-modal]')).toHaveClass(/is-open/, { timeout: 30000 });
+
+  await page.goto(`${baseURL}/login`, { waitUntil: 'domcontentloaded' });
+  await page.locator('[name="email"]').fill(email);
+  await page.locator('[name="password"]').fill(password);
+  await page.locator('form').filter({ has: page.locator('[name="email"]') }).locator('button[type="submit"]').click();
+  await expect(page).toHaveURL(/panel/);
+
+  await page.goto(`${baseURL}/panel/planner-hub/institution-profile`, { waitUntil: 'domcontentloaded' });
+  await page.locator('[name="address_line1"]').fill('500 Logistics Avenue');
+  await page.locator('[name="city"]').fill('Miami');
+  await page.locator('[name="state"]').fill('FL');
+  await page.locator('[name="zip"]').fill('33101');
+  await page.locator('[name="short_description"]').fill('QA logistics activation workspace.');
+  await page.getByRole('button', { name: 'Save Profile' }).click();
+  await page.waitForLoadState('domcontentloaded');
+
+  await page.goto(`${baseURL}/panel/planner-hub/no-access?module=inventory_storage`, { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#activationGuideModal')).toBeVisible();
+  await expect(page.locator('#activationGuideTitle')).toContainText(/logistics|logistico|logistique/i);
+  await expect(page.locator('.locked-module-panel')).toContainText('Store + Logistics');
+  await expect(page.locator('.locked-module-panel')).toContainText(/Shopify/);
+  const continueLink = page.locator('#activationGuideModal a[href*="activation_flow=store_delivery_tracking"]');
+  await expect(continueLink).toBeVisible();
+  await continueLink.click();
+  await expect(page).toHaveURL(/panel\/cards\?activation_flow=store_delivery_tracking/);
+  await expect(page.locator('body')).toContainText(/Step 1 of 2|Paso 1 de 2|Etapa 1 de 2|Etape 1 sur 2/i);
+
+  await page.goto(`${baseURL}/panel/planner-hub/no-access?module=store_delivery_tracking&activation_ready=1`, { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#activationGuideModal')).toBeVisible();
+  await expect(page.locator('#activationGuideTitle')).toContainText(/Activate Store|activar Tienda|Ativar Loja|Activer Boutique/i);
+  await expect(page.locator('#activationGuideModal a[href*="membership/modules/review"]')).toBeVisible();
+});

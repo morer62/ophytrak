@@ -5,17 +5,24 @@ use App\Utils\TemplateResponse;
 use App\Services\ModuleAccessService;
 use App\Services\OphyraPricingService;
 use App\Services\UserCurrencyPreferenceService;
+use App\Services\ProductProfileService;
+use App\Repositories\UserCardsRepository;
 
 $router = new Router();
 
 $router->get(function () {
     $module = trim((string)($_GET['module'] ?? 'module'));
     $required = array_filter(array_map('trim', explode(',', (string)($_GET['required'] ?? $module))));
+    if (ProductProfileService::includedWithStoreLogistics($module)) {
+        $module = 'store_delivery_tracking';
+        $required = ['store_delivery_tracking'];
+    }
     $pricing = new OphyraPricingService();
     $currencyPreference = new UserCurrencyPreferenceService($pricing);
     $access = new ModuleAccessService();
     $user = \App\Services\LoginService::getSession();
     $ownerId = $user ? (int)($user->getOwner() ?: $user->getId()) : 0;
+    $hasPaymentMethod = $ownerId > 0 && (new UserCardsRepository())->getMainCardByUserId($ownerId) !== null;
     $selectedCurrency = $currencyPreference->resolveCurrency($ownerId, $_GET['payment_currency'] ?? null);
     $catalog = $access->getLockedModuleCatalog($ownerId, $selectedCurrency);
 
@@ -32,6 +39,8 @@ $router->get(function () {
         'moduleCatalog' => $catalog,
         'pricing' => $pricing->publicPricing($selectedCurrency),
         'selectedCurrency' => $selectedCurrency,
+        'hasPaymentMethod' => $hasPaymentMethod,
+        'activationReady' => ($_GET['activation_ready'] ?? '') === '1',
     ]);
 });
 

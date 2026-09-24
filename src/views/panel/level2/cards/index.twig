@@ -2,6 +2,12 @@
 
 {% block body %}
 <main class="container mt-4">
+    {% if activationFlow %}
+        <div class="alert alert-info rounded-4 border-0 shadow-sm mb-4">
+            <strong>{{ trans('billing.activation_payment_step')|default('Step 1 of 2: add your payment method.') }}</strong>
+            {{ trans('billing.activation_payment_help')|default('After saving it, we will take you back to activate Store + Logistics.') }}
+        </div>
+    {% endif %}
     <section class="p-4 p-lg-5 rounded-4 shadow-sm mb-4 text-white" style="background: linear-gradient(135deg, #0f172a, #0f766e); color: #fff;">
         <div class="row align-items-center g-4">
             <div class="col-lg-8">
@@ -171,7 +177,7 @@
 
         const result = await res.json();
         if (result.success) {
-            window.location.reload();
+            window.location.href = result.redirect || window.location.href;
             return;
         }
 

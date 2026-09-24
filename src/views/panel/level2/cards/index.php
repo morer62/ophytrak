@@ -41,7 +41,8 @@ $router->get(function () {
         "cards" => $cards,
         "saved_methods" => $savedMethods,
         "billing" => $billing,
-        "websiteUrl" => $_ENV["APP_URL"] ?? "https://ophyra.com"
+        "websiteUrl" => $_ENV["APP_URL"] ?? "https://ophyra.com",
+        "activationFlow" => ($_GET['activation_flow'] ?? '') === 'store_delivery_tracking' ? 'store_delivery_tracking' : null,
     ]);
 });
 
@@ -122,7 +123,10 @@ $router->post(function () {
         TranslationService::detectLocale();
         return JsonResponse::createResponse([
             "success" => true,
-            "card" => $customer
+            "card" => $customer,
+            "redirect" => ($_GET['activation_flow'] ?? '') === 'store_delivery_tracking'
+                ? LocationUtils::pathFor('panel/planner-hub/no-access?module=store_delivery_tracking&activation_ready=1')
+                : null,
         ]);
     } catch (Exception $e) {
         return JsonResponse::createResponse([

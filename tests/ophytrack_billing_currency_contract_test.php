@@ -21,6 +21,9 @@ $assertSame = static function (mixed $expected, mixed $actual, string $message) 
 };
 
 $assertSame('BRL', ProductProfileService::billingCurrency(), 'OPHYTRACK must declare BRL as its billing currency.');
+$assertSame(['store_delivery_tracking'], ProductProfileService::allowedAddonSlugs(), 'OPHYTRACK must sell Store + Logistics as its single launch plan.');
+$assertSame(true, ProductProfileService::includedWithStoreLogistics('inventory_storage'), 'Warehouse must be included with Store + Logistics.');
+$assertSame(true, ProductProfileService::includedWithStoreLogistics('marketplace_connectors'), 'Marketplace connectors must be included with Store + Logistics.');
 $assertSame('BRL', $pricing->getDefaultCurrency(), 'OPHYTRACK default billing currency must be BRL.');
 $assertSame(['BRL'], $pricing->allowedOphyraPaymentCurrencies(), 'OPHYTRACK must expose only BRL for membership payments.');
 $assertSame('BRL', $pricing->normalizePaymentCurrency('EUR'), 'A manipulated EUR payment request must resolve to BRL.');
@@ -35,9 +38,11 @@ foreach (['path', 'trans', 'asset', 'asset_for', 'url', 'csrf_token'] as $functi
     $twig->addFunction(new Twig\TwigFunction($functionName, static fn (...$arguments) => ''));
 }
 foreach ([
+    'panel/level2/cards/index.twig',
     'panel/level2/home/index.twig',
     'panel/level2/membership/manage/index.twig',
     'panel/level2/membership/modules/review/index.twig',
+    'panel/level2/planner-hub/no-access/index.twig',
     'public/planner-hub/index.twig',
 ] as $template) {
     try {
