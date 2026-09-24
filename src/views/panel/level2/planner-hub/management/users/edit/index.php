@@ -15,6 +15,7 @@ use App\Utils\LocationUtils;
 use App\Utils\MessageUtil;
 use App\Utils\Router;
 use App\Utils\TemplateResponse;
+use App\Services\ProductProfileService;
 
 $router = new Router();
 
@@ -381,7 +382,7 @@ $router->post(function () {
         $newData["role_id"] = (int) $_POST["role_id"];
     }
 
-    if ($user->level == 4 && isset($_POST["contract_detail"])) {
+    if (!ProductProfileService::isOphytrack() && $user->level == 4 && isset($_POST["contract_detail"])) {
         $institutionUpdateData["contract_detail"] = $_POST["contract_detail"];
         $newData["contract_detail"] = $_POST["contract_detail"];
     }

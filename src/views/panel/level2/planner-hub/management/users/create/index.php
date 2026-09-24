@@ -371,6 +371,10 @@ $router->post(function () {
     if (ProductProfileService::isOphytrack()) {
         $_POST['role_id'] = '';
         $_POST['link_role_id'] = '';
+        $_POST['contract_detail'] = '';
+        $_POST['contract_template_id'] = '';
+        $_POST['link_contract_detail'] = '';
+        $_POST['link_contract_template_id'] = '';
     }
 
     if (!$currentInstitution) {

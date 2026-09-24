@@ -295,6 +295,14 @@ class Kernel
                         LocationUtils::redirectInternal('panel/home');
                     }
 
+                    $currentProductPath = implode('/', $urlViews);
+                    if (\App\Services\ProductProfileService::isOphytrack()
+                        && (str_starts_with($currentProductPath, 'panel/planner-hub/management/users/contracts')
+                            || str_starts_with($currentProductPath, 'panel/planner-hub/team/contracts'))) {
+                        \App\Utils\MessageUtil::setMessage('Employment contracts are not required in OPHYTRACK.');
+                        LocationUtils::redirectInternal('panel/home');
+                    }
+
                     if (
                         $user->getLevel() === 4 &&
                         isset($urlViews[1], $urlViews[2], $urlViews[3]) &&

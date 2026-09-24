@@ -5,7 +5,7 @@
 <li class="sidebar-item"><a class="sidebar-link text-danger" href="{{ path('panel/ophytrack/payments') }}"><i data-feather="dollar-sign"></i><span>{{ trans('carrier_ui.pending_payments') }}</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/team/chat?context=store') }}"><i data-feather="message-circle"></i><span>{{ trans('nav.inbox') }}</span></a></li>
 {% if 'storage' in level4_permission_modules %}<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/management/storage') }}"><i data-feather="archive"></i><span>{{ trans('nav.warehouse') }}</span></a></li>{% endif %}
-{% if 'payroll' in level4_permission_modules %}<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/team/payroll/clock') }}"><i data-feather="clock"></i><span>{{ trans('ui.hours') }}</span></a></li>{% endif %}
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/team/payroll/clock') }}"><i data-feather="clock"></i><span>{{ trans('ui.hours') }}</span></a></li>
 {% if level4_permission_modules|length %}<li class="sidebar-header">{{ trans('team_scope.delegated_admin') }}</li>{% endif %}
 {% if 'users' in level4_permission_modules %}<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/management/users') }}"><i data-feather="users"></i><span>{{ trans('carrier_ui.drivers') }}</span></a></li>{% endif %}
 {% if 'orders' in level4_permission_modules %}<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/management/orders') }}"><i data-feather="package"></i><span>{{ trans('ui.assigned_orders') }}</span></a></li>{% endif %}

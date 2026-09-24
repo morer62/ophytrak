@@ -8,6 +8,9 @@
     border-color: #dee2e6;
     color: #6c757d;
 }
+{% if product_mode == 'ophytrack' %}
+.mb-3:has(> textarea[name="contract_detail"]) { display: none; }
+{% endif %}
 </style>
 {% endblock %}
 

@@ -14,6 +14,7 @@ use App\Services\TranslationService;
 use App\Repositories\InstitutionProfileRepository;
 use App\Repositories\UserInstitutionsRepository;
 use App\Repositories\OrdersTeamTasksRepository;
+use App\Services\ProductProfileService;
 
 date_default_timezone_set('UTC');
 
@@ -104,8 +105,9 @@ $router->get(function () use ($repo, $user): string {
     $logs = $repo->getActiveLogsByUserAndOwner($user->getId(), $currentInstitutionOwner);
 
     $activeLog = count($logs) > 0 ? $logs[0] : null;
-    $contractService = new TeamMemberContractService();
-    $clockContractStatus = $contractService->getClockContractStatus($user->getId(), (int)$currentInstitutionOwner);
+    $clockContractStatus = ProductProfileService::isOphytrack()
+        ? ['allowed' => true, 'reason' => 'ophytrack_contract_free']
+        : (new TeamMemberContractService())->getClockContractStatus($user->getId(), (int)$currentInstitutionOwner);
 
     $assignedEvents = [];
     if ($isLevel4 && $currentInstitutionOwner) {
@@ -243,8 +245,8 @@ $router->post(callback: function () use ($repo, $user): void {
             LocationUtils::reload();
         }
 
-        $contractService = new TeamMemberContractService();
-        if (!$contractService->isClockInAllowed($user->getId(), $currentInstitutionOwner)) {
+        if (!ProductProfileService::isOphytrack()
+            && !(new TeamMemberContractService())->isClockInAllowed($user->getId(), $currentInstitutionOwner)) {
             MessageUtil::setMessage(TranslationService::trans('planner_hub.team_contract_clock_blocked'), 'Contract required', 'warning');
             LocationUtils::reload();
         }

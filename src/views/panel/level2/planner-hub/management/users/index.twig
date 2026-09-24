@@ -70,7 +70,7 @@
                                 <th>{{ trans('planner_hub.role') }}</th>
                                 <th>{{ trans('planner_hub.hourly_rate') }}</th>
                                 <th>{{ trans('planner_hub.relationship') }}</th>
-                                <th>Contract</th>
+                                {% if product_mode != 'ophytrack' %}<th>Contract</th>{% endif %}
                                 <th>{{ trans('planner_hub.chat_with_clients') }}</th>
                                 <th>{{ trans('planner_hub.resend_email') }}</th>
                                 <th>{{ trans('planner_hub.actions') }}</th>
@@ -105,7 +105,7 @@
                                             <span class="badge bg-secondary">-</span>
                                         {% endif %}
                                     </td>
-                                    <td>
+                                    {% if product_mode != 'ophytrack' %}<td>
                                         {% if member.team_contract %}
                                             <span class="badge bg-{{ member.team_contract.status in ['SIGNED','VALIDATED','MANUALLY_UPLOADED'] ? 'success' : (member.team_contract.status == 'REJECTED' ? 'danger' : 'warning') }}">
                                                 {{ member.team_contract.status }}
@@ -113,7 +113,7 @@
                                         {% else %}
                                             <span class="badge bg-secondary">NOT_ASSIGNED</span>
                                         {% endif %}
-                                    </td>
+                                    </td>{% endif %}
                                     <td>
                                         <form method="post" class="d-inline">
                                             <input type="hidden" name="toggle_chat" value="{{ member.id }}">
@@ -136,7 +136,7 @@
                                     </td>
                                     <td>
                                         <a href="{{ path('panel/planner-hub/management/users/edit?id=' ~ member.id) }}" class="btn btn-sm btn-outline-warning">✏️ {{ trans('planner_hub.edit') }}</a>
-                                        <a href="{{ path('panel/planner-hub/management/users/contracts?id=' ~ member.id) }}" class="btn btn-sm btn-outline-primary">Contracts</a>
+                                        {% if product_mode != 'ophytrack' %}<a href="{{ path('panel/planner-hub/management/users/contracts?id=' ~ member.id) }}" class="btn btn-sm btn-outline-primary">Contracts</a>{% endif %}
                                         <form method="post" class="d-inline">
                                             <input type="hidden" name="id" value="{{ member.id }}">
                                             {% if member.password_updated == 0 %}

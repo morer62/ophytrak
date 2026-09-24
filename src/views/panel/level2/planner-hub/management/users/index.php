@@ -10,6 +10,7 @@ use App\Utils\TemplateResponse;
 use App\Utils\Router;
 use App\Utils\LocationUtils;
 use App\Utils\MessageUtil;
+use App\Services\ProductProfileService;
 
 $router = new Router();
 
@@ -94,10 +95,12 @@ $router->get(function () {
         }
         $teamMembers = array_values($teamMembersById);
 
-        $contractRepo = new \App\Repositories\TeamMemberContractsRepository();
-        $contractStatuses = $contractRepo->getLatestByMembers(array_map(fn($member) => (int)$member->id, $teamMembers), $currentOwnerId);
-        foreach ($teamMembers as $member) {
-            $member->team_contract = $contractStatuses[(int)$member->id] ?? null;
+        if (!ProductProfileService::isOphytrack()) {
+            $contractRepo = new \App\Repositories\TeamMemberContractsRepository();
+            $contractStatuses = $contractRepo->getLatestByMembers(array_map(fn($member) => (int)$member->id, $teamMembers), $currentOwnerId);
+            foreach ($teamMembers as $member) {
+                $member->team_contract = $contractStatuses[(int)$member->id] ?? null;
+            }
         }
         
         $clients = $clientsUsersRepo->getClientsByOwner($currentOwnerId, $filters);

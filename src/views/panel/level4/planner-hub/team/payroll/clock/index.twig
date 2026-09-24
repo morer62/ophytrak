@@ -811,13 +811,12 @@
     </div>
 
     <div class="col-xl-4">
-      {% set contractStatus = clockContractStatus|default({'allowed': false}) %}
-      {% set contractAllowed = contractStatus.allowed|default(false) %}
       <section class="clock-side-card">
         <div class="clock-side-label">{{ trans('planner_hub.clock_timezone') }}</div>
         <div class="clock-side-value" id="clockTimezone">-</div>
       </section>
-      <section class="clock-side-card {% if contractAllowed %}is-approved{% endif %}">
+      {% if product_mode != 'ophytrack' %}{% set contractStatus = clockContractStatus|default({'allowed': false}) %}
+      {% set contractAllowed = contractStatus.allowed|default(false) %}<section class="clock-side-card {% if contractAllowed %}is-approved{% endif %}">
         <div class="clock-side-label">{{ trans('planner_hub.clock_contract_rule') }}</div>
         {% if contractAllowed %}
           <div class="clock-side-value">{{ trans('planner_hub.clock_contract_approved') }}</div>
@@ -826,7 +825,7 @@
           <div class="clock-side-value">{{ trans('planner_hub.clock_contract_required_before_clock_in') }}</div>
           <p class="text-muted mb-0 mt-2 small">{{ trans('planner_hub.team_contract_clock_blocked') }}</p>
         {% endif %}
-      </section>
+      </section>{% endif %}
       {% if isLevel4 and currentInstitution %}
       <section class="clock-side-card">
         <div class="clock-side-label">{{ trans('planner_hub.clock_current_company') }}</div>
