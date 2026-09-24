@@ -7546,6 +7546,7 @@
         "return_review": "An?lise de devolu??o"
     },
     "store_manual": {
+        "postal_code": "CEP",
         "badge": "Central de suporte da loja",
         "title": "Criar pedido da loja",
         "subtitle": "Monte o carrinho do cliente, envie um link de pagamento ou conclua a venda com comprovante manual.",

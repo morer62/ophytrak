@@ -7342,7 +7342,7 @@
         "address_help": "Usa la sugerencia de Google cuando esté disponible para completar ciudad, estado, código postal y país automáticamente.",
         "city": "Ciudad",
         "state": "Estado",
-        "zip": "Código postal",
+        "zip": "CP",
         "country": "País",
         "payment_methods": "Métodos de pago aceptados",
         "about_title": "Descripción / Acerca de",
@@ -7677,6 +7677,7 @@
         "empty_text": "Las órdenes entregadas, completadas y devueltas aparecerán aquí."
     },
     "store_manual": {
+        "postal_code": "CP",
         "badge": "Soporte de tienda",
         "title": "Crear orden de tienda",
         "subtitle": "Arma el carrito del cliente, envía enlace de pago o cierra la venta con comprobante manual.",

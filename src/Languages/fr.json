@@ -7546,6 +7546,7 @@
         "return_review": "Examen du retour"
     },
     "store_manual": {
+        "postal_code": "Code postal",
         "badge": "Support boutique",
         "title": "Créer une commande boutique",
         "subtitle": "Construisez le panier client, envoyez un lien de paiement ou finalisez la vente avec une preuve manuelle.",

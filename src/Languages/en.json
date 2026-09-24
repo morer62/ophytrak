@@ -7668,6 +7668,7 @@
         "empty_text": "Delivered, completed and return orders will appear here."
     },
     "store_manual": {
+        "postal_code": "Postal code",
         "badge": "Store support desk",
         "title": "Create Store order",
         "subtitle": "Build a customer cart, send a payment link, or close the sale with a manual payment proof.",

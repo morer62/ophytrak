@@ -42,21 +42,21 @@
 
     <div class="row mb-3">
         <div class="col-md-4">
-            <label class="form-label">City</label>
+            <label class="form-label">{{ trans('business_profile_builder.city') }}</label>
             <input type="text" name="city" class="form-control" value="{{ profile.city ?? '' }}">
         </div>
         <div class="col-md-4">
-            <label class="form-label">State</label>
+            <label class="form-label">{{ trans('business_profile_builder.state') }}</label>
             <input type="text" name="state" class="form-control" value="{{ profile.state ?? '' }}">
         </div>
         <div class="col-md-4">
-            <label class="form-label">ZIP</label>
+            <label class="form-label">{{ trans('business_profile_builder.zip') }}</label>
             <input type="text" name="zip" class="form-control" value="{{ profile.zip ?? '' }}">
         </div>
     </div>
 
     <div class="mb-4">
-        <label class="form-label">Country</label>
+        <label class="form-label">{{ trans('business_profile_builder.country') }}</label>
         <input type="text" name="country" class="form-control" value="{{ profile.country ?? '' }}">
     </div>
 

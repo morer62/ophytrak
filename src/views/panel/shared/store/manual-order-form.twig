@@ -132,7 +132,7 @@
           <input class="form-control mb-2" name="shipping_city" data-address-part="city" data-address-dependent placeholder="{{ trans('store_manual.city') }}" required disabled>
           <div class="row g-2">
             <div class="col-6"><input class="form-control" name="shipping_state" data-address-part="state" data-address-dependent placeholder="{{ trans('store_manual.state') }}" required disabled></div>
-            <div class="col-6"><input class="form-control" name="shipping_zip" data-address-part="zip" data-address-dependent placeholder="ZIP" required disabled></div>
+            <div class="col-6"><input class="form-control" name="shipping_zip" data-address-part="zip" data-address-dependent placeholder="{{ trans('store_manual.postal_code') }}" aria-label="{{ trans('store_manual.postal_code') }}" autocomplete="postal-code" required disabled></div>
           </div>
           <input class="form-control mt-2" name="shipping_country" data-address-part="country" data-address-dependent placeholder="{{ trans('store_manual.country') }}" required disabled>
           <label class="form-label mt-3" for="shippingInstructions">{{ trans('store_manual.shipping_instructions') }}</label>

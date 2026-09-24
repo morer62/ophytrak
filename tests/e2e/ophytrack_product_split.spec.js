@@ -193,6 +193,8 @@ test('locked logistics guides a new seller through activation', async ({ page })
   await expect(page.locator('body')).not.toContainText(/\b(?:USD|EUR|GBP)\b/);
   await expect(page.locator('body')).not.toContainText(/(^|[^R])\$\d/);
   await expect(page.locator('#display_currency')).toHaveCount(0);
+  await expect(page.locator('[name="shipping_zip"]')).toHaveAttribute('placeholder', 'CP');
+  await expect(page.locator('[name="shipping_zip"]')).toHaveAttribute('autocomplete', 'postal-code');
 
   await page.goto(`${baseURL}/panel/planner-hub/settings/payment-providers?locale=es`, { waitUntil: 'domcontentloaded' });
   await expect(page.locator('select[name="currency"]')).toHaveCount(0);
