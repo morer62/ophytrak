@@ -7546,6 +7546,7 @@
         "return_review": "An?lise de devolu??o"
     },
     "store_manual": {
+        "payment_proof_required": "Envie o comprovante de pagamento ou selecione Marcar como pago sem comprovante.",
         "postal_code": "CEP",
         "badge": "Central de suporte da loja",
         "title": "Criar pedido da loja",

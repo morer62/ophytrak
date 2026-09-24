@@ -195,6 +195,14 @@ test('locked logistics guides a new seller through activation', async ({ page })
   await expect(page.locator('#display_currency')).toHaveCount(0);
   await expect(page.locator('[name="shipping_zip"]')).toHaveAttribute('placeholder', 'CP');
   await expect(page.locator('[name="shipping_zip"]')).toHaveAttribute('autocomplete', 'postal-code');
+  await expect(page.locator('#paymentMode')).toHaveValue('manual_proof');
+  await expect(page.locator('#paymentProof')).toHaveAttribute('required', '');
+  await page.locator('#paymentMode').evaluate(select => {
+    select.value = 'mark_paid';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await expect(page.locator('#paymentProof')).not.toHaveAttribute('required', '');
+  await expect(page.locator('#manualProofBox')).toHaveClass(/d-none/);
 
   await page.goto(`${baseURL}/panel/planner-hub/settings/payment-providers?locale=es`, { waitUntil: 'domcontentloaded' });
   await expect(page.locator('select[name="currency"]')).toHaveCount(0);

@@ -27,6 +27,9 @@ $assertContains('src/Repositories/StorageItemRepository.php', 'c.name LIKE :term
 $assertNotContains('src/views/panel/level2/planner-hub/store/products/home/index.twig', "path('product/", 'Level 2 must not link to a missing public product route.');
 $assertNotContains('src/views/panel/level2/planner-hub/store/categories/home/index.twig', "path('product-category/", 'Level 2 must not link to a missing public category route.');
 $assertNotContains('src/views/panel/level5/chat/index.php', 'Location: index.php', 'Level 5 chat must redirect through the application route.');
+$assertContains('src/Services/StoreManualOrderService.php', "\$paymentMode === 'manual_proof'", 'Manual proof payments must be validated by the backend.');
+$assertContains('src/Services/StoreManualOrderService.php', 'UPLOAD_ERR_OK', 'A manual payment proof must be a successful upload before an order is created.');
+$assertContains('src/views/panel/shared/store/manual-order-form.twig', "document.getElementById('paymentProof').required = requiresProof", 'The order wizard must require a receipt only for manual proof payments.');
 
 foreach (glob($root . '/src/Languages/*.json') as $languageFile) {
     json_decode((string)file_get_contents($languageFile), true);
@@ -49,6 +52,7 @@ $changedTemplates = [
     'panel/level2/planner-hub/store/products/home/index.twig',
     'panel/level2/planner-hub/store/orders/home/index.twig',
     'panel/level2/planner-hub/store/orders/home/compact-table.twig',
+    'panel/shared/store/manual-order-form.twig',
     'panel/level4/planner-hub/team/driver-mode/index.twig',
     'panel/level4/planner-hub/team/my-work/index.twig',
     'panel/level5/planner-hub/orders/orders/index.twig',

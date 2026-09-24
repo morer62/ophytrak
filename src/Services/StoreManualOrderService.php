@@ -47,6 +47,14 @@ class StoreManualOrderService
         if (!in_array($paymentMode, $allowedPaymentModes, true)) {
             return ['success' => false, 'message' => 'Select a valid payment option.'];
         }
+        $paymentProof = $files['payment_proof'] ?? [];
+        if ($paymentMode === 'manual_proof' && (
+            empty($paymentProof['name'])
+            || empty($paymentProof['tmp_name'])
+            || (int)($paymentProof['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
+        )) {
+            return ['success' => false, 'message' => TranslationService::trans('store_manual.payment_proof_required')];
+        }
         $notes = trim((string)($post['notes'] ?? ''));
         $shippingInstructions = trim((string)($post['shipping_instructions'] ?? ''));
         if ($shippingInstructions !== '') {

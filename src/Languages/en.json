@@ -7668,6 +7668,7 @@
         "empty_text": "Delivered, completed and return orders will appear here."
     },
     "store_manual": {
+        "payment_proof_required": "Upload the payment receipt, or choose Mark paid without receipt.",
         "postal_code": "Postal code",
         "badge": "Store support desk",
         "title": "Create Store order",

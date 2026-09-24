@@ -7546,6 +7546,7 @@
         "return_review": "Examen du retour"
     },
     "store_manual": {
+        "payment_proof_required": "Téléversez le justificatif de paiement ou choisissez Marquer comme payé sans justificatif.",
         "postal_code": "Code postal",
         "badge": "Support boutique",
         "title": "Créer une commande boutique",

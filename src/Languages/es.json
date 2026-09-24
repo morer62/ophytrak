@@ -7677,6 +7677,7 @@
         "empty_text": "Las órdenes entregadas, completadas y devueltas aparecerán aquí."
     },
     "store_manual": {
+        "payment_proof_required": "Sube el comprobante de pago o selecciona Marcar pagado sin comprobante.",
         "postal_code": "CP",
         "badge": "Soporte de tienda",
         "title": "Crear orden de tienda",

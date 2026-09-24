@@ -165,7 +165,7 @@
           {% endif %}
           <div id="manualProofBox" class="d-none">
             <label class="form-label">{{ trans('store_report.payment_proof') }}</label>
-            <input class="form-control mb-2" type="file" name="payment_proof" accept="image/*,.pdf">
+            <input class="form-control mb-2" id="paymentProof" type="file" name="payment_proof" accept="image/*,.pdf">
           </div>
           <label class="form-label">{{ trans('store_report.ref') }}</label>
           <input class="form-control mb-2" name="payment_reference" placeholder="Cash, Zelle, invoice #...">
@@ -267,7 +267,7 @@
   document.addEventListener('change', event => {
     if (event.target.matches('.store-product')) refreshVariations(event.target.closest('.store-line'));
     if (event.target.matches('.store-variation,.store-qty,.money-field')) refreshTotal();
-    if (event.target.id === 'paymentMode') document.getElementById('manualProofBox').classList.toggle('d-none', event.target.value !== 'manual_proof');
+    if (event.target.id === 'paymentMode') refreshPaymentProofState();
     if (event.target.id === 'feeType') {
       const type = event.target.value;
       const input = document.getElementById('feeValue');
@@ -316,6 +316,11 @@
       if (!form.querySelector('[data-address-place-id]').value) { alert('{{ trans('store_manual.address_required')|e('js') }}'); return false; }
       const mode = document.getElementById('paymentMode');
       if (!mode.value || mode.selectedOptions[0]?.disabled) { alert('{{ trans('store_manual.payment_method_required')|e('js') }}'); return false; }
+      if (mode.value === 'manual_proof' && !document.getElementById('paymentProof').files.length) {
+        alert('{{ trans('store_manual.payment_proof_required')|e('js') }}');
+        document.getElementById('paymentProof').focus();
+        return false;
+      }
     }
     return true;
   };
@@ -345,7 +350,12 @@
   const selectedClient = document.getElementById('storeClientSelect');
   if (selectedClient?.value) selectedClient.dispatchEvent(new Event('change', { bubbles: true }));
   refreshClientState();
-  document.getElementById('manualProofBox').classList.toggle('d-none', document.getElementById('paymentMode').value !== 'manual_proof');
+  function refreshPaymentProofState() {
+    const requiresProof = document.getElementById('paymentMode').value === 'manual_proof';
+    document.getElementById('manualProofBox').classList.toggle('d-none', !requiresProof);
+    document.getElementById('paymentProof').required = requiresProof;
+  }
+  refreshPaymentProofState();
   showStep(1);
 })();
 </script>
