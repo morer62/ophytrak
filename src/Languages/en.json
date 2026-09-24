@@ -3036,7 +3036,7 @@
         "signup_step_contact_copy": "Add the main contact for account access, billing and support.",
         "signup_step_password_title": "Create your secure access.",
         "signup_step_password_copy": "Your account is ready to be processed. Add a password to finish setup.",
-        "signup_currency_note": "Module prices use {currency} based on your approximate country when available. You can change billing currency later from your private dashboard.",
+        "signup_currency_note": "OPHYTRACK memberships are processed exclusively in Brazilian reais (BRL).",
         "signup_ready_to_process": "Your account is ready to be processed. Finish this last step to continue.",
         "signup_success_title": "Your account is ready to use",
         "signup_success_ready": "Your account is ready to use. Validate your email and password to sign in.",

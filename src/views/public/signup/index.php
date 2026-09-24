@@ -68,7 +68,7 @@ $router->get(function () use ($client) {
         "from_affiliate" => $fromAffiliate,
         "affiliate_data" => $affiliateData,
         "detectedCountryCode" => $pricingContext['country_code'],
-        "detectedCurrencyCode" => $pricingContext['currency_code'],
+        "detectedCurrencyCode" => \App\Services\ProductProfileService::billingCurrency() ?? $pricingContext['currency_code'],
         "isEuropeanRegion" => $pricingContext['is_european_region'],
         "recaptchaSiteKey" => $recaptchaService->siteKey(),
         "recaptchaAction" => $recaptchaService->expectedAction(),
@@ -148,9 +148,8 @@ $router->post(function () {
     $pricingService = new OphyraPricingService();
     $geoPricingService = new GeoPricingService($pricingService);
     $detectedCountry = trim((string)($_POST['detected_country_code'] ?? ''));
-    $preferredCurrency = $pricingService->normalizePaymentCurrency(
-        $_POST['preferred_currency'] ?? $geoPricingService->resolveCurrencyForCountry($detectedCountry)
-    );
+    $preferredCurrency = \App\Services\ProductProfileService::billingCurrency()
+        ?? $pricingService->normalizePaymentCurrency($_POST['preferred_currency'] ?? $geoPricingService->resolveCurrencyForCountry($detectedCountry));
 
     if ($companyName === '') {
         MessageUtil::setMessage('Business name is required.');

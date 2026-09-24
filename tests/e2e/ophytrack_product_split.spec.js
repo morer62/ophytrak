@@ -23,6 +23,19 @@ test('public product and signup expose only OPHYTRACK logistics', async ({ page 
   await expect(page.locator('[name="business_operation_type"] option[value="contracts_services"]')).toHaveCount(0);
 });
 
+test('Spanish signup renders Back correctly and keeps billing in BRL', async ({ page }) => {
+  await page.goto(`${baseURL}/signup?locale=es`, { waitUntil: 'domcontentloaded' });
+  await page.locator('[name="company_name"]').fill('QA Registro BRL');
+  await page.locator('[data-signup-next]').click();
+  await page.locator('[name="business_nature"]').selectOption('carrier_logistics');
+  await page.locator('[name="business_operation_type"]').selectOption('store_delivery_tracking');
+  await page.locator('[data-signup-next]').click();
+  await expect(page.locator('[data-signup-prev]')).toHaveText('Atrás');
+  await expect(page.locator('input[name="preferred_currency"]')).toHaveValue('BRL');
+  await expect(page.locator('.signup-step.is-active')).toContainText('exclusivamente en reales brasileños (BRL)');
+  await expect(page.locator('body')).not.toContainText(/Atr\?s|EUR según|Ã.|Â.|â€|�/);
+});
+
 test('public logistics story and signup remain localized in every supported language', async ({ page }) => {
   const expectations = {
     en: ['Every package. Every handoff.', 'Create your OPHYTRACK logistics account', 'Shipping and tracking'],

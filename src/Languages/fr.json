@@ -3079,7 +3079,7 @@
         "signup_step_contact_copy": "Ajoutez le contact principal pour l'accès, la facturation et le support.",
         "signup_step_password_title": "Créez votre accès sécurisé.",
         "signup_step_password_copy": "Votre compte est prêt à être traité. Ajoutez un mot de passe pour terminer.",
-        "signup_currency_note": "Les prix des modules utilisent {currency} selon votre pays approximatif lorsque disponible. Vous pourrez changer la devise de facturation plus tard depuis votre dashboard privé.",
+        "signup_currency_note": "Les abonnements OPHYTRACK sont traités exclusivement en réaux brésiliens (BRL).",
         "signup_ready_to_process": "Votre compte est prêt à être traité. Terminez cette dernière étape pour continuer.",
         "signup_success_title": "Votre compte est prêt à être utilisé",
         "signup_success_ready": "Votre compte est prêt à être utilisé. Validez votre e-mail et votre mot de passe pour vous connecter.",
