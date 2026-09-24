@@ -19,18 +19,19 @@ test('public product and signup expose only OPHYTRACK logistics', async ({ page 
   await expect(page.locator('body')).toContainText('OPHYTRACK');
   await expect(page.locator('[name="business_nature"] option[value="service_business"]')).toHaveCount(0);
   await expect(page.locator('[name="business_nature"] option[value="carrier_logistics"]')).toHaveCount(1);
+  await expect(page.locator('[name="business_operation_type"] option[value="store_delivery_tracking"]')).toHaveText('Shipping and tracking');
   await expect(page.locator('[name="business_operation_type"] option[value="contracts_services"]')).toHaveCount(0);
 });
 
 test('public logistics story and signup remain localized in every supported language', async ({ page }) => {
   const expectations = {
-    en: ['Every package. Every handoff.', 'Create your OPHYTRACK logistics account'],
-    es: ['Cada paquete. Cada traspaso.', 'Crea tu cuenta logística OPHYTRACK'],
-    pt: ['Cada pacote. Cada transferência.', 'Crie sua conta logística OPHYTRACK'],
-    fr: ['Chaque colis. Chaque transfert.', 'Créez votre compte logistique OPHYTRACK'],
+    en: ['Every package. Every handoff.', 'Create your OPHYTRACK logistics account', 'Shipping and tracking'],
+    es: ['Cada paquete. Cada traspaso.', 'Crea tu cuenta logística OPHYTRACK', 'Envío y rastreo'],
+    pt: ['Cada pacote. Cada transferência.', 'Crie sua conta logística OPHYTRACK', 'Envio e rastreamento'],
+    fr: ['Chaque colis. Chaque transfert.', 'Créez votre compte logistique OPHYTRACK', 'Expédition et suivi'],
   };
 
-  for (const [locale, [hero, signup]] of Object.entries(expectations)) {
+  for (const [locale, [hero, signup, operation]] of Object.entries(expectations)) {
     let response = await page.goto(`${baseURL}/?locale=${locale}`, { waitUntil: 'domcontentloaded' });
     expect(response.status()).toBe(200);
     await expect(page.locator('h1')).toContainText(hero);
@@ -40,6 +41,7 @@ test('public logistics story and signup remain localized in every supported lang
     response = await page.goto(`${baseURL}/signup?locale=${locale}`, { waitUntil: 'domcontentloaded' });
     expect(response.status()).toBe(200);
     await expect(page.locator('.signup-step-title')).toContainText(signup);
+    await expect(page.locator('[name="business_operation_type"] option[value="store_delivery_tracking"]')).toHaveText(operation);
     await expect(page.locator('body')).not.toContainText(/ophytrack_public\.|Ã.|Â.|â€|�/);
   }
 });
