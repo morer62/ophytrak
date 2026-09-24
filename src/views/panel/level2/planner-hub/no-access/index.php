@@ -41,7 +41,7 @@ $router->get(function () {
         'pricing' => $pricing->publicPricing($selectedCurrency),
         'selectedCurrency' => $selectedCurrency,
         'hasPaymentMethod' => $hasPaymentMethod,
-        'activationReady' => ($_GET['activation_ready'] ?? '') === '1',
+        'activationReady' => ($_GET['activation_ready'] ?? '') === '1' && $hasPaymentMethod,
         'currentLocale' => TranslationService::getCurrentLocale(),
     ]);
 });

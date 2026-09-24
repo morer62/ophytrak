@@ -82,6 +82,7 @@ test('membership billing is locked to Brazilian reais', async ({ page }) => {
 });
 
 test('locked logistics guides a new seller through activation', async ({ page }) => {
+  test.setTimeout(60000);
   const runId = Date.now().toString();
   const email = `qa.activation.${runId}@example.test`;
 
@@ -136,8 +137,19 @@ test('locked logistics guides a new seller through activation', async ({ page })
   await expect(page).toHaveURL(/panel\/cards\?activation_flow=store_delivery_tracking&locale=es/);
   await expect(page.locator('body')).toContainText('Paso 1 de 2: agrega tu metodo de pago.');
 
-  await page.goto(`${baseURL}/panel/planner-hub/no-access?module=store_delivery_tracking&activation_ready=1`, { waitUntil: 'domcontentloaded' });
+  const stripeFrame = page.frameLocator('iframe[title*="Secure card payment input frame"]');
+  await stripeFrame.locator('[name="cardnumber"]').fill('4242424242424242');
+  await stripeFrame.locator('[name="exp-date"]').fill('1230');
+  await stripeFrame.locator('[name="cvc"]').fill('123');
+  await stripeFrame.locator('[name="postal"]').fill('33101');
+  await page.locator('#submit-card').click();
+  await expect(page).toHaveURL(/no-access\?module=store_delivery_tracking&activation_ready=1&locale=es/, { timeout: 30000 });
   await expect(page.locator('#activationGuideModal')).toBeVisible();
   await expect(page.locator('#activationGuideTitle')).toContainText(/Activate Store|activar Tienda|Ativar Loja|Activer Boutique/i);
-  await expect(page.locator('#activationGuideModal a[href*="membership/modules/review"]')).toBeVisible();
+  const activateLink = page.locator('#activationGuideModal a[href*="membership/modules/review"]');
+  await expect(activateLink).toBeVisible();
+  await activateLink.click();
+  await expect(page).toHaveURL(/membership\/modules\/review/);
+  await expect(page.locator('a[href*="activation_flow=store_delivery_tracking"]')).toHaveCount(0);
+  await expect(page.locator('form').filter({ has: page.locator('input[name="action"][value="confirm_pay"]') }).locator('button[type="submit"]')).toBeVisible();
 });

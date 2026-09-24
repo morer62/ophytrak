@@ -16,6 +16,8 @@ $router = new Router();
 
 $router->get(function () {
     $user = LoginService::getSession();
+    $activationFlow = ($_GET['activation_flow'] ?? '') === 'store_delivery_tracking' ? 'store_delivery_tracking' : null;
+    $cardOwnerId = $activationFlow ? (int)($user->getOwner() ?: $user->getId()) : (int)$user->getId();
 
     if (PlatformDetector::isMobileApp()) {
         TranslationService::detectLocale();
@@ -33,7 +35,7 @@ $router->get(function () {
 
     $cardRepo = new UserCardsRepository();
     $savedMethodRepo = new ClientSavedPaymentMethodsRepository();
-    $cards = $cardRepo->getByUserId($user->getId());
+    $cards = $cardRepo->getByUserId($cardOwnerId);
     $savedMethods = $savedMethodRepo->getActiveForClientAcrossBusinesses((int)$user->getId(), (string)$user->getEmail());
 
     return TemplateResponse::render(__DIR__ . "/index.twig", [
@@ -42,7 +44,7 @@ $router->get(function () {
         "saved_methods" => $savedMethods,
         "billing" => $billing,
         "websiteUrl" => $_ENV["APP_URL"] ?? "https://ophyra.com",
-        "activationFlow" => ($_GET['activation_flow'] ?? '') === 'store_delivery_tracking' ? 'store_delivery_tracking' : null,
+        "activationFlow" => $activationFlow,
         "currentLocale" => TranslationService::getCurrentLocale(),
     ]);
 });
@@ -61,6 +63,8 @@ $router->post(function () {
         
         $repo = new UserCardsRepository();
         $savedMethodRepo = new ClientSavedPaymentMethodsRepository();
+        $activationFlow = ($_GET['activation_flow'] ?? '') === 'store_delivery_tracking';
+        $cardOwnerId = $activationFlow ? (int)($user->getOwner() ?: $user->getId()) : (int)$user->getId();
 
         if (isset($_POST["delete_saved_method"])) {
             $savedMethodRepo->deactivateForClient(intval($_POST["delete_saved_method"]), (int)$user->getId(), (string)$user->getEmail());
@@ -74,15 +78,15 @@ $router->post(function () {
 
         // Eliminar tarjeta
         if (isset($_POST["delete_card"])) {
-            $repo->deleteCardForUser($user->getId(), intval($_POST["delete_card"]));
-            $repo->ensureMainCard($user->getId());
+            $repo->deleteCardForUser($cardOwnerId, intval($_POST["delete_card"]));
+            $repo->ensureMainCard($cardOwnerId);
             LocationUtils::redirectInternal("panel/cards");
         }
 
         // Establecer tarjeta principal
         if (isset($_POST["set_main"])) {
             $cardId = intval($_POST["set_main"]);
-            $repo->setMainCard($user->getId(), $cardId);
+            $repo->setMainCard($cardOwnerId, $cardId);
             LocationUtils::redirectInternal("panel/cards");
         }
 
@@ -110,10 +114,10 @@ $router->post(function () {
         }
 
         // If there is no main card, this one becomes the main card.
-        $main = $repo->countCards($user->getId()) == 0 ? "yes" : "no";
+        $main = $activationFlow || $repo->countCards($cardOwnerId) === 0 ? "yes" : "no";
 
-        $repo->add([
-            "id_user" => $user->getId(),
+        $saved = $repo->add([
+            "id_user" => $cardOwnerId,
             "brand" => $cardInfo["brand"],
             "last4" => $cardInfo["last4"],
             "exp" => $cardInfo["exp"],
@@ -121,11 +125,33 @@ $router->post(function () {
             "main_card" => $main
         ]);
 
+        if (!$saved) {
+            return JsonResponse::createResponse([
+                "success" => false,
+                "message" => TranslationService::trans('billing.payment_method_save_failed')
+            ], 500);
+        }
+
+        $insertedCardId = $repo->getLastId();
+        if ($main === 'yes' && $insertedCardId > 0) {
+            $repo->setMainCard($cardOwnerId, $insertedCardId);
+        } else {
+            $repo->ensureMainCard($cardOwnerId);
+        }
+
+        $verifiedCard = $repo->getMainCardByUserId($cardOwnerId);
+        if (!$verifiedCard || empty($verifiedCard->token)) {
+            return JsonResponse::createResponse([
+                "success" => false,
+                "message" => TranslationService::trans('billing.payment_method_verify_failed')
+            ], 500);
+        }
+
         TranslationService::detectLocale();
         return JsonResponse::createResponse([
             "success" => true,
-            "card" => $customer,
-            "redirect" => ($_GET['activation_flow'] ?? '') === 'store_delivery_tracking'
+            "saved" => true,
+            "redirect" => $activationFlow
                 ? LocationUtils::pathFor('panel/planner-hub/no-access?module=store_delivery_tracking&activation_ready=1&locale=' . urlencode(TranslationService::getCurrentLocale()))
                 : null,
         ]);

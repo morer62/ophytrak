@@ -72,6 +72,7 @@ $buildPayload = static function (string $moduleSlug, ?string $paymentCurrency = 
         'moduleSlug' => $moduleSlug,
         'selectedCurrency' => $selectedCurrency,
         'allowedCurrencies' => $pricing->allowedOphyraPaymentCurrencies(),
+        'currentLocale' => TranslationService::getCurrentLocale(),
         'currentModule' => $currentModule,
         'mainCard' => $mainCard,
         'hasCard' => $mainCard && !empty($mainCard->token),
@@ -116,7 +117,7 @@ $router->post(function () use ($resolveModuleSlug, $buildPayload) {
 
     if (!$payload['hasCard']) {
         MessageUtil::setMessage('Add a payment method before confirming this module.', 'Error', 'error');
-        LocationUtils::redirectInternal('panel/cards');
+        LocationUtils::redirectInternal('panel/cards?activation_flow=store_delivery_tracking&locale=' . urlencode(TranslationService::getCurrentLocale()));
     }
 
     $started = $billing->markAddonCheckoutStarted($billingOwnerId, $moduleSlug, $payload['selectedCurrency']);

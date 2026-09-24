@@ -3561,6 +3561,8 @@
         "feature_warehouse": "Entrepot",
         "feature_qr_inventory": "Inventaire QR",
         "feature_marketplaces": "Connecteurs marketplace",
+        "payment_method_save_failed": "Impossible d'enregistrer le moyen de paiement. Veuillez reessayer.",
+        "payment_method_verify_failed": "Le moyen de paiement n'est pas disponible pour l'activation. Veuillez reessayer.",
         "currency_fallback_usd": "Aucun taux actif n'est disponible pour cette devise, le checkout revient donc en USD.",
         "review_summary": "Resume de verification",
         "base_price": "Prix de base",

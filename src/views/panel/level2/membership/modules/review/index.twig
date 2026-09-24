@@ -108,7 +108,7 @@
                     </form>
                 {% else %}
                     <div class="alert alert-warning">{{ trans('billing.payment_method_required')|default('Add a payment method before confirming payment.') }}</div>
-                    <a href="{{ path('panel/cards') }}" class="btn btn-primary w-100">{{ trans('billing.add_payment_method')|default('Add payment method') }}</a>
+                    <a href="{{ path('panel/cards?activation_flow=store_delivery_tracking&locale=' ~ currentLocale) }}" class="btn btn-primary w-100">{{ trans('billing.add_payment_method')|default('Add payment method') }}</a>
                 {% endif %}
 
                 <form method="post" class="mt-2">

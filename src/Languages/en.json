@@ -3519,6 +3519,8 @@
         "feature_warehouse": "Warehouse",
         "feature_qr_inventory": "QR inventory",
         "feature_marketplaces": "Marketplace connectors",
+        "payment_method_save_failed": "We could not save the payment method. Please try again.",
+        "payment_method_verify_failed": "The payment method was not available for activation. Please try again.",
         "currency_fallback_usd": "No active exchange rate is available for that currency, so checkout safely falls back to USD.",
         "review_summary": "Review summary",
         "base_price": "Base price",

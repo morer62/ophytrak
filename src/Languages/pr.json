@@ -3460,6 +3460,8 @@
         "feature_warehouse": "Armazem",
         "feature_qr_inventory": "Estoque QR",
         "feature_marketplaces": "Conectores de marketplace",
+        "payment_method_save_failed": "Nao foi possivel salvar a forma de pagamento. Tente novamente.",
+        "payment_method_verify_failed": "A forma de pagamento nao ficou disponivel para a ativacao. Tente novamente.",
         "currency_fallback_usd": "Nao ha taxa ativa para essa moeda, entao o checkout volta com seguranca para USD.",
         "review_summary": "Resumo da revisao",
         "base_price": "Preco base",

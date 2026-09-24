@@ -3508,6 +3508,8 @@
         "feature_warehouse": "Almacen",
         "feature_qr_inventory": "Inventario QR",
         "feature_marketplaces": "Conectores de mercado",
+        "payment_method_save_failed": "No pudimos guardar el metodo de pago. Intentalo nuevamente.",
+        "payment_method_verify_failed": "El metodo de pago no quedo disponible para la activacion. Intentalo nuevamente.",
         "currency_fallback_usd": "No hay una tasa activa para esa moneda, por eso el checkout vuelve de forma segura a USD.",
         "review_summary": "Resumen de revision",
         "base_price": "Precio base",
