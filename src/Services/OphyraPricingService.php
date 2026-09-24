@@ -91,6 +91,10 @@ class OphyraPricingService
 
     public function getDefaultCurrency(): string
     {
+        if ($currency = ProductProfileService::billingCurrency()) {
+            return $currency;
+        }
+
         $currency = strtoupper(trim((string)$this->env('OPHYRA_DEFAULT_BILLING_CURRENCY', $this->baseCurrency())));
         return $this->isCurrencySupported($currency) ? $currency : $this->baseCurrency();
     }
@@ -199,6 +203,13 @@ class OphyraPricingService
         }
 
         if ($currency !== $this->baseCurrency()) {
+            if ($currency === ProductProfileService::billingCurrency()) {
+                $productDefault = ProductProfileService::defaultBillingPrice($canonical);
+                if ($productDefault !== null) {
+                    return $productDefault;
+                }
+            }
+
             error_log("OphyraPricingService: missing {$currencyKey}. Checkout for {$canonical}/{$currency} is disabled.");
             return null;
         }
@@ -270,7 +281,7 @@ class OphyraPricingService
         return [
             'base_currency' => $this->baseCurrency(),
             'default_currency' => $currency,
-            'supported_currencies' => $this->getSupportedCurrencies(),
+            'supported_currencies' => $this->allowedOphyraPaymentCurrencies(),
             'billing_cycle' => $this->billingCycle(),
             'free_starter_base' => $this->freeStarterBaseEnabled(),
             'custom_domain_status' => $this->customDomainStatus(),
@@ -280,11 +291,19 @@ class OphyraPricingService
 
     public function allowedOphyraPaymentCurrencies(): array
     {
+        if ($currency = ProductProfileService::billingCurrency()) {
+            return [$currency];
+        }
+
         return $this->getSupportedCurrencies();
     }
 
     public function normalizePaymentCurrency(?string $currency): string
     {
+        if ($fixedCurrency = ProductProfileService::billingCurrency()) {
+            return $fixedCurrency;
+        }
+
         $currency = strtoupper(trim((string)$currency));
         return $this->isCurrencySupported($currency) ? $currency : $this->getDefaultCurrency();
     }

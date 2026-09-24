@@ -39,6 +39,7 @@
         <div class="card ophyra-card">
             <div class="card-body">
                 <h3 class="h5 mb-3">{{ trans('billing.payment_currency')|default('Payment currency') }}</h3>
+                {% if allowedCurrencies|length > 1 %}
                 <form method="get" class="row g-3 align-items-end">
                     <input type="hidden" name="module_slug" value="{{ moduleSlug }}">
                     <div class="col-md-6">
@@ -53,6 +54,12 @@
                         <button class="btn btn-outline-primary w-100" type="submit">{{ trans('billing.update_quote')|default('Update quote') }}</button>
                     </div>
                 </form>
+                {% else %}
+                    <div class="d-flex align-items-center justify-content-between rounded border p-3">
+                        <span>{{ trans('billing.fixed_currency_notice')|default('Membership payments are processed in Brazilian reais.') }}</span>
+                        <strong>{{ selectedCurrency }}</strong>
+                    </div>
+                {% endif %}
                 {% if quote.payment_currency == 'USD' and selectedCurrency != 'USD' %}
                     <p class="text-muted small mt-3 mb-0">
                         {{ trans('billing.currency_fallback_usd')|default('No active exchange rate is available for that currency, so checkout safely falls back to USD.') }}

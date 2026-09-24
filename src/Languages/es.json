@@ -3474,6 +3474,7 @@
         "payment_currency": "Moneda de pago",
         "select_currency": "Seleccionar moneda",
         "update_quote": "Actualizar cotizacion",
+        "fixed_currency_notice": "Los pagos de membresia se procesan exclusivamente en reales brasilenos.",
         "currency_fallback_usd": "No hay una tasa activa para esa moneda, por eso el checkout vuelve de forma segura a USD.",
         "review_summary": "Resumen de revision",
         "base_price": "Precio base",

@@ -62,3 +62,21 @@ test('seller sees logistics shell and legacy service routes are closed', async (
   await page.goto(`${baseURL}/panel/planner-hub/management/orders`, { waitUntil: 'domcontentloaded' });
   await expect(page).not.toHaveURL(/management\/orders(?:$|\?)/);
 });
+
+test('membership billing is locked to Brazilian reais', async ({ page }) => {
+  await page.goto(`${baseURL}/login`, { waitUntil: 'domcontentloaded' });
+  await page.locator('[name="email"]').fill(sellerEmail);
+  await page.locator('[name="password"]').fill(password);
+  await page.locator('form').filter({ has: page.locator('[name="email"]') }).locator('button[type="submit"]').click();
+  await expect(page).toHaveURL(/panel/);
+
+  const response = await page.goto(`${baseURL}/panel/membership/manage?payment_currency=EUR`, { waitUntil: 'domcontentloaded' });
+  expect(response.status()).toBe(200);
+  await expect(page.locator('body')).toContainText('BRL');
+  await expect(page.locator('select[name="payment_currency"]')).toHaveCount(0);
+  const submittedCurrencies = await page.locator('input[name="payment_currency"]').evaluateAll(
+    inputs => inputs.map(input => input.value)
+  );
+  expect(submittedCurrencies.length).toBeGreaterThan(0);
+  expect(new Set(submittedCurrencies)).toEqual(new Set(['BRL']));
+});

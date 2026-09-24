@@ -3485,6 +3485,7 @@
         "payment_currency": "Payment currency",
         "select_currency": "Select currency",
         "update_quote": "Update quote",
+        "fixed_currency_notice": "Membership payments are processed exclusively in Brazilian reais.",
         "currency_fallback_usd": "No active exchange rate is available for that currency, so checkout safely falls back to USD.",
         "review_summary": "Review summary",
         "base_price": "Base price",

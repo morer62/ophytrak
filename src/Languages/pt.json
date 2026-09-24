@@ -3527,6 +3527,7 @@
         "payment_currency": "Moeda de pagamento",
         "select_currency": "Selecionar moeda",
         "update_quote": "Atualizar cotacao",
+        "fixed_currency_notice": "Os pagamentos da assinatura sao processados exclusivamente em reais brasileiros.",
         "currency_fallback_usd": "Nao ha taxa ativa para essa moeda, entao o checkout volta com seguranca para USD.",
         "review_summary": "Resumo da revisao",
         "base_price": "Preco base",

@@ -18,6 +18,10 @@ class UserCurrencyPreferenceService
 
     public function getPreferredCurrency(int $ownerId): ?string
     {
+        if ($currency = ProductProfileService::billingCurrency()) {
+            return $currency;
+        }
+
         try {
             $this->db->query('SELECT preferred_currency FROM users WHERE id = :id LIMIT 1');
             $this->db->bind(':id', $ownerId);
@@ -33,6 +37,10 @@ class UserCurrencyPreferenceService
 
     public function resolveCurrency(int $ownerId, ?string $candidate = null): string
     {
+        if ($currency = ProductProfileService::billingCurrency()) {
+            return $currency;
+        }
+
         $candidate = strtoupper(trim((string)$candidate));
         if ($this->pricing->isCurrencySupported($candidate)) {
             return $candidate;
@@ -55,7 +63,7 @@ class UserCurrencyPreferenceService
 
     public function supportedCurrencies(): array
     {
-        return $this->pricing->getSupportedCurrencies();
+        return $this->pricing->allowedOphyraPaymentCurrencies();
     }
 
     public function requiresSetup(int $ownerId): bool

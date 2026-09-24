@@ -51,7 +51,7 @@ $router->get(function () {
         'industryLandingPages' => $landing->getIndustryPages($appUrl),
         'ophyraPricing' => $pricing->publicPricing($selectedCurrency),
         'selectedCurrency' => $selectedCurrency,
-        'supportedCurrencies' => $pricing->getSupportedCurrencies(),
+        'supportedCurrencies' => $pricing->allowedOphyraPaymentCurrencies(),
         'pricingCountryCode' => $pricingContext['country_code'],
         'pricingSource' => $pricingContext['source'],
         'seo' => $seo,

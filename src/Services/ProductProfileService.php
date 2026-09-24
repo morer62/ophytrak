@@ -5,6 +5,7 @@ namespace App\Services;
 final class ProductProfileService
 {
     public const MODE = 'ophytrack';
+    public const BILLING_CURRENCY = 'BRL';
 
     public static function mode(): string
     {
@@ -14,6 +15,23 @@ final class ProductProfileService
     public static function isOphytrack(): bool
     {
         return self::mode() === self::MODE;
+    }
+
+    public static function billingCurrency(): ?string
+    {
+        return self::isOphytrack() ? self::BILLING_CURRENCY : null;
+    }
+
+    public static function defaultBillingPrice(string $canonicalModuleSlug): ?float
+    {
+        if (!self::isOphytrack()) return null;
+
+        return [
+            'base_profile' => 0.0,
+            'store_logistics' => 169.0,
+            'advanced_storage_qr_inventory' => 75.0,
+            'marketplace_connectors' => 59.0,
+        ][$canonicalModuleSlug] ?? null;
     }
 
     public static function profile(): array
