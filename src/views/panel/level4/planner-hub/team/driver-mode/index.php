@@ -96,6 +96,7 @@ $router->get(function () {
         'assignedPackageTokens' => $assignedPackageTokens,
         'scannedPackageId' => max(0, (int)($_GET['scanned_package'] ?? 0)),
         'isCarrierOrganization' => $isCarrierOrganization,
+        'isCarrierOwner' => $isCarrierOwner,
         'carrierPackages' => $carrierPackages,
         'carrierCollectedPackages' => array_values(array_filter($carrierPackages,static fn($p)=>(string)$p->custody_status==='PICKED_UP')),
         'carrierWarehousePackages' => array_values(array_filter($carrierPackages,static fn($p)=>in_array((string)$p->custody_status,['RECEIVED_AT_HUB','SORTED_AT_HUB'],true))),
