@@ -6,6 +6,7 @@ use App\Services\ModuleAccessService;
 use App\Services\OphyraPricingService;
 use App\Services\UserCurrencyPreferenceService;
 use App\Services\ProductProfileService;
+use App\Services\TranslationService;
 use App\Repositories\UserCardsRepository;
 
 $router = new Router();
@@ -41,6 +42,7 @@ $router->get(function () {
         'selectedCurrency' => $selectedCurrency,
         'hasPaymentMethod' => $hasPaymentMethod,
         'activationReady' => ($_GET['activation_ready'] ?? '') === '1',
+        'currentLocale' => TranslationService::getCurrentLocale(),
     ]);
 });
 

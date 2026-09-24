@@ -2,20 +2,31 @@
 
 {% block body %}
 {% set labels = {
-  'services': 'Service Operations',
-  'service_operations': 'Service Operations',
-  'store_delivery_tracking': 'Store + Logistics',
-  'store_logistics': 'Store + Logistics',
-  'inventory_storage': 'Warehouse',
-  'advanced_storage_qr_inventory': 'Warehouse',
+  'services': trans('billing.module_service_operations'),
+  'service_operations': trans('billing.module_service_operations'),
+  'store_delivery_tracking': trans('billing.module_store_logistics'),
+  'store_logistics': trans('billing.module_store_logistics'),
+  'inventory_storage': trans('billing.feature_warehouse'),
+  'advanced_storage_qr_inventory': trans('billing.feature_warehouse'),
   'ai_advisor': 'AI Advisor',
   'tickets_rsvp': 'Ticket Sales + RSVP',
   'ticket_sales_rsvp': 'Ticket Sales + RSVP',
-  'marketplace_connectors': 'Marketplace Connectors',
+  'marketplace_connectors': trans('billing.feature_marketplaces'),
   'shared_operational_tools': 'Shared Operational Tools',
   'operating_core': 'Service Operations',
   'service_operations': 'Service Operations',
   'paid_modules': 'a paid module'
+} %}
+{% set featureLabels = {
+  'Store': trans('billing.feature_store'),
+  'Products': trans('billing.feature_products'),
+  'Store orders': trans('billing.feature_store_orders'),
+  'Fulfillment': trans('billing.feature_fulfillment'),
+  'Delivery tracking': trans('billing.feature_delivery_tracking'),
+  'Customers': trans('billing.feature_customers'),
+  'Store reports': trans('billing.feature_store_reports'),
+  'Warehouse': trans('billing.feature_warehouse'),
+  'QR inventory': trans('billing.feature_qr_inventory')
 } %}
 {% set primary = requiredModules|first ?: requestedModule %}
 {% set module = moduleCatalog[primary] ?? null %}
@@ -26,27 +37,27 @@
       <i class="fa-solid fa-lock"></i>
     </div>
     <div>
-      <p class="text-uppercase fw-bold text-muted small mb-2">Module locked</p>
-      <h1 class="fw-bold mb-3">{{ labels[requestedModule] ?? labels[primary] ?? 'This module' }} is not active yet</h1>
+      <p class="text-uppercase fw-bold text-muted small mb-2">{{ trans('billing.module_locked') }}</p>
+      <h1 class="fw-bold mb-3">{{ trans('billing.module_not_active', {'module': labels[requestedModule] ?? labels[primary] ?? trans('billing.this_module')}) }}</h1>
       <p class="lead text-muted mb-4">
-        Base Profile is free and keeps your public business profile available. Operational tools unlock only after the matching paid module is active.
+        {{ trans('billing.locked_module_intro') }}
       </p>
 
       <div class="locked-module-card mb-4">
         <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
           <div>
-            <h2 class="h5 fw-bold mb-2">Required activation</h2>
+            <h2 class="h5 fw-bold mb-2">{{ trans('billing.required_activation') }}</h2>
             <div class="d-flex flex-wrap gap-2 mb-3">
               {% for slug in requiredModules %}
                 <span class="badge rounded-pill bg-dark">{{ labels[slug] ?? slug|replace({'_':' '})|title }}</span>
               {% endfor %}
             </div>
             {% if module %}
-              <p class="text-muted mb-2">{{ module.description }}</p>
+              <p class="text-muted mb-2">{{ primary == 'store_delivery_tracking' ? trans('billing.activation_bundle_description') : module.description }}</p>
               {% if module.unlocks is defined and module.unlocks is not empty %}
                 <div class="d-flex flex-wrap gap-2">
                   {% for item in module.unlocks %}
-                    <span class="locked-feature-chip">{{ item }}</span>
+                    <span class="locked-feature-chip">{{ featureLabels[item] ?? item }}</span>
                   {% endfor %}
                 </div>
               {% endif %}
@@ -55,19 +66,19 @@
           <div class="locked-module-price">
             {% if module and module.selected_price_label is not empty %}
               <span>{{ module.selected_price_label }}</span>
-              <small>/month</small>
+              <small>/{{ trans('billing.month') }}</small>
             {% else %}
-              <span>Locked</span>
-              <small>{% if module and module.is_coming_soon|default(false) %}coming soon{% else %}price unavailable{% endif %}</small>
+              <span>{{ trans('billing.locked') }}</span>
+              <small>{% if module and module.is_coming_soon|default(false) %}{{ trans('nav.coming_soon') }}{% else %}{{ trans('billing.price_unavailable') }}{% endif %}</small>
             {% endif %}
           </div>
         </div>
       </div>
 
       <div class="d-flex flex-column flex-sm-row gap-2">
-        <a href="{{ path('panel/membership/manage?payment_currency=' ~ selectedCurrency) }}" class="btn btn-dark btn-lg fw-bold">Review modules</a>
-        <a href="{{ path('panel/cards?activation_flow=store_delivery_tracking') }}" class="btn btn-outline-dark btn-lg fw-bold">{{ trans('billing.activation_payment_cta')|default('Add payment method') }}</a>
-        <a href="{{ path('panel/onboarding') }}" class="btn btn-outline-secondary btn-lg fw-bold">Back to onboarding</a>
+        <a href="{{ path('panel/membership/manage?payment_currency=' ~ selectedCurrency ~ '&locale=' ~ currentLocale) }}" class="btn btn-dark btn-lg fw-bold">{{ trans('billing.review_plan') }}</a>
+        <a href="{{ path('panel/cards?activation_flow=store_delivery_tracking&locale=' ~ currentLocale) }}" class="btn btn-outline-dark btn-lg fw-bold">{{ trans('billing.activation_payment_cta')|default('Add payment method') }}</a>
+        <a href="{{ path('panel/onboarding?locale=' ~ currentLocale) }}" class="btn btn-outline-secondary btn-lg fw-bold">{{ trans('billing.back_to_onboarding') }}</a>
       </div>
     </div>
   </section>
@@ -82,12 +93,12 @@
           <p class="text-uppercase fw-bold text-success small mb-2">{{ trans('billing.activation_ready_kicker')|default('Payment method ready') }}</p>
           <h2 class="h3 fw-bold mb-3" id="activationGuideTitle">{{ trans('billing.activation_ready_title')|default('Activate Store + Logistics?') }}</h2>
           <p class="text-muted mb-4">{{ trans('billing.activation_ready_body')|default('One plan unlocks your store, warehouse, marketplace connectors and delivery operation.') }}</p>
-          <a href="{{ path('panel/membership/modules/review?module_slug=store_delivery_tracking&payment_currency=' ~ selectedCurrency) }}" class="btn btn-dark btn-lg w-100 fw-bold">{{ trans('billing.activation_activate_cta')|default('Review and activate') }}</a>
+          <a href="{{ path('panel/membership/modules/review?module_slug=store_delivery_tracking&payment_currency=' ~ selectedCurrency ~ '&locale=' ~ currentLocale) }}" class="btn btn-dark btn-lg w-100 fw-bold">{{ trans('billing.activation_activate_cta')|default('Review and activate') }}</a>
         {% else %}
           <p class="text-uppercase fw-bold text-primary small mb-2">{{ trans('billing.activation_step_kicker')|default('Activation - Step 1 of 2') }}</p>
           <h2 class="h3 fw-bold mb-3" id="activationGuideTitle">{{ trans('billing.activation_title')|default('Activate your logistics workspace') }}</h2>
           <p class="text-muted mb-4">{{ trans('billing.activation_body')|default('First add a payment method. Then we will bring you back to confirm activation.') }}</p>
-          <a href="{{ path('panel/cards?activation_flow=store_delivery_tracking') }}" class="btn btn-dark btn-lg w-100 fw-bold">{{ trans('billing.activation_payment_cta')|default('Continue to payment method') }}</a>
+          <a href="{{ path('panel/cards?activation_flow=store_delivery_tracking&locale=' ~ currentLocale) }}" class="btn btn-dark btn-lg w-100 fw-bold">{{ trans('billing.activation_payment_cta')|default('Continue to payment method') }}</a>
         {% endif %}
         <button type="button" class="btn btn-link text-muted mt-2" data-bs-dismiss="modal">{{ trans('billing.activation_later')|default('Not now') }}</button>
       </div>

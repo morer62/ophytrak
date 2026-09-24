@@ -117,16 +117,24 @@ test('locked logistics guides a new seller through activation', async ({ page })
   await page.getByRole('button', { name: 'Save Profile' }).click();
   await page.waitForLoadState('domcontentloaded');
 
+  await page.locator('#languageDropdownHeader').click();
+  await Promise.all([
+    page.waitForResponse(response => response.url().includes('/api/change-language') && response.request().method() === 'POST'),
+    page.locator('#languageDropdownMenuHeader [data-locale="es"]').click(),
+  ]);
+  await page.waitForFunction(() => document.documentElement.lang.toLowerCase().startsWith('es'));
+
   await page.goto(`${baseURL}/panel/planner-hub/no-access?module=inventory_storage`, { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#activationGuideModal')).toBeVisible();
-  await expect(page.locator('#activationGuideTitle')).toContainText(/logistics|logistico|logistique/i);
-  await expect(page.locator('.locked-module-panel')).toContainText('Store + Logistics');
+  await expect(page.locator('#activationGuideTitle')).toContainText('Activa tu espacio logistico');
+  await expect(page.locator('.locked-module-panel')).toContainText('Tienda + Logistica aun no esta activo');
+  await expect(page.locator('.locked-module-panel')).toContainText('Modulo bloqueado');
   await expect(page.locator('.locked-module-panel')).toContainText(/Shopify/);
   const continueLink = page.locator('#activationGuideModal a[href*="activation_flow=store_delivery_tracking"]');
   await expect(continueLink).toBeVisible();
   await continueLink.click();
-  await expect(page).toHaveURL(/panel\/cards\?activation_flow=store_delivery_tracking/);
-  await expect(page.locator('body')).toContainText(/Step 1 of 2|Paso 1 de 2|Etapa 1 de 2|Etape 1 sur 2/i);
+  await expect(page).toHaveURL(/panel\/cards\?activation_flow=store_delivery_tracking&locale=es/);
+  await expect(page.locator('body')).toContainText('Paso 1 de 2: agrega tu metodo de pago.');
 
   await page.goto(`${baseURL}/panel/planner-hub/no-access?module=store_delivery_tracking&activation_ready=1`, { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#activationGuideModal')).toBeVisible();
