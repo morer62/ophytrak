@@ -121,6 +121,7 @@ class TemplateResponse
         $activeModuleSlugs = [];
         $activeAddonSlugs = [];
         $isCarrierOrganization = false;
+        $level4PermissionModules = [];
 
         try {
             $session = LoginService::getSession();
@@ -139,6 +140,12 @@ class TemplateResponse
                 $ownerId = (int)($teamContext['selectedOwnerId'] ?? $session->getOwner());
                 $isCarrierOrganization = $ownerId > 0
                     && (new \App\Repositories\CarrierPackageRepository())->isCarrier($ownerId);
+                $delegableModules = ['users', 'orders', 'storage', 'crm', 'roles', 'payroll'];
+                foreach ($session->getPermissions2() as $permission) {
+                    $module = strtolower((string)$permission->getModule());
+                    if (in_array($module, $delegableModules, true)) $level4PermissionModules[] = $module;
+                }
+                $level4PermissionModules = array_values(array_unique($level4PermissionModules));
             }
         } catch (Exception $e) {
             error_log("ERROR loading module access in TemplateResponse: " . $e->getMessage());
@@ -218,6 +225,7 @@ class TemplateResponse
             "active_module_slugs" => $activeModuleSlugs,
             "active_addon_slugs" => $activeAddonSlugs,
             "is_carrier_organization" => $isCarrierOrganization,
+            "level4_permission_modules" => $level4PermissionModules,
             "product_mode" => ProductProfileService::mode(),
             "currency_code" => ProductProfileService::operationalCurrency(),
             "currency_symbol" => ProductProfileService::currencySymbol(),

@@ -5,6 +5,7 @@ use App\Utils\TemplateResponse;
 use App\Services\LoginService;
 use App\Services\UserInstitutionService;
 use App\Services\UserWorkspaceContextService;
+use App\Services\ProductProfileService;
 use App\Repositories\UserRepository;
 use App\Repositories\InstitutionProfileRepository;
 use App\Repositories\UserInstitutionsRepository;
@@ -74,7 +75,15 @@ $router->get(function () {
         $teamContract = (new TeamMemberContractsRepository())->getLatestForMember($user->getId(), (int)$currentInstitution->id_owner);
     }
     
-    return TemplateResponse::render(__DIR__ . "/index.twig", [
+    $permissionModules = [];
+    $delegableModules = ['users', 'orders', 'storage', 'crm', 'roles', 'payroll'];
+    foreach ($user->getPermissions2() as $permission) {
+        $module = strtolower((string)$permission->getModule());
+        if (in_array($module, $delegableModules, true)) $permissionModules[] = $module;
+    }
+    $permissionModules = array_values(array_unique($permissionModules));
+
+    return TemplateResponse::render(ProductProfileService::isOphytrack() ? __DIR__ . "/ophytrack.twig" : __DIR__ . "/index.twig", [
         'user' => $user,
         'userInstitutions' => $userInstitutions,
         'currentInstitution' => $currentInstitution,
@@ -86,6 +95,7 @@ $router->get(function () {
         'contractDetail' => $contractDetail ?? null,
         'teamContract' => $teamContract,
         'teamContext' => $teamContext,
+        'permissionModules' => $permissionModules,
     ]);
 });
 
@@ -110,6 +120,12 @@ $router->post(function () {
         }
     }
     
+    if (isset($_POST['level']) && ProductProfileService::isOphytrack()) {
+        \App\Utils\MessageUtil::setMessage('Team access is controlled by the business owner.');
+        LocationUtils::redirectInternal('panel/home');
+        return;
+    }
+
     if (isset($_POST['level'])) {
         $newLevel = (int)($_POST['level'] ?? 0);
 

@@ -1,0 +1,27 @@
+{% extends 'templates/base.admin.twig' %}
+{% block body %}
+<main class="container-fluid py-4" style="max-width:1180px">
+  <section class="command-hero text-white rounded-4 p-4 p-lg-5 mb-4">
+    <span class="badge bg-info text-dark mb-3">OPHYTRACK &middot; {{ trans('ui.my_work') }}</span>
+    <h1 class="display-6 fw-bold text-white">{{ currentInstitution.company_name|default(trans('team_home.company_workspace_fallback')) }}</h1>
+    <p class="lead mb-2">{{ trans('team_home.role') }}: {{ roleName|default(trans('team_home.team_member')) }}</p>
+    <p class="mb-0 opacity-75">{{ trans('team_scope.scope_help') }}</p>
+  </section>
+  <div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-4"><a class="card border-0 shadow-sm h-100 text-decoration-none text-dark" href="{{ path('panel/planner-hub/team/my-work') }}"><div class="card-body p-4"><i data-feather="check-square" class="text-primary mb-3"></i><h2 class="h5 fw-bold">{{ trans('team_home.my_work_title') }}</h2><p class="text-muted mb-0">{{ trans('team_scope.assigned_help') }}</p></div></a></div>
+    {% if is_carrier_organization %}<div class="col-md-6 col-xl-4"><a class="card border-0 shadow-sm h-100 text-decoration-none text-dark" href="{{ path('panel/planner-hub/team/driver-mode') }}"><div class="card-body p-4"><i data-feather="maximize" class="text-primary mb-3"></i><h2 class="h5 fw-bold">{{ trans('store_logistics.scan_package_qr') }}</h2><p class="text-muted mb-0">{{ trans('team_scope.carrier_help') }}</p></div></a></div>{% endif %}
+    <div class="col-md-6 col-xl-4"><a class="card border-0 shadow-sm h-100 text-decoration-none text-dark" href="{{ path('panel/ophytrack/payments') }}"><div class="card-body p-4"><i data-feather="dollar-sign" class="text-danger mb-3"></i><h2 class="h5 fw-bold">{{ trans('payment_center.driver_settlements') }}</h2><p class="text-muted mb-0">{{ trans('team_scope.settlements_help') }}</p></div></a></div>
+    <div class="col-md-6 col-xl-4"><a class="card border-0 shadow-sm h-100 text-decoration-none text-dark" href="{{ path('panel/planner-hub/team/chat?context=store') }}"><div class="card-body p-4"><i data-feather="message-circle" class="text-primary mb-3"></i><h2 class="h5 fw-bold">{{ trans('ui.team_chat') }}</h2><p class="text-muted mb-0">{{ trans('team_scope.chat_help') }}</p></div></a></div>
+  </div>
+  {% if permissionModules|length %}
+  <section class="card border-primary border-opacity-25 shadow-sm"><div class="card-body p-4"><span class="badge bg-primary mb-2">{{ trans('team_scope.delegated_admin') }}</span><h2 class="h4 fw-bold">{{ trans('team_scope.admin_title') }}</h2><p class="text-muted">{{ trans('team_scope.admin_help') }}</p><div class="d-flex flex-wrap gap-2">
+    {% if 'users' in permissionModules %}<a class="btn btn-outline-primary" href="{{ path('panel/planner-hub/management/users') }}">{{ trans('carrier_ui.drivers') }}</a>{% endif %}
+    {% if 'orders' in permissionModules %}<a class="btn btn-outline-primary" href="{{ path('panel/planner-hub/management/orders') }}">{{ trans('ui.assigned_orders') }}</a>{% endif %}
+    {% if 'storage' in permissionModules %}<a class="btn btn-outline-primary" href="{{ path('panel/planner-hub/management/storage') }}">{{ trans('nav.warehouse') }}</a>{% endif %}
+    {% if 'crm' in permissionModules %}<a class="btn btn-outline-primary" href="{{ path('panel/planner-hub/management/crm') }}">CRM</a>{% endif %}
+    {% if 'roles' in permissionModules %}<a class="btn btn-outline-primary" href="{{ path('panel/planner-hub/management/roles') }}">Roles</a>{% endif %}
+    {% if 'payroll' in permissionModules %}<a class="btn btn-outline-primary" href="{{ path('panel/planner-hub/management/payroll') }}">{{ trans('ui.hours') }}</a>{% endif %}
+  </div></div></section>
+  {% endif %}
+</main>
+{% endblock %}

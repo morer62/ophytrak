@@ -4,6 +4,7 @@ namespace App\Utils;
 
 use App\Entity\User;
 use App\Services\LoginService;
+use App\Services\ProductProfileService;
 
 class TwigUtils {
 
@@ -21,6 +22,9 @@ class TwigUtils {
             $currentPath = $paths[$i];
 
             if ($currentPath == "home"){
+                continue;
+            }
+            if (ProductProfileService::isOphytrack() && $currentPath === 'planner-hub') {
                 continue;
             }
 

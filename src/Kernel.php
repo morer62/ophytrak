@@ -289,6 +289,12 @@ class Kernel
                         }
                     }
 
+                    if (\App\Services\ProductProfileService::isOphytrack()
+                        && $user->getLevel() === 4
+                        && implode('/', $urlViews) === 'panel/planner-hub') {
+                        LocationUtils::redirectInternal('panel/home');
+                    }
+
                     if (
                         $user->getLevel() === 4 &&
                         isset($urlViews[1], $urlViews[2], $urlViews[3]) &&
