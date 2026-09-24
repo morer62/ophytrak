@@ -104,6 +104,7 @@ class StripeService
                 'brand' => (string)$paymentMethod->card->brand,
                 'last4' => (string)$paymentMethod->card->last4,
                 'exp' => (int)$paymentMethod->card->exp_month . '/' . (int)$paymentMethod->card->exp_year,
+                'billing_zip' => substr((string)($paymentMethod->billing_details->address->postal_code ?? ''), 0, 12),
             ];
         } catch (\Throwable $e) {
             error_log('StripeService::verifiedCardFromSetupIntent(): ' . $e->getMessage());

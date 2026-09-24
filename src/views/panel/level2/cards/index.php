@@ -135,6 +135,7 @@ $router->post(function () {
             "last4" => $verifiedSetup["last4"],
             "exp" => $verifiedSetup["exp"],
             "token" => $verifiedSetup["reference"],
+            "billing_zip" => $verifiedSetup["billing_zip"],
             "main_card" => $main
         ]);
 

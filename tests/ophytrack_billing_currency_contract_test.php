@@ -37,6 +37,8 @@ $stripeService = (string)file_get_contents($root . '/src/Services/StripeService.
 $assertSame(false, str_contains($cardsTemplate, 'stripe.createToken('), 'Level 2 card setup must not use legacy Stripe card tokens.');
 $assertSame(true, str_contains($cardsTemplate, 'stripe.confirmCardSetup('), 'Level 2 card setup must confirm a SetupIntent.');
 $assertSame(true, str_contains($stripeService, 'paymentIntents->create('), 'Saved membership cards must be charged with PaymentIntents.');
+$cardsController = (string)file_get_contents($root . '/src/views/panel/level2/cards/index.php');
+$assertSame(true, str_contains($cardsController, '"billing_zip" => $verifiedSetup["billing_zip"]'), 'Saved Stripe cards must satisfy the existing non-null billing_zip column.');
 
 $loader = new Twig\Loader\FilesystemLoader($root . '/src/views');
 $twig = new Twig\Environment($loader);
