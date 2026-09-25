@@ -67,26 +67,48 @@ function initMap() {
             form.dispatchEvent(new CustomEvent('ophyra:address-cleared'));
         };
         input.addEventListener('input', clearSelection);
-        autocomplete.addListener('place_changed', function () {
-            const place = autocomplete.getPlace();
-            if (!place || !place.address_components || !place.place_id) {
-                clearSelection();
-                return;
-            }
+        const parseAddressParts = components => {
             const parts = { city: '', state: '', zip: '', country: '' };
             const cityCandidates = { locality: '', postalTown: '', administrativeArea2: '', sublocality: '' };
-            place.address_components.forEach(component => {
+            let zipBase = '', zipSuffix = '';
+            (components || []).forEach(component => {
                 const types = component.types || [];
                 if (types.includes('locality')) cityCandidates.locality = component.long_name;
                 if (types.includes('postal_town')) cityCandidates.postalTown = component.long_name;
                 if (types.includes('administrative_area_level_2')) cityCandidates.administrativeArea2 = component.long_name;
                 if (types.includes('sublocality_level_1')) cityCandidates.sublocality = component.long_name;
                 if (types.includes('administrative_area_level_1')) parts.state = component.short_name;
-                if (types.includes('postal_code')) parts.zip = component.long_name;
-                if (types.includes('postal_code_suffix')) parts.zip += (parts.zip ? '-' : '') + component.long_name;
+                if (types.includes('postal_code')) zipBase = component.long_name;
+                if (types.includes('postal_code_suffix')) zipSuffix = component.long_name;
                 if (types.includes('country')) parts.country = component.short_name;
             });
             parts.city = cityCandidates.locality || cityCandidates.postalTown || cityCandidates.administrativeArea2 || cityCandidates.sublocality;
+            parts.zip = zipBase + (zipSuffix ? (zipBase ? '-' : '') + zipSuffix : '');
+            return parts;
+        };
+        const geocode = request => new Promise(resolve => {
+            new google.maps.Geocoder().geocode(request, (results, status) => resolve(status === 'OK' ? (results || []) : []));
+        });
+        const findPostalCode = results => {
+            for (const result of results || []) {
+                const zip = parseAddressParts(result.address_components).zip;
+                if (zip) return zip;
+            }
+            return '';
+        };
+        autocomplete.addListener('place_changed', async function () {
+            const place = autocomplete.getPlace();
+            if (!place || !place.place_id) {
+                clearSelection();
+                return;
+            }
+            const parts = parseAddressParts(place.address_components);
+            if (!parts.zip) {
+                parts.zip = findPostalCode(await geocode({ placeId: place.place_id }));
+            }
+            if (!parts.zip && place.geometry?.location) {
+                parts.zip = findPostalCode(await geocode({ location: place.geometry.location }));
+            }
             input.value = place.formatted_address || input.value;
             Object.entries(parts).forEach(([key, value]) => {
                 const target = form.querySelector(`[data-address-part="${key}"]`);

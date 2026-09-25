@@ -1076,7 +1076,7 @@
     {% set googleMapsKey = env.GOOGLE_MAPS_API_KEY|default(env.GOOGLE_KEY|default('')) %}
     {% if googleMapsKey %}
         <script src="https://maps.googleapis.com/maps/api/js?key={{ googleMapsKey }}&loading=async&libraries=places&callback=initMap"></script>
-        <script src="{{ asset_for('assets/js/googleMaps.js') }}?v=20260805-address-autocomplete-2"></script>
+        <script src="{{ asset_for('assets/js/googleMaps.js') }}?v=20260925-address-autocomplete-3"></script>
     {% endif %}
 
     {% block scripts %}
