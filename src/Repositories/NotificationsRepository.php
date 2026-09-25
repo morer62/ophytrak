@@ -89,6 +89,10 @@ class NotificationsRepository extends BaseRepository
     private function normalizeLinks(array $notifications): void
     {
         foreach ($notifications as $notification) {
+            $message = (string)($notification->mensaje ?? '');
+            if (preg_match('/^Carrier picked up (.+) by secure QR scan$/i', $message, $match)) {
+                $notification->mensaje = 'La transportadora recolectó el paquete '.$match[1].' mediante escaneo QR seguro.';
+            }
             $link = trim((string)($notification->link ?? ''));
             if ($link === '' || str_starts_with($link, '#')) {
                 continue;
