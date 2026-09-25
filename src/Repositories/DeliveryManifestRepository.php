@@ -32,6 +32,17 @@ class DeliveryManifestRepository extends StoreRepository
         return[true,'Package added to manifest '.$draft->manifest_code.'.',$draft];
     }
 
+    public function transferPackageToDriver(int $carrierOwner,int $driverUser,string $secureToken,int $actorUser):array
+    {
+        if(!$this->isReady())return[false,'La estructura de manifiestos no está instalada.',null];
+        $this->db->query("SELECT p.id,p.custody_status,p.current_custodian_user_id FROM store_packages p JOIN store_orders o ON o.id=p.id_store_order AND o.id_owner=p.id_owner WHERE o.public_token=:token AND p.current_custodian_owner_id=:owner AND p.custody_status IN ('RECEIVED_AT_HUB','SORTED_AT_HUB','OUT_FOR_DELIVERY') LIMIT 1");$this->db->bind(':token',trim($secureToken));$this->db->bind(':owner',$carrierOwner);$package=$this->db->fetchOne();if(!$package)return[false,'El paquete no está disponible para alteración de agente.',null];
+        $this->db->query("UPDATE store_delivery_manifest_items i JOIN {$this->table} m ON m.id=i.id_manifest SET i.status='REMOVED',i.updated_at=NOW() WHERE i.id_store_package=:package AND i.status='PENDING' AND m.carrier_owner_id=:owner AND m.delivery_user_id<>:driver AND m.status IN ('DRAFT','GENERATED','IN_PROGRESS')");$this->db->bind(':package',(int)$package->id);$this->db->bind(':owner',$carrierOwner);$this->db->bind(':driver',$driverUser);$this->db->execute();
+        $this->db->query("UPDATE {$this->table} m SET m.package_count=(SELECT COUNT(*) FROM store_delivery_manifest_items i WHERE i.id_manifest=m.id AND i.status='PENDING'),m.updated_at=NOW() WHERE m.carrier_owner_id=:owner AND m.status IN ('DRAFT','GENERATED','IN_PROGRESS')");$this->db->bind(':owner',$carrierOwner);$this->db->execute();
+        $this->db->query("UPDATE store_packages SET custody_status='SORTED_AT_HUB',current_status='SORTED_AT_HUB',current_custodian_user_id=:driver,current_location_label='Transferred to delivery agent',updated_at=NOW() WHERE id=:package AND current_custodian_owner_id=:owner");$this->db->bind(':driver',$driverUser);$this->db->bind(':package',(int)$package->id);$this->db->bind(':owner',$carrierOwner);$this->db->execute();
+        (new CarrierPackageRepository())->assignEmployee((int)$package->id,$carrierOwner,$driverUser,$actorUser,'DELIVERY');
+        return$this->addPackage($carrierOwner,$driverUser,(int)$package->id);
+    }
+
     public function getForDriver(int $carrierOwner,int $driverUser):array
     {
         if(!$this->isReady())return[];$this->db->query("SELECT m.*,SUM(i.status='PENDING') pending_count,SUM(i.status='DELIVERED') delivered_count,SUM(i.status IN ('FAILED','RETURNED')) incident_count FROM {$this->table} m LEFT JOIN store_delivery_manifest_items i ON i.id_manifest=m.id WHERE m.carrier_owner_id=:owner AND m.delivery_user_id=:driver GROUP BY m.id ORDER BY FIELD(m.status,'IN_PROGRESS','GENERATED','DRAFT','COMPLETED','CANCELLED'),m.created_at DESC");$this->db->bind(':owner',$carrierOwner);$this->db->bind(':driver',$driverUser);return$this->db->fetchAll();

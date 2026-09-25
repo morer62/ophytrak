@@ -95,7 +95,7 @@ $router->get(function () {
         'allDeliveryTasks' => array_merge($deliveryTasks, $incidentTasks, $completedTasks),
         'assignedPackageTokens' => $assignedPackageTokens,
         'scannedPackageId' => max(0, (int)($_GET['scanned_package'] ?? 0)),
-        'carrierStage' => in_array((string)($_GET['carrier_stage']??''),['collected','history','warehouse','route','cancelled','closed'],true)?(string)$_GET['carrier_stage']:'collected',
+        'carrierStage' => in_array((string)($_GET['carrier_stage']??''),['collected','history','warehouse','route','agent_change','cancelled','closed'],true)?(string)$_GET['carrier_stage']:'collected',
         'carrierView' => in_array((string)($_GET['view']??''),['deliveries','collection'],true)?(string)$_GET['view']:'deliveries',
         'carrierResult' => in_array((string)($_GET['result']??''),['open','completed','attempts','returns'],true)?(string)$_GET['result']:'open',
         'showCarrierDetails' => (string)($_GET['details']??'')==='1',
@@ -125,6 +125,7 @@ $router->post(function () {
     $action=trim((string)($_POST['action']??''));
     if($action==='collection_batch_confirm'){$tokens=json_decode((string)($_POST['tokens']??'[]'),true);$handedBy=trim((string)($_POST['handed_by']??''));$signature=trim((string)($_POST['signature']??''));if(!is_array($tokens)||!count($tokens)||$handedBy===''||!str_starts_with($signature,'data:image/png;base64,'))$respond(false,'Agrega paquetes, identifica a quien los entrega y registra su firma.');$done=[];$errors=[];foreach(array_unique($tokens) as $token){[$ok,$message,$package]=$repo->claimByQr($ownerId,(int)$user->getId(),trim((string)$token),null,null,null,'COLLECTION_BATCH');if($ok)$done[]=['code'=>(string)($package->package_code??$token)];else $errors[]=$message;}$respond(count($done)>0,count($done).' paquetes confirmados'.($errors?' · '.count($errors).' no procesados':''),['packages'=>$done,'errors'=>$errors]);}
     if($action==='generate_manifest'){$manifestRepo=new DeliveryManifestRepository();[$ok,$message]=$manifestRepo->generate((int)($_POST['manifest_id']??0),$ownerId,(int)$user->getLevel()===2?0:(int)$user->getId());$respond($ok,$message);}
+    if($action==='agent_change_manifest'){$tokens=json_decode((string)($_POST['tokens']??'[]'),true);if(!is_array($tokens)||!count($tokens))$respond(false,'Escanea al menos un paquete para alterar el agente.');$manifestRepo=new DeliveryManifestRepository();$done=[];$errors=[];foreach(array_unique($tokens)as$token){[$ok,$message,$manifest]=$manifestRepo->transferPackageToDriver($ownerId,(int)$user->getId(),trim((string)$token),(int)$user->getId());if($ok)$done[]=$token;else$errors[]=$message;}if(!$done)$respond(false,$errors[0]??'No se pudo transferir ningún paquete.');$draft=$manifestRepo->getOrCreateDraft($ownerId,(int)$user->getId());[$generated,$message]=$manifestRepo->generate((int)($draft->id??0),$ownerId,(int)$user->getId());$respond($generated,$generated?count($done).' paquetes transferidos y manifiesto actualizado.':$message,['count'=>count($done),'errors'=>$errors]);}
     if($action==='carrier_qr_preview'){
         [$ok,$message,$package]=$repo->previewClaimByQr($ownerId,trim((string)($_POST['qr_token']??'')));
         $respond($ok,$message,$package?['package'=>[
