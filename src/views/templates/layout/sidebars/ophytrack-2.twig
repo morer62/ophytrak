@@ -6,6 +6,11 @@
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/home') }}"><i data-feather="grid"></i><span>{{ trans('nav.dashboard') }}</span></a></li>
 {% if is_carrier_organization %}
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/team/driver-mode' : storeGate) }}"><i data-feather="camera"></i><span>{{ trans('carrier_ui.scan_packages') }}</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/team/driver-mode?view=collection&details=1&carrier_stage=collected' : storeGate) }}"><i data-feather="maximize"></i><span>Coletas globales</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/team/driver-mode?view=collection&details=1&carrier_stage=warehouse' : storeGate) }}"><i data-feather="archive"></i><span>Recepción y almacén</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/team/driver-mode?view=collection&details=1&carrier_stage=route' : storeGate) }}"><i data-feather="navigation"></i><span>Manifiestos y rutas</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/team/driver-mode?view=deliveries&result=attempts' : storeGate) }}"><i data-feather="alert-triangle"></i><span>Intentos e incidencias</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/team/driver-mode?view=deliveries&result=returns' : storeGate) }}"><i data-feather="corner-up-left"></i><span>Devoluciones</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/store/orders/home' : storeGate) }}"><i data-feather="package"></i><span>{{ trans('carrier_ui.assigned_shipments') }}</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/management/storage' : storeGate) }}"><i data-feather="archive"></i><span>{{ trans('carrier_ui.carrier_warehouse') }}</span></a></li>
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path(hasStore ? 'panel/planner-hub/management/users?context=store' : storeGate) }}"><i data-feather="users"></i><span>{{ trans('carrier_ui.drivers') }}</span></a></li>
