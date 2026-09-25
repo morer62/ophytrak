@@ -95,6 +95,7 @@ $router->get(function () {
         'allDeliveryTasks' => array_merge($deliveryTasks, $incidentTasks, $completedTasks),
         'assignedPackageTokens' => $assignedPackageTokens,
         'scannedPackageId' => max(0, (int)($_GET['scanned_package'] ?? 0)),
+        'carrierStage' => in_array((string)($_GET['carrier_stage']??''),['collected','warehouse','route','cancelled','closed'],true)?(string)$_GET['carrier_stage']:'collected',
         'isCarrierOrganization' => $isCarrierOrganization,
         'isCarrierOwner' => $isCarrierOwner,
         'carrierPackages' => $carrierPackages,
@@ -132,7 +133,7 @@ $router->post(function () {
     if($action==='carrier_qr_claim'){
         $qrPhoto='';if(FileUtils::hasFile($_FILES,'qr_photo')){$file=$_FILES['qr_photo'];if(!in_array((string)($file['type']??''),['image/jpeg','image/png','image/webp'],true)||(int)($file['size']??0)>8*1024*1024){$message='QR evidence must be JPG, PNG or WEBP up to 8 MB.';if(strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH']??''))==='xmlhttprequest'){header('Content-Type: application/json');http_response_code(422);echo json_encode(['success'=>false,'message'=>$message]);exit;}MessageUtil::setMessage($message);LocationUtils::reload();}$qrPhoto=FileUtils::saveFile($file,'store-carrier-evidence');}
         [$ok,$message,$package]=$repo->claimByQr($ownerId,(int)$user->getId(),trim((string)($_POST['qr_token']??'')),$qrPhoto,is_numeric($_POST['latitude']??null)?(float)$_POST['latitude']:null,is_numeric($_POST['longitude']??null)?(float)$_POST['longitude']:null);
-        if(strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH']??''))==='xmlhttprequest'){header('Content-Type: application/json');http_response_code($ok?200:422);echo json_encode(['success'=>$ok,'message'=>$message,'package_id'=>$package->id??null]);exit;}MessageUtil::setMessage($message);LocationUtils::reload();
+        if(strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH']??''))==='xmlhttprequest'){$updated=$ok?$repo->findBySecureToken(trim((string)($_POST['qr_token']??''))):null;$status=(string)($updated->custody_status??'');$listStage=in_array($status,['PICKED_UP'],true)?'collected':(in_array($status,['RECEIVED_AT_HUB','SORTED_AT_HUB'],true)?'warehouse':(in_array($status,['OUT_FOR_DELIVERY'],true)?'route':(in_array($status,['CANCELLED_RETURN_PENDING'],true)?'cancelled':'closed')));header('Content-Type: application/json');http_response_code($ok?200:422);echo json_encode(['success'=>$ok,'message'=>$message,'package_id'=>$package->id??null,'custody_status'=>$status,'list_stage'=>$listStage]);exit;}MessageUtil::setMessage($message);LocationUtils::reload();
     }
     if($action==='carrier_manual_secure_claim'){
         $photo='';if(FileUtils::hasFile($_FILES,'manual_claim_photo')){$file=$_FILES['manual_claim_photo'];if(!in_array((string)($file['type']??''),['image/jpeg','image/png','image/webp'],true)||(int)($file['size']??0)>8*1024*1024){$respond(false,'Evidence must be JPG, PNG or WEBP up to 8 MB.');}$photo=FileUtils::saveFile($file,'store-carrier-evidence');}
