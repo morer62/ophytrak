@@ -1,14 +1,21 @@
-<li class="sidebar-header">OPHYTRACK · {{ trans('ui.my_work') }}</li>
+<li class="sidebar-header">OPHYTRACK · {{ is_carrier_organization ? 'REPARTIDOR' : trans('ui.my_work') }}</li>
+{% if is_carrier_organization %}
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/team/driver-mode?view=deliveries') }}"><i data-feather="truck"></i><span>Entregas</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/team/driver-mode?view=collection') }}"><i data-feather="maximize"></i><span>Coletas</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/team/driver-mode?view=collection&details=1&carrier_stage=warehouse') }}"><i data-feather="package"></i><span>Recepción física</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/team/driver-mode?view=collection&details=1&carrier_stage=route') }}"><i data-feather="navigation"></i><span>Manifiesto de salida</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/team/driver-mode?view=deliveries&result=returns') }}"><i data-feather="corner-up-left"></i><span>Devoluciones</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/ophytrack/payments') }}"><i data-feather="dollar-sign"></i><span>Mis ganancias</span></a></li>
+{% else %}
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/home') }}"><i data-feather="grid"></i><span>{{ trans('nav.dashboard') }}</span></a></li>
-{% if is_carrier_organization %}<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/team/driver-mode') }}"><i data-feather="navigation"></i><span>{{ trans('carrier_ui.scan_packages') }}</span></a></li>{% endif %}
-<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/team/my-work') }}"><i data-feather="check-square"></i><span>{{ trans('ui.assigned_orders') }}</span></a></li>
-<li class="sidebar-item"><a class="sidebar-link text-danger" href="{{ path('panel/ophytrack/payments') }}"><i data-feather="dollar-sign"></i><span>{{ trans('carrier_ui.pending_payments') }}</span></a></li>
+{% endif %}
+{% if not is_carrier_organization %}<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/team/my-work') }}"><i data-feather="check-square"></i><span>{{ trans('ui.assigned_orders') }}</span></a></li>{% endif %}
 <li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/team/chat?context=store') }}"><i data-feather="message-circle"></i><span>{{ trans('nav.inbox') }}</span></a></li>
 {% if 'storage' in level4_permission_modules %}<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/management/storage') }}"><i data-feather="archive"></i><span>{{ trans('nav.warehouse') }}</span></a></li>{% endif %}
-<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/team/payroll/clock') }}"><i data-feather="clock"></i><span>{{ trans('ui.hours') }}</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/team/payroll/clock') }}"><i data-feather="clock"></i><span>{{ is_carrier_organization ? 'Mi jornada' : trans('ui.hours') }}</span></a></li>
 {% if level4_permission_modules|length %}<li class="sidebar-header">{{ trans('team_scope.delegated_admin') }}</li>{% endif %}
 {% if 'users' in level4_permission_modules %}<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/management/users') }}"><i data-feather="users"></i><span>{{ trans('carrier_ui.drivers') }}</span></a></li>{% endif %}
 {% if 'orders' in level4_permission_modules %}<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/management/orders') }}"><i data-feather="package"></i><span>{{ trans('ui.assigned_orders') }}</span></a></li>{% endif %}
 {% if 'roles' in level4_permission_modules %}<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/planner-hub/management/roles') }}"><i data-feather="shield"></i><span>{{ trans('planner_hub.roles') }}</span></a></li>{% endif %}
-<li class="sidebar-header">{{ trans('nav.business') }}</li>
-<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/settings') }}"><i data-feather="settings"></i><span>{{ trans('nav.settings') }}</span></a></li>
+<li class="sidebar-header">{{ is_carrier_organization ? 'MI CUENTA' : trans('nav.business') }}</li>
+<li class="sidebar-item"><a class="sidebar-link" href="{{ path('panel/settings') }}"><i data-feather="user"></i><span>{{ is_carrier_organization ? 'Perfil' : trans('nav.settings') }}</span></a></li>

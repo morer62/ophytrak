@@ -97,6 +97,8 @@ $router->get(function () {
         'scannedPackageId' => max(0, (int)($_GET['scanned_package'] ?? 0)),
         'carrierStage' => in_array((string)($_GET['carrier_stage']??''),['collected','warehouse','route','cancelled','closed'],true)?(string)$_GET['carrier_stage']:'collected',
         'carrierView' => in_array((string)($_GET['view']??''),['deliveries','collection'],true)?(string)$_GET['view']:'deliveries',
+        'carrierResult' => in_array((string)($_GET['result']??''),['open','completed','attempts','returns'],true)?(string)$_GET['result']:'open',
+        'showCarrierDetails' => (string)($_GET['details']??'')==='1',
         'isCarrierOrganization' => $isCarrierOrganization,
         'isCarrierOwner' => $isCarrierOwner,
         'collectedTodayCount' => $isCarrierOrganization?$carrierRepo->countCollectedToday($ownerId,$isCarrierOwner?null:(int)$user->getId()):0,
