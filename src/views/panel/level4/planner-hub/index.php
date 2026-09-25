@@ -5,6 +5,9 @@ use App\Services\Level4AccessCenterService;
 use App\Services\UserWorkspaceContextService;
 use App\Utils\Router;
 use App\Utils\TemplateResponse;
+use App\Utils\LocationUtils;
+use App\Services\ProductProfileService;
+use App\Repositories\CarrierPackageRepository;
 
 $router = new Router();
 
@@ -15,6 +18,12 @@ $router->get(function () {
     if (!empty($teamContext['selectedInstitutionId'])) {
         LoginService::reloadUserPermissions((int)$teamContext['selectedInstitutionId']);
         $user = LoginService::getSession();
+    }
+
+    $selectedOwnerId = (int)($teamContext['selectedOwnerId'] ?? $user->getOwner());
+    if (ProductProfileService::isOphytrack() && $selectedOwnerId > 0 && (new CarrierPackageRepository())->isCarrier($selectedOwnerId)) {
+        LocationUtils::redirectInternal('panel/planner-hub/team/driver-mode?view=deliveries');
+        return;
     }
 
     $accessCenter = (new Level4AccessCenterService())->build($user, $teamContext);

@@ -10,6 +10,7 @@ use App\Repositories\UserRepository;
 use App\Repositories\InstitutionProfileRepository;
 use App\Repositories\UserInstitutionsRepository;
 use App\Repositories\TeamMemberContractsRepository;
+use App\Repositories\CarrierPackageRepository;
 use App\Utils\LocationUtils;
 
 $router = new Router();
@@ -24,6 +25,12 @@ $router->get(function () {
     if (!empty($teamContext['selectedInstitutionId'])) {
         LoginService::reloadUserPermissions((int)$teamContext['selectedInstitutionId']);
         $user = LoginService::getSession();
+    }
+
+    $selectedOwnerId = (int)($teamContext['selectedOwnerId'] ?? $user->getOwner());
+    if (ProductProfileService::isOphytrack() && $selectedOwnerId > 0 && (new CarrierPackageRepository())->isCarrier($selectedOwnerId)) {
+        LocationUtils::redirectInternal('panel/planner-hub/team/driver-mode?view=deliveries');
+        return;
     }
     
     $currentInstitutionId = $_SESSION['current_institution_id'] ?? null;
