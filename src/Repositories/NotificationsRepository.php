@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Repositories\Connection;
+use App\Utils\LocationUtils;
 use Exception;
 
 class NotificationsRepository extends BaseRepository
@@ -17,6 +18,7 @@ class NotificationsRepository extends BaseRepository
     public function getByUser(int $userId): array
     {
         $notifications = $this->getAllBy(['id_user' => $userId]);
+        $this->normalizeLinks($notifications);
         
         // Ordenar por timestamp descendente (más recientes primero)
         usort($notifications, function($a, $b) {
@@ -29,6 +31,7 @@ class NotificationsRepository extends BaseRepository
     public function getUnreadByUser(int $userId): array
     {
         $notifications = $this->getAllBy(['id_user' => $userId, 'leido' => 0]);
+        $this->normalizeLinks($notifications);
         
         // Ordenar por timestamp descendente (más recientes primero)
         usort($notifications, function($a, $b) {
@@ -73,6 +76,7 @@ class NotificationsRepository extends BaseRepository
     public function getAllNotifications(): array
     {
         $notifications = $this->getAllBy([]);
+        $this->normalizeLinks($notifications);
         
         // Ordenar por timestamp descendente (más recientes primero)
         usort($notifications, function($a, $b) {
@@ -80,5 +84,22 @@ class NotificationsRepository extends BaseRepository
         });
         
         return $notifications;
+    }
+
+    private function normalizeLinks(array $notifications): void
+    {
+        foreach ($notifications as $notification) {
+            $link = trim((string)($notification->link ?? ''));
+            if ($link === '' || str_starts_with($link, '#')) {
+                continue;
+            }
+            if (preg_match('~^(?:https?:)?//~i', $link)) {
+                continue;
+            }
+            // Notification producers historically saved links as both
+            // "panel/..." and "/panel/...". A relative value opened from
+            // /panel/notifications became /panel/panel/... and returned 404.
+            $notification->link = LocationUtils::pathFor(ltrim($link, '/'));
+        }
     }
 }
