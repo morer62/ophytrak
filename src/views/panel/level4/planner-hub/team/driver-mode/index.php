@@ -84,7 +84,7 @@ $router->get(function () {
         }
     }
 
-    $isCarrierOwner=(int)$user->getLevel()===2;$carrierPackages=$isCarrierOrganization?$carrierRepo->getForCarrier($ownerId,$isCarrierOwner?null:(int)$user->getId()):[];$manifests=$isCarrierOrganization?($isCarrierOwner?$manifestRepo->getForCarrier($ownerId):$manifestRepo->getForDriver($ownerId,(int)$user->getId())):[];$activeManifest=null;$manifestItems=[];foreach($manifests as $candidate){if(in_array((string)$candidate->status,['DRAFT','GENERATED','IN_PROGRESS'],true)){$activeManifest=$candidate;$manifestItems=$manifestRepo->getItems((int)$candidate->id,$ownerId,$isCarrierOwner?0:(int)$user->getId());break;}}
+    $isCarrierOwner=(int)$user->getLevel()===2;$carrierPackages=$isCarrierOrganization?$carrierRepo->getForCarrier($ownerId,$isCarrierOwner?null:(int)$user->getId()):[];$carrierCancelledPackages=$isCarrierOrganization?$carrierRepo->getCancelledReturnsForCarrier($ownerId,$isCarrierOwner?null:(int)$user->getId()):[];$manifests=$isCarrierOrganization?($isCarrierOwner?$manifestRepo->getForCarrier($ownerId):$manifestRepo->getForDriver($ownerId,(int)$user->getId())):[];$activeManifest=null;$manifestItems=[];foreach($manifests as $candidate){if(in_array((string)$candidate->status,['DRAFT','GENERATED','IN_PROGRESS'],true)){$activeManifest=$candidate;$manifestItems=$manifestRepo->getItems((int)$candidate->id,$ownerId,$isCarrierOwner?0:(int)$user->getId());break;}}
     return TemplateResponse::render(__DIR__ . '/index.twig', [
         'teamContext' => $teamContext,
         'deliveryTasks' => $deliveryTasks,
@@ -96,6 +96,7 @@ $router->get(function () {
         'assignedPackageTokens' => $assignedPackageTokens,
         'scannedPackageId' => max(0, (int)($_GET['scanned_package'] ?? 0)),
         'carrierStage' => in_array((string)($_GET['carrier_stage']??''),['collected','warehouse','route','cancelled','closed'],true)?(string)$_GET['carrier_stage']:'collected',
+        'carrierView' => in_array((string)($_GET['view']??''),['deliveries','collection'],true)?(string)$_GET['view']:'deliveries',
         'isCarrierOrganization' => $isCarrierOrganization,
         'isCarrierOwner' => $isCarrierOwner,
         'collectedTodayCount' => $isCarrierOrganization?$carrierRepo->countCollectedToday($ownerId,$isCarrierOwner?null:(int)$user->getId()):0,
@@ -103,7 +104,10 @@ $router->get(function () {
         'carrierCollectedPackages' => array_values(array_filter($carrierPackages,static fn($p)=>(string)$p->custody_status==='PICKED_UP')),
         'carrierWarehousePackages' => array_values(array_filter($carrierPackages,static fn($p)=>in_array((string)$p->custody_status,['RECEIVED_AT_HUB','SORTED_AT_HUB'],true))),
         'carrierRoutePackages' => array_values(array_filter($carrierPackages,static fn($p)=>(string)$p->custody_status==='OUT_FOR_DELIVERY')),
-        'carrierCancelledPackages' => $isCarrierOrganization?$carrierRepo->getCancelledReturnsForCarrier($ownerId,$isCarrierOwner?null:(int)$user->getId()):[],
+        'carrierDeliveredPackages' => array_values(array_filter($carrierPackages,static fn($p)=>(string)$p->custody_status==='DELIVERED')),
+        'carrierAttemptPackages' => array_values(array_filter($carrierPackages,static fn($p)=>in_array((string)$p->custody_status,['CUSTOMER_ABSENT','CUSTOMER_REJECTED'],true))),
+        'carrierCancelledPackages' => $carrierCancelledPackages,
+        'carrierPendingReturnPackages' => array_values(array_filter($carrierCancelledPackages,static fn($p)=>in_array((string)$p->custody_status,['CANCELLED_RETURN_PENDING','DELIVERY_CANCELLED'],true))),
         'carrierClosedPackages' => array_values(array_filter($carrierPackages,static fn($p)=>in_array((string)$p->custody_status,['DELIVERED','CUSTOMER_ABSENT','CUSTOMER_REJECTED'],true))),
         'deliveryManifests'=>$manifests,'activeManifest'=>$activeManifest,'manifestItems'=>$manifestItems,'manifestDbReady'=>$manifestRepo->isReady(),
     ]);
