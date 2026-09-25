@@ -84,7 +84,7 @@ $router->get(function () {
         }
     }
 
-    $isCarrierOwner=(int)$user->getLevel()===2;$carrierPackages=$isCarrierOrganization?$carrierRepo->getForCarrier($ownerId,$isCarrierOwner?null:(int)$user->getId()):[];$carrierCancelledPackages=$isCarrierOrganization?$carrierRepo->getCancelledReturnsForCarrier($ownerId,$isCarrierOwner?null:(int)$user->getId()):[];$manifests=$isCarrierOrganization?($isCarrierOwner?$manifestRepo->getForCarrier($ownerId):$manifestRepo->getForDriver($ownerId,(int)$user->getId())):[];$activeManifest=null;$manifestItems=[];foreach($manifests as $candidate){if(in_array((string)$candidate->status,['DRAFT','GENERATED','IN_PROGRESS'],true)){$activeManifest=$candidate;$manifestItems=$manifestRepo->getItems((int)$candidate->id,$ownerId,$isCarrierOwner?0:(int)$user->getId());break;}}
+    $isCarrierOwner=(int)$user->getLevel()===2;$carrierPackages=$isCarrierOrganization?$carrierRepo->getForCarrier($ownerId,$isCarrierOwner?null:(int)$user->getId()):[];$carrierCancelledPackages=$isCarrierOrganization?$carrierRepo->getCancelledReturnsForCarrier($ownerId,$isCarrierOwner?null:(int)$user->getId()):[];$today=(new \DateTimeImmutable('now',new \DateTimeZone('America/Sao_Paulo')))->format('Y-m-d');$historyFrom=preg_match('/^\d{4}-\d{2}-\d{2}$/',(string)($_GET['from']??''))?(string)$_GET['from']:(new \DateTimeImmutable($today))->modify('-30 days')->format('Y-m-d');$historyTo=preg_match('/^\d{4}-\d{2}-\d{2}$/',(string)($_GET['to']??''))?(string)$_GET['to']:$today;if($historyFrom>$historyTo)[$historyFrom,$historyTo]=[$historyTo,$historyFrom];$manifests=$isCarrierOrganization?($isCarrierOwner?$manifestRepo->getForCarrier($ownerId):$manifestRepo->getForDriver($ownerId,(int)$user->getId())):[];$activeManifest=null;$manifestItems=[];foreach($manifests as $candidate){if(in_array((string)$candidate->status,['DRAFT','GENERATED','IN_PROGRESS'],true)){$activeManifest=$candidate;$manifestItems=$manifestRepo->getItems((int)$candidate->id,$ownerId,$isCarrierOwner?0:(int)$user->getId());break;}}
     return TemplateResponse::render(__DIR__ . '/index.twig', [
         'teamContext' => $teamContext,
         'deliveryTasks' => $deliveryTasks,
@@ -104,7 +104,8 @@ $router->get(function () {
         'collectedTodayCount' => $isCarrierOrganization?$carrierRepo->countCollectedToday($ownerId,$isCarrierOwner?null:(int)$user->getId()):0,
         'carrierPackages' => $carrierPackages,
         'carrierCollectedPackages' => array_values(array_filter($carrierPackages,static fn($p)=>(string)$p->custody_status==='PICKED_UP')),
-        'carrierCollectionHistory' => $isCarrierOrganization?$carrierRepo->getCollectionHistory($ownerId,$isCarrierOwner?null:(int)$user->getId()):[],
+        'carrierCollectionHistory' => $isCarrierOrganization?$carrierRepo->getCollectionHistory($ownerId,$isCarrierOwner?null:(int)$user->getId(),$historyFrom,$historyTo):[],
+        'historyFrom'=>$historyFrom,'historyTo'=>$historyTo,
         'carrierWarehousePackages' => array_values(array_filter($carrierPackages,static fn($p)=>in_array((string)$p->custody_status,['RECEIVED_AT_HUB','SORTED_AT_HUB'],true))),
         'carrierRoutePackages' => array_values(array_filter($carrierPackages,static fn($p)=>(string)$p->custody_status==='OUT_FOR_DELIVERY')),
         'carrierDeliveredPackages' => array_values(array_filter($carrierPackages,static fn($p)=>(string)$p->custody_status==='DELIVERED')),

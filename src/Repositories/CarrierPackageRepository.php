@@ -146,11 +146,12 @@ class CarrierPackageRepository extends StoreRepository
         $this->db->bind(':carrier',$carrierOwner);if($userId)$this->db->bind(':user',$userId);$row=$this->db->fetchOne();return(int)($row->total??0);
     }
 
-    public function getCollectionHistory(int $carrierOwner,?int $userId=null): array
+    public function getCollectionHistory(int $carrierOwner,?int $userId=null,?string $from=null,?string $to=null): array
     {
         $userSql=$userId?' AND e.id_user=:user':'';
-        $this->db->query("SELECT e.id AS event_id,e.created_at AS collected_at,e.status_to AS custody_status,p.id,p.package_code,p.id_store_order,o.guest_name,o.guest_email,o.guest_phone,o.shipping_address_1,o.shipping_address_2,o.shipping_city,o.shipping_state,o.shipping_zip,ip.company_name AS seller_name FROM store_package_events e JOIN store_packages p ON p.id=e.id_store_package JOIN store_orders o ON o.id=p.id_store_order AND o.id_owner=p.id_owner JOIN store_package_carrier_assignments a ON a.id_store_package=p.id AND a.carrier_owner_id=:carrier LEFT JOIN institution_profile ip ON ip.id_owner=p.id_owner WHERE e.event_type='QR_CUSTODY_ACCEPTED' {$userSql} ORDER BY e.created_at DESC,e.id DESC LIMIT 250");
-        $this->db->bind(':carrier',$carrierOwner);if($userId)$this->db->bind(':user',$userId);return$this->db->fetchAll();
+        $dateSql=$from&&$to?" AND DATE(CONVERT_TZ(e.created_at,'+00:00','-03:00')) BETWEEN :from_date AND :to_date":'';
+        $this->db->query("SELECT e.id AS event_id,CONVERT_TZ(e.created_at,'+00:00','-03:00') AS collected_at,e.status_to AS custody_status,p.id,p.package_code,p.id_store_order,o.public_token,o.guest_name,o.guest_email,o.guest_phone,o.shipping_address_1,o.shipping_address_2,o.shipping_city,o.shipping_state,o.shipping_zip,ip.company_name AS seller_name FROM store_package_events e JOIN store_packages p ON p.id=e.id_store_package JOIN store_orders o ON o.id=p.id_store_order AND o.id_owner=p.id_owner JOIN store_package_carrier_assignments a ON a.id_store_package=p.id AND a.carrier_owner_id=:carrier LEFT JOIN institution_profile ip ON ip.id_owner=p.id_owner WHERE e.event_type='QR_CUSTODY_ACCEPTED' {$userSql} {$dateSql} ORDER BY e.created_at DESC,e.id DESC LIMIT 500");
+        $this->db->bind(':carrier',$carrierOwner);if($userId)$this->db->bind(':user',$userId);if($dateSql){$this->db->bind(':from_date',$from);$this->db->bind(':to_date',$to);}return$this->db->fetchAll();
     }
 
     public function assignEmployee(int $packageId,int $carrierOwner,int $employeeId,int $assignedBy,string $role): array
