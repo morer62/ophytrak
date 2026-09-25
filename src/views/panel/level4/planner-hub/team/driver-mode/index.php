@@ -98,6 +98,7 @@ $router->get(function () {
         'carrierStage' => in_array((string)($_GET['carrier_stage']??''),['collected','warehouse','route','cancelled','closed'],true)?(string)$_GET['carrier_stage']:'collected',
         'isCarrierOrganization' => $isCarrierOrganization,
         'isCarrierOwner' => $isCarrierOwner,
+        'collectedTodayCount' => $isCarrierOrganization?$carrierRepo->countCollectedToday($ownerId,$isCarrierOwner?null:(int)$user->getId()):0,
         'carrierPackages' => $carrierPackages,
         'carrierCollectedPackages' => array_values(array_filter($carrierPackages,static fn($p)=>(string)$p->custody_status==='PICKED_UP')),
         'carrierWarehousePackages' => array_values(array_filter($carrierPackages,static fn($p)=>in_array((string)$p->custody_status,['RECEIVED_AT_HUB','SORTED_AT_HUB'],true))),

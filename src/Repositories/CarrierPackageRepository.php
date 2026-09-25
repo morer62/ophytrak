@@ -139,6 +139,13 @@ class CarrierPackageRepository extends StoreRepository
         $this->db->query("SELECT DISTINCT p.*,o.guest_name,o.guest_email,o.guest_phone,o.shipping_address_1,o.shipping_address_2,o.shipping_city,o.shipping_state,o.shipping_zip,o.shipping_country,o.shipping_instructions,o.status AS order_status,ip.company_name AS seller_name,a.assignment_role,a.status AS assignment_status FROM store_packages p JOIN store_orders o ON o.id=p.id_store_order AND o.id_owner=p.id_owner LEFT JOIN institution_profile ip ON ip.id_owner=p.id_owner LEFT JOIN store_package_carrier_assignments a ON a.id_store_package=p.id AND a.carrier_owner_id=:carrier AND a.status<>'CANCELLED' WHERE p.current_custodian_owner_id=:carrier {$userSql} ORDER BY p.last_event_at DESC");$this->db->bind(':carrier',$carrierOwner);if($userId)$this->db->bind(':user',$userId);return$this->db->fetchAll();
     }
 
+    public function countCollectedToday(int $carrierOwner,?int $userId=null): int
+    {
+        $userSql=$userId?' AND e.id_user=:user':'';
+        $this->db->query("SELECT COUNT(DISTINCT e.id_store_package) total FROM store_package_events e JOIN store_package_carrier_assignments a ON a.id_store_package=e.id_store_package AND a.carrier_owner_id=:carrier WHERE e.event_type='QR_CUSTODY_ACCEPTED' AND DATE(CONVERT_TZ(e.created_at,'+00:00','-03:00'))=DATE(CONVERT_TZ(UTC_TIMESTAMP(),'+00:00','-03:00')) {$userSql}");
+        $this->db->bind(':carrier',$carrierOwner);if($userId)$this->db->bind(':user',$userId);$row=$this->db->fetchOne();return(int)($row->total??0);
+    }
+
     public function assignEmployee(int $packageId,int $carrierOwner,int $employeeId,int $assignedBy,string $role): array
     {
         $role=strtoupper($role);if(!in_array($role,['PICKUP','HUB_RECEIVING','SORTING','DELIVERY','SUPERVISOR'],true))return[false,'Invalid carrier role.'];
