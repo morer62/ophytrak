@@ -15,6 +15,8 @@ test('departure manifest scans, groups companies, generates the ordered route an
   for(const id of ['departureManifest','departureManifestList','manifestServiceDetails','manifestCepStart','manifestCepEnd','manifestReadType','manifestManualCode','recordManifestCode','generateDepartureManifest','manifestScannedTotal','manifestCompanyTotals'])expect(view).toContain(id);
   expect(view).toContain('Generar manifiesto de salida');
   expect(view).toContain('Total de paquetes escaneados:');
+  expect(controller).toContain("if($carrierStage==='route')");
+  expect(controller).toContain("status==='DRAFT'");
   expect(controller).toContain('manifestCompanySummary');
   expect(repository).toContain('seller_name');
   expect(view).toContain("data.append('workflow_context','departure_manifest')");

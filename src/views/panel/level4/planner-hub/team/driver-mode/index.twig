@@ -173,6 +173,9 @@
                     </form>
                   {% elseif activeManifest %}
                     <a class="btn btn-primary btn-lg w-100" href="{{ path('panel/planner-hub/team/driver-mode?view=deliveries') }}">Ir a Entregas</a>
+                  {% else %}
+                    <button class="btn btn-danger btn-lg w-100" id="generateDepartureManifest" type="button" disabled>Generar manifiesto de salida</button>
+                    <p class="small text-muted text-center mt-2 mb-0">Escanea al menos un paquete para habilitar el manifiesto.</p>
                   {% endif %}
                   <div id="manifestFeedback" class="mt-3"></div>
                   <button class="btn btn-warning btn-lg w-100 mt-3" id="manifestScannedTotal" type="button" data-bs-toggle="collapse" data-bs-target="#manifestCompanyTotals" aria-expanded="true">
