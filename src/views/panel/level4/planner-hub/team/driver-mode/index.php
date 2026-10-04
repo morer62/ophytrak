@@ -95,7 +95,7 @@ $router->get(function () {
         'allDeliveryTasks' => array_merge($deliveryTasks, $incidentTasks, $completedTasks),
         'assignedPackageTokens' => $assignedPackageTokens,
         'scannedPackageId' => max(0, (int)($_GET['scanned_package'] ?? 0)),
-        'carrierStage' => in_array((string)($_GET['carrier_stage']??''),['collected','history','warehouse','route','agent_change','cancelled','closed'],true)?(string)$_GET['carrier_stage']:'collected',
+        'carrierStage' => in_array((string)($_GET['carrier_stage']??''),['collected','history','warehouse','route','agent_change','cancelled','return_route','closed'],true)?(string)$_GET['carrier_stage']:'collected',
         'carrierView' => in_array((string)($_GET['view']??''),['deliveries','collection'],true)?(string)$_GET['view']:'deliveries',
         'carrierResult' => in_array((string)($_GET['result']??''),['open','completed','attempts','returns'],true)?(string)$_GET['result']:'open',
         'showCarrierDetails' => (string)($_GET['details']??'')==='1',
