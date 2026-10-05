@@ -100,11 +100,11 @@ class MarketplaceConnectorsRepository extends BaseRepository
                 INSERT INTO {$this->table}
                     (id_owner, provider, display_name, store_url, account_id, external_shop_id, shop_cipher, country_code, currency_code, shop_domain,
                      access_token_encrypted, refresh_token_encrypted, token_expires_at,
-                     status, sync_status, public_store_url, created_at, updated_at)
+                     status, sync_status, sync_products, sync_orders, sync_inventory, inventory_source, price_source, public_store_url, created_at, updated_at)
                 VALUES
                     (:owner_id, :provider, :display_name, :store_url, :account_id, :external_shop_id, :shop_cipher, :country_code, :currency_code, :shop_domain,
                      :access_token, :refresh_token, :token_expires_at,
-                     :status, 'NEVER', :public_store_url, NOW(), NOW())
+                     :status, 'NEVER', :sync_products, :sync_orders, :sync_inventory, :inventory_source, :price_source, :public_store_url, NOW(), NOW())
                 ON DUPLICATE KEY UPDATE
                     display_name = VALUES(display_name),
                     store_url = VALUES(store_url),
@@ -118,6 +118,11 @@ class MarketplaceConnectorsRepository extends BaseRepository
                     refresh_token_encrypted = IF(:refresh_token_plain = '', refresh_token_encrypted, VALUES(refresh_token_encrypted)),
                     token_expires_at = VALUES(token_expires_at),
                     status = VALUES(status),
+                    sync_products = VALUES(sync_products),
+                    sync_orders = VALUES(sync_orders),
+                    sync_inventory = VALUES(sync_inventory),
+                    inventory_source = VALUES(inventory_source),
+                    price_source = VALUES(price_source),
                     public_store_url = VALUES(public_store_url),
                     updated_at = NOW()
             ");
@@ -138,6 +143,13 @@ class MarketplaceConnectorsRepository extends BaseRepository
             $this->db->bind(':refresh_token_plain', $refreshToken);
             $this->db->bind(':token_expires_at', trim((string)($data['token_expires_at'] ?? '')) ?: null);
             $this->db->bind(':status', !empty($data['is_active']) ? 'ACTIVE' : 'INACTIVE');
+            $this->db->bind(':sync_products', array_key_exists('sync_products',$data) ? (!empty($data['sync_products']) ? 1 : 0) : (int)($existing->sync_products ?? 1));
+            $this->db->bind(':sync_orders', array_key_exists('sync_orders',$data) ? (!empty($data['sync_orders']) ? 1 : 0) : (int)($existing->sync_orders ?? 1));
+            $this->db->bind(':sync_inventory', array_key_exists('sync_inventory',$data) ? (!empty($data['sync_inventory']) ? 1 : 0) : (int)($existing->sync_inventory ?? 1));
+            $inventorySource=(string)($data['inventory_source']??$existing->inventory_source??'MARKETPLACE');
+            $priceSource=(string)($data['price_source']??$existing->price_source??'MARKETPLACE');
+            $this->db->bind(':inventory_source', in_array($inventorySource, ['MARKETPLACE','OPHYRA','MANUAL'], true) ? $inventorySource : 'MARKETPLACE');
+            $this->db->bind(':price_source', in_array($priceSource, ['MARKETPLACE','OPHYRA','MANUAL'], true) ? $priceSource : 'MARKETPLACE');
             $this->db->bind(':public_store_url', trim((string)($data['public_store_url'] ?? '')) ?: null);
             $this->db->execute();
 
@@ -182,7 +194,7 @@ class MarketplaceConnectorsRepository extends BaseRepository
         $refresh=(string)($token['refresh_token']??'');
         $expires=$token['expires_in']??$token['access_token_expire_in']??null;
         $expiresAt=is_numeric($expires)?date('Y-m-d H:i:s',((int)$expires>time()?(int)$expires:time()+(int)$expires)):null;
-        try{$this->db->query("UPDATE {$this->table} SET access_token_encrypted=:access,refresh_token_encrypted=:refresh,token_expires_at=:expires,external_shop_id=COALESCE(NULLIF(:shop,''),external_shop_id),shop_cipher=COALESCE(NULLIF(:cipher,''),shop_cipher),status='ACTIVE',last_error=NULL,updated_at=NOW() WHERE id_owner=:owner AND provider=:provider");$this->db->bind(':access',$this->encrypt($access));$this->db->bind(':refresh',$refresh!==''?$this->encrypt($refresh):'');$this->db->bind(':expires',$expiresAt);$this->db->bind(':shop',(string)($token['shop_id']??$token['user_id']??$token['open_id']??''));$this->db->bind(':cipher',(string)($token['shop_cipher']??''));$this->db->bind(':owner',$ownerId);$this->db->bind(':provider',$provider);$this->db->execute();return$this->db->rowCount()===1;}catch(\Throwable $e){error_log('Marketplace authorization save: '.$e->getMessage());return false;}
+        try{$this->db->query("UPDATE {$this->table} SET access_token_encrypted=:access,refresh_token_encrypted=IF(:refresh_plain='',refresh_token_encrypted,:refresh),token_expires_at=COALESCE(:expires,token_expires_at),external_shop_id=COALESCE(NULLIF(:shop,''),external_shop_id),shop_cipher=COALESCE(NULLIF(:cipher,''),shop_cipher),status='ACTIVE',last_error=NULL,updated_at=NOW() WHERE id_owner=:owner AND provider=:provider");$this->db->bind(':access',$this->encrypt($access));$this->db->bind(':refresh',$refresh!==''?$this->encrypt($refresh):'');$this->db->bind(':refresh_plain',$refresh);$this->db->bind(':expires',$expiresAt);$this->db->bind(':shop',(string)($token['shop_id']??$token['user_id']??$token['open_id']??''));$this->db->bind(':cipher',(string)($token['shop_cipher']??''));$this->db->bind(':owner',$ownerId);$this->db->bind(':provider',$provider);$this->db->execute();return$this->db->rowCount()===1;}catch(\Throwable $e){error_log('Marketplace authorization save: '.$e->getMessage());return false;}
     }
 
     private function getRawByOwnerAndProvider(int $ownerId, string $provider): ?object

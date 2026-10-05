@@ -106,15 +106,20 @@ class MarketplaceSyncService
                 $adapter->testConnection();
                 $importer = new MarketplaceImportService();
                 $products = []; $productCursor = null;
-                for ($page = 0; $page < 100; $page++) {
-                    $productResult = $adapter->fetchProducts($productCursor);
-                    $products = array_merge($products, (array)($productResult['items'] ?? []));
-                    $next = $productResult['next_cursor'] ?? null;
-                    if ($next === null || $next === '' || $next === $productCursor) break;
-                    $productCursor = (string)$next;
+                if ((int)($connector->sync_products ?? 1) === 1) {
+                    for ($page = 0; $page < 100; $page++) {
+                        $productResult = $adapter->fetchProducts($productCursor);
+                        $products = array_merge($products, (array)($productResult['items'] ?? []));
+                        $next = $productResult['next_cursor'] ?? null;
+                        if ($next === null || $next === '' || $next === $productCursor) break;
+                        $productCursor = (string)$next;
+                    }
                 }
-                $orderResult = $adapter->fetchOrders();
-                $orders = (array)($orderResult['items'] ?? []);
+                $orders = [];
+                if ((int)($connector->sync_orders ?? 1) === 1) {
+                    $orderResult = $adapter->fetchOrders();
+                    $orders = (array)($orderResult['items'] ?? []);
+                }
                 $productsWritten = $importer->importProducts($ownerId, $connector, $provider, $products);
                 $ordersWritten = $importer->importOrders($ownerId, $connector, $provider, $orders);
                 $status = 'SUCCESS';

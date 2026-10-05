@@ -110,6 +110,19 @@
                 <span>Activate connector</span>
               </label>
             </div>
+            <div class="col-12 d-flex flex-wrap gap-3">
+              <label class="connector-toggle"><input type="checkbox" name="sync_products" value="1" {{ not connector or connector.sync_products ? 'checked' : '' }}> <span>Sync products</span></label>
+              <label class="connector-toggle"><input type="checkbox" name="sync_orders" value="1" {{ not connector or connector.sync_orders ? 'checked' : '' }}> <span>Sync orders</span></label>
+              <label class="connector-toggle"><input type="checkbox" name="sync_inventory" value="1" {{ not connector or connector.sync_inventory ? 'checked' : '' }}> <span>Sync inventory</span></label>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Inventory source</label>
+              <select class="form-select" name="inventory_source"><option value="MARKETPLACE" {{ connector.inventory_source|default('MARKETPLACE') == 'MARKETPLACE' ? 'selected' : '' }}>Marketplace</option><option value="OPHYRA" {{ connector.inventory_source|default('') == 'OPHYRA' ? 'selected' : '' }}>Ophytrack</option><option value="MANUAL" {{ connector.inventory_source|default('') == 'MANUAL' ? 'selected' : '' }}>Manual</option></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Price source</label>
+              <select class="form-select" name="price_source"><option value="MARKETPLACE" {{ connector.price_source|default('MARKETPLACE') == 'MARKETPLACE' ? 'selected' : '' }}>Marketplace</option><option value="OPHYRA" {{ connector.price_source|default('') == 'OPHYRA' ? 'selected' : '' }}>Ophytrack</option><option value="MANUAL" {{ connector.price_source|default('') == 'MANUAL' ? 'selected' : '' }}>Manual</option></select>
+            </div>
           </div>
 
           <div class="connector-actions">
@@ -125,6 +138,16 @@
             {{ connector and connector.has_access_token ? 'Reconnect authorized store' : 'Connect authorized store' }}
           </button>
         </form>
+
+        {% if connector and connector.has_refresh_token %}
+        <form method="post">
+          {{ macros.csrf() }}
+          <input type="hidden" name="action" value="refresh_token">
+          <input type="hidden" name="provider" value="{{ provider }}">
+          <button class="btn btn-outline-success w-100" type="submit">Renew authorization now</button>
+          <small class="text-muted">Tokens are also renewed automatically before expiration.</small>
+        </form>
+        {% endif %}
 
         <form method="post" class="connector-sync-form">
           {{ macros.csrf() }}

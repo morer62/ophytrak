@@ -5,6 +5,7 @@ use App\Services\LoginService;
 use App\Services\MarketplaceSyncService;
 use App\Services\Marketplace\MarketplaceOAuthService;
 use App\Services\Marketplace\MarketplaceSandboxService;
+use App\Services\Marketplace\MarketplaceTokenRefreshService;
 use App\Services\TranslationService;
 use App\Utils\LocationUtils;
 use App\Utils\MessageUtil;
@@ -79,6 +80,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if($action==='sandbox_sync'){
         $result=(new MarketplaceSandboxService())->run($ownerId,$provider);MessageUtil::setMessage($result['message'],$result['success']?'Success':'Error',$result['success']?'success':'error');LocationUtils::reload();
+    }
+
+    if($action==='refresh_token'){
+        try{(new MarketplaceTokenRefreshService($repository))->refresh($ownerId,$provider);MessageUtil::setMessage('Marketplace authorization renewed successfully.','Success','success');}catch(\Throwable $e){MessageUtil::setMessage($e->getMessage(),'Error','error');}LocationUtils::reload();
     }
 
     if ($action === 'manual_sync') {
