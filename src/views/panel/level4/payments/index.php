@@ -6,8 +6,31 @@ use App\Repositories\CarrierPackageRepository;
 use App\Services\UserWorkspaceContextService;
 use App\Utils\TemplateResponse;
 use App\Utils\Router;
+use App\Utils\LocationUtils;
+use App\Utils\MessageUtil;
 
 $router = new Router();
+
+$router->post(function (): void {
+    $user = LoginService::getSession();
+    $payoutRepo = new OphytrackDriverPayoutRepository();
+    $action = (string) ($_POST['action'] ?? '');
+    try {
+        if ($action !== 'driver_review') {
+            throw new RuntimeException('This action is not available to delivery users.');
+        }
+        $ok = $payoutRepo->review(
+            (int) ($_POST['payout_id'] ?? 0),
+            (int) $user->getId(),
+            (string) ($_POST['decision'] ?? '') === 'accept',
+            trim((string) ($_POST['review_notes'] ?? ''))
+        );
+        MessageUtil::setMessage($ok ? 'Payment review saved.' : 'This payout cannot be reviewed.');
+    } catch (Throwable $e) {
+        MessageUtil::setMessage($e->getMessage());
+    }
+    LocationUtils::reload();
+});
 
 $router->get(function (): string {
     $user = LoginService::getSession();
@@ -17,7 +40,8 @@ $router->get(function (): string {
     $payoutRepo=new OphytrackDriverPayoutRepository();$payouts=$payoutRepo->earningsForDriver((int)$user->getId(),$from->format('Y-m-d'),$to->format('Y-m-d'));foreach($payouts as $payout)$payout->service_key=$normalize($payout);if($selected)$payouts=array_values(array_filter($payouts,static fn($p)=>in_array($p->service_key,$selected,true)));if($period==='previous_fortnight')$payouts=array_values(array_filter($payouts,static fn($p)=>in_array((string)$p->status,['PENDING','PROOF_SUBMITTED','REJECTED'],true)));$deliveryTotal=array_reduce($payouts,static fn($sum,$p)=>$sum+(float)$p->amount_brl,0.0);
     $context=(new UserWorkspaceContextService())->getTeamContext($user);$owner=(int)($context['selectedOwnerId']??$user->getOwner());$collections=(new CarrierPackageRepository())->getCollectionHistory($owner,(int)$user->getId(),$from->format('Y-m-d'),$to->format('Y-m-d'));$collectionTotal=count($collections)*(float)($_ENV['OPHYTRACK_DEFAULT_COLLECTION_PAYOUT_BRL']??0);$adjustments=$payoutRepo->adjustmentsForDriver((int)$user->getId(),$owner,$from->format('Y-m-d'),$to->format('Y-m-d'));$credits=array_reduce($adjustments,static fn($sum,$a)=>$sum+((string)$a->adjustment_type==='CREDIT'?(float)$a->amount_brl:0),0.0);$debits=array_reduce($adjustments,static fn($sum,$a)=>$sum+((string)$a->adjustment_type==='DEBIT'?(float)$a->amount_brl:0),0.0);
     $companyBreakdown=[];foreach($payouts as $payout){$company=trim((string)($payout->payer_name??''))?:($services[$payout->service_key]??'Avulso (remesa)');if(!isset($companyBreakdown[$company]))$companyBreakdown[$company]=['name'=>$company,'count'=>0,'total'=>0.0];$companyBreakdown[$company]['count']++;$companyBreakdown[$company]['total']+=(float)$payout->amount_brl;}foreach($companyBreakdown as &$company){$company['rate']=$company['count']>0?$company['total']/$company['count']:0.0;}unset($company);usort($companyBreakdown,static fn($a,$b)=>strnatcasecmp($a['name'],$b['name']));
-    return TemplateResponse::render(__DIR__.'/index.twig',['driverName'=>trim($user->getName().' '.$user->getLastname()),'driverCode'=>$user->getId(),'services'=>$services,'selectedServices'=>$selected,'period'=>$period,'periods'=>$periods,'from'=>$from,'to'=>$to,'deliveryCount'=>count($payouts),'deliveryTotal'=>$deliveryTotal,'collectionCount'=>count($collections),'collectionTotal'=>$collectionTotal,'adjustments'=>$adjustments,'credits'=>$credits,'debits'=>$debits,'receivable'=>$deliveryTotal+$credits-$debits,'companyBreakdown'=>$companyBreakdown,'queriedAt'=>new DateTimeImmutable('now',$zone)]);
+    $driverPayouts=$payoutRepo->forDriver((int)$user->getId());$reviewablePayouts=array_values(array_filter($driverPayouts,static fn($p)=>(string)$p->status==='PROOF_SUBMITTED'));
+    return TemplateResponse::render(__DIR__.'/index.twig',['driverName'=>trim($user->getName().' '.$user->getLastname()),'driverCode'=>$user->getId(),'services'=>$services,'selectedServices'=>$selected,'period'=>$period,'periods'=>$periods,'from'=>$from,'to'=>$to,'deliveryCount'=>count($payouts),'deliveryTotal'=>$deliveryTotal,'collectionCount'=>count($collections),'collectionTotal'=>$collectionTotal,'adjustments'=>$adjustments,'credits'=>$credits,'debits'=>$debits,'receivable'=>$deliveryTotal+$credits-$debits,'companyBreakdown'=>$companyBreakdown,'driverPayouts'=>$driverPayouts,'reviewablePayouts'=>$reviewablePayouts,'queriedAt'=>new DateTimeImmutable('now',$zone)]);
 });
 
 $router->run();
