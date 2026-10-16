@@ -164,11 +164,19 @@ $router->post(function () {
         $eventType = 'DELIVERY_ATTEMPTED';
     } elseif ($action === 'delivery_attempted') {
         $notes = trim((string)($_POST['notes'] ?? ''));
-        if ($notes === '') {
+        $reason = trim((string)($_POST['occurrence_reason'] ?? ''));
+        $saveOccurrencePhoto = static function (string $field): string {
+            if (!FileUtils::hasFile($_FILES, $field)) return '';
+            $file=$_FILES[$field];
+            if (!in_array((string)($file['type']??''),['image/jpeg','image/png','image/webp'],true)||(int)($file['size']??0)>5*1024*1024) return '';
+            return FileUtils::saveFile($file,'store-delivery-occurrences');
+        };
+        $occurrencePhoto1=$saveOccurrencePhoto('occurrence_photo_1');$occurrencePhoto2=$saveOccurrencePhoto('occurrence_photo_2');
+        if ($notes === '' || $reason === '' || $occurrencePhoto1 === '' || $occurrencePhoto2 === '') {
             MessageUtil::setMessage(TranslationService::trans('store_logistics.attempt_notes_required'));
             LocationUtils::reload();
         }
-        $ok = $logisticsService->markDeliveryAttempted($ownerId, (int)$task->id_store_order, $taskId, (int)$user->getId(), $notes);
+        $ok = $logisticsService->markDeliveryAttempted($ownerId, (int)$task->id_store_order, $taskId, (int)$user->getId(), $notes, $reason, $occurrencePhoto1, $occurrencePhoto2);
         $eventType = 'RETURNED_TO_BUSINESS';
     } elseif ($action === 'returned_to_business') {
         $notes = trim((string)($_POST['notes'] ?? ''));

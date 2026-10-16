@@ -55,7 +55,7 @@ class StoreOrderTasksRepository extends StoreRepository
                    o.shipping_state, o.shipping_zip, o.shipping_country, o.shipping_instructions,
                    o.created_at AS order_created_at, o.public_token, p.package_code,
                    w.allow_team_close_delivery, w.allow_chat_with_client,
-                   w.delivery_photo_url, w.delivery_notes
+                   w.delivery_photo_url, w.delivery_notes, COALESCE(w.delivery_attempt_count, 0) AS delivery_attempt_count
             FROM {$this->table} t
             INNER JOIN store_orders o ON o.id = t.id_store_order AND o.id_owner = t.id_owner
             LEFT JOIN store_order_workflow w ON w.id_store_order = t.id_store_order

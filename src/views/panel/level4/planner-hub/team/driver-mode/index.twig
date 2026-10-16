@@ -326,6 +326,8 @@
                                     <div class="driver-package-code mb-2">{{ task.package_code|default('OPH-' ~ task.id_store_order) }}</div><div class="driver-modal-label">{{ trans('store_logistics.recipient_information') }}</div>
                                     <div class="fw-bold">{{ task.guest_name ?: task.guest_email }}</div>
                                     {% if task.guest_name and task.guest_email %}<div class="text-muted small">{{ task.guest_email }}</div>{% endif %}
+                                    {% if task.public_token %}<div class="driver-package-qr mt-3" data-package-qr="{{ task.public_token|e('html_attr') }}" aria-label="{{ trans('store_logistics.package_qr') }}"></div>{% endif %}
+                                    <div class="small text-muted mt-2">{{ trans('store_logistics.delivery_attempts') }}: {{ task.delivery_attempt_count|default(0) }}</div>
                                 </div>
                                 <div class="driver-modal-section">
                                     <div class="driver-modal-label">{{ trans('store_logistics.address') }}</div>
@@ -373,16 +375,20 @@
                                                 <input type="hidden" name="location_context" value="driver_mode">
                                                 <div class="driver-flow-panel driver-proof-panel">
                                                     <button type="button" class="driver-back" data-driver-back><i data-feather="arrow-left"></i> {{ trans('store_logistics.back') }}</button><h4 class="h5 fw-bold">{{ trans('store_logistics.delivery_proof') }}</h4>
-                                                    <label class="form-label">{{ trans('store_logistics.receiver_type') }} *</label><select name="receiver_type" class="form-select mb-3"><option value="">{{ trans('store_logistics.select_option') }}</option><option value="BUYER">{{ trans('store_logistics.buyer') }}</option><option value="HOUSEHOLD">{{ trans('store_logistics.household_member') }}</option><option value="DOORMAN">{{ trans('store_logistics.doorman') }}</option><option value="OTHER">{{ trans('store_logistics.other_receiver') }}</option></select>
+                                                    <label class="form-label">{{ trans('store_logistics.receiver_type') }} *</label><select name="receiver_type" class="form-select mb-3"><option value="">{{ trans('store_logistics.select_option') }}</option><option value="BUYER">{{ trans('store_logistics.buyer') }}</option><option value="HOUSEHOLD">{{ trans('delivery_manifest.family') }}</option><option value="NEIGHBOR">{{ trans('delivery_manifest.neighbor') }}</option><option value="DOORMAN">{{ trans('delivery_manifest.doorman') }}</option><option value="RECEPTION">{{ trans('store_logistics.reception') }}</option></select>
                                                     <label class="form-label">{{ trans('store_logistics.receiver_name') }} *</label><input name="receiver_name" class="form-control mb-3" maxlength="150">
-                                                    <label class="form-label">{{ trans('store_logistics.document_type') }} *</label><div class="driver-proof-choice mb-3"><label><input type="radio" name="document_type" value="ID"> ID / RG</label><label><input type="radio" name="document_type" value="TAX_ID"> CPF / Tax ID</label></div>
+                                                    <label class="form-label">{{ trans('store_logistics.document_type') }} *</label><select name="document_type" class="form-select mb-3"><option value="">{{ trans('store_logistics.select_option') }}</option><option value="RG">RG</option><option value="CPF">CPF</option></select>
                                                     <label class="form-label">{{ trans('store_logistics.document_number') }} *</label><input name="document_number" class="form-control mb-3" maxlength="80">
                                                     <label class="form-label">{{ trans('store_logistics.delivery_photo') }} *</label><img class="driver-photo-preview" alt=""><input type="file" name="delivery_proof" class="form-control driver-proof-input mb-3" accept="image/jpeg,image/png,image/webp" capture="environment">
                                                     <label class="form-label">{{ trans('store_logistics.observations') }}</label><textarea data-delivery-notes class="form-control mb-3" rows="3" maxlength="500" placeholder="{{ trans('store_logistics.delivery_notes_placeholder') }}"></textarea>
                                                     <button class="driver-action" type="submit" data-driver-action="delivered"><i data-feather="check"></i> {{ trans('store_logistics.confirm_delivery') }}</button>
                                                 </div>
                                                 <div class="driver-flow-panel driver-occurrence-panel">
-                                                    <button type="button" class="driver-back" data-driver-back><i data-feather="arrow-left"></i> {{ trans('store_logistics.back') }}</button><h4 class="h5 fw-bold">{{ trans('store_logistics.report_occurrence') }}</h4><label class="form-label">{{ trans('store_logistics.what_happened') }} *</label><textarea data-occurrence-notes class="form-control mb-3" rows="4" maxlength="500"></textarea><button class="driver-action secondary danger" type="submit" data-driver-action="delivery_attempted"><i data-feather="alert-circle"></i> {{ trans('store_logistics.save_occurrence') }}</button><button class="driver-action secondary mt-2" type="submit" data-driver-action="returned_to_business"><i data-feather="rotate-ccw"></i> {{ trans('store_logistics.returned_to_business') }}</button>
+                                                    <button type="button" class="driver-back" data-driver-back><i data-feather="arrow-left"></i> {{ trans('store_logistics.back') }}</button><h4 class="h5 fw-bold">{{ trans('store_logistics.occurrence_reasons') }}</h4>
+                                                    <select name="occurrence_reason" class="form-select mb-3"><option value="">{{ trans('store_logistics.select_option') }}</option><option value="CUSTOMER_REJECTED">{{ trans('delivery_manifest.rejected') }}</option><option value="RISK_AREA">{{ trans('delivery_manifest.risk_area') }}</option><option value="OUT_OF_ROUTE">{{ trans('store_logistics.package_out_of_route') }}</option><option value="ADDRESS_NOT_FOUND">{{ trans('delivery_manifest.address_not_found') }}</option><option value="CUSTOMER_ABSENT">{{ trans('delivery_manifest.absent') }}</option></select>
+                                                    <label class="form-label">{{ trans('store_logistics.what_happened') }} *</label><textarea data-occurrence-notes class="form-control mb-3" rows="3" maxlength="500"></textarea>
+                                                    <label class="form-label">{{ trans('store_logistics.evidence_photos') }} *</label><div class="row g-2 mb-3"><div class="col-6"><img class="driver-photo-preview" alt=""><input type="file" name="occurrence_photo_1" class="form-control driver-proof-input" accept="image/jpeg,image/png,image/webp" capture="environment"></div><div class="col-6"><img class="driver-photo-preview" alt=""><input type="file" name="occurrence_photo_2" class="form-control driver-proof-input" accept="image/jpeg,image/png,image/webp" capture="environment"></div></div>
+                                                    <button class="driver-action secondary danger" type="submit" data-driver-action="delivery_attempted"><i data-feather="alert-circle"></i> {{ trans('store_logistics.confirm_occurrence') }}</button>
                                                 </div>
                                                 <input type="hidden" name="notes" value="">
                                                 <div class="driver-bottom-actions"><button type="button" class="occurrence" data-driver-flow="occurrence">{{ trans('store_logistics.occurrence') }}</button><button type="button" class="delivered" data-driver-flow="proof">{{ trans('store_logistics.delivered') }}</button></div>
@@ -431,6 +437,7 @@
 {% block scripts %}
 {{ parent() }}
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
 let packageScanner = null;
 let packageScanBusy = false;
@@ -440,6 +447,7 @@ const scannedCarrierPackageId={{ scannedPackageId|default(0)|json_encode|raw }};
 const initialCarrierStage={{ carrierStage|default('collected')|json_encode|raw }};
 const initialCarrierResult={{ carrierResult|default('open')|json_encode|raw }};
 const showCarrierDetails={{ showCarrierDetails ? 'true' : 'false' }};
+document.querySelectorAll('[data-package-qr]').forEach(function(container){if(window.QRCode)new QRCode(container,{text:container.dataset.packageQr,width:112,height:112,correctLevel:QRCode.CorrectLevel.M});});
 document.querySelectorAll('[data-carrier-stage-tab]').forEach(function(button){button.addEventListener('click',function(){document.querySelectorAll('[data-carrier-stage-tab]').forEach(function(tab){tab.classList.toggle('active',tab===button);});document.querySelectorAll('[data-carrier-stage-panel]').forEach(function(panel){panel.hidden=panel.dataset.carrierStagePanel!==button.dataset.carrierStageTab;});document.querySelectorAll('[data-carrier-stage-extra]').forEach(function(panel){panel.hidden=panel.dataset.carrierStageExtra!==button.dataset.carrierStageTab;});});});
 document.querySelector('[data-carrier-stage-tab="'+initialCarrierStage+'"]')?.click();
 document.querySelectorAll('[data-delivery-result-tab]').forEach(function(button){button.addEventListener('click',function(){document.querySelectorAll('[data-delivery-result-tab]').forEach(function(tab){tab.classList.toggle('active',tab===button);});document.querySelectorAll('[data-delivery-result-panel]').forEach(function(panel){panel.hidden=panel.dataset.deliveryResultPanel!==button.dataset.deliveryResultTab;});});});
@@ -634,7 +642,10 @@ document.querySelectorAll('.driver-task-form').forEach(function (form) {
         }
         if (submitter && ['delivery_attempted', 'returned_to_business'].includes(submitter.dataset.driverAction)) {
             const notes = form.querySelector('[name="notes"]');
-            if (!notes || !notes.value.trim()) {
+            const occurrenceRequired=submitter.dataset.driverAction==='delivery_attempted';
+            const reason=form.querySelector('[name="occurrence_reason"]');
+            const evidence=Array.from(form.querySelectorAll('[name="occurrence_photo_1"],[name="occurrence_photo_2"]'));
+            if (!notes || !notes.value.trim() || (occurrenceRequired && (!reason?.value || evidence.some(function(input){return !input.files?.length;})))) {
                 event.preventDefault();
                 alert({{ trans('store_logistics.attempt_notes_required')|json_encode|raw }});
                 return;
@@ -689,8 +700,8 @@ document.querySelectorAll('[data-driver-flow]').forEach(function (button) {
 document.querySelectorAll('[data-driver-back]').forEach(function (button) {
     button.addEventListener('click', function () { const form=button.closest('form');form.querySelectorAll('.driver-flow-panel').forEach(function(panel){panel.classList.remove('active')});form.querySelector('.driver-bottom-actions').style.display='grid'; });
 });
-document.querySelectorAll('.driver-delivery-form [name="delivery_proof"]').forEach(function (input) {
-    input.addEventListener('change', function () { const file=input.files&&input.files[0];const preview=input.closest('form').querySelector('.driver-photo-preview');if(!file||!preview)return;preview.src=URL.createObjectURL(file);preview.style.display='block'; });
+document.querySelectorAll('.driver-delivery-form [name="delivery_proof"],.driver-delivery-form [name="occurrence_photo_1"],.driver-delivery-form [name="occurrence_photo_2"]').forEach(function (input) {
+    input.addEventListener('change', function () { const file=input.files&&input.files[0];const preview=input.parentElement?.querySelector('.driver-photo-preview')||input.closest('.driver-flow-panel')?.querySelector('.driver-photo-preview');if(!file||!preview)return;preview.src=URL.createObjectURL(file);preview.style.display='block'; });
 });
 
 document.querySelectorAll('[data-driver-modal-target]').forEach(function (button) {

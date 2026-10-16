@@ -135,7 +135,7 @@ class StoreLogisticsWorkflowService
             ], true);
     }
 
-    public function markDeliveryAttempted(int $ownerId, int $orderId, int $taskId, int $userId, string $notes = ''): bool
+    public function markDeliveryAttempted(int $ownerId, int $orderId, int $taskId, int $userId, string $notes = '', string $reason = '', string $photo1 = '', string $photo2 = ''): bool
     {
         $task = $this->tasksRepo->getOneForOwner($taskId, $ownerId);
         if (!$task || (int)$task->id_store_order !== $orderId || (string)$task->task_type !== StoreOrderTasksRepository::TYPE_DELIVERY) {
@@ -143,11 +143,12 @@ class StoreLogisticsWorkflowService
         }
 
         $order = $this->ordersRepo->getById($orderId);
-        if (!$order || (int)$order->id_owner !== $ownerId || (string)$order->status !== StoreOrdersRepository::STATUS_OUT_FOR_DELIVERY || trim($notes) === '') {
+        $allowedReasons=['CUSTOMER_REJECTED','RISK_AREA','OUT_OF_ROUTE','ADDRESS_NOT_FOUND','CUSTOMER_ABSENT'];
+        if (!$order || (int)$order->id_owner !== $ownerId || (string)$order->status !== StoreOrdersRepository::STATUS_OUT_FOR_DELIVERY || trim($notes) === '' || !in_array($reason,$allowedReasons,true) || $photo1==='' || $photo2==='') {
             return false;
         }
         $ok = $this->tasksRepo->updateTaskStatus($taskId, StoreOrderTasksRepository::STATUS_WAITING_REVIEW, $userId, $notes);
-        return $ok && $this->ordersRepo->updateStatus($orderId, StoreOrdersRepository::STATUS_DELIVERY_ATTEMPTED);
+        return $ok && $this->workflowRepo->markDeliveryOccurrence($orderId,$userId,$reason,$notes,$photo1,$photo2) && $this->ordersRepo->updateStatus($orderId, StoreOrdersRepository::STATUS_DELIVERY_ATTEMPTED);
     }
 
     public function markReturnedToBusiness(int $ownerId, int $orderId, int $taskId, int $userId, string $notes = ''): bool

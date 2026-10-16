@@ -20,6 +20,10 @@ $assertNotContains = static function (string $file, string $needle, string $mess
 $assertContains('src/Repositories/StoreUserRolesRepository.php', 'user_institutions', 'Store team lookup must include multi-company relationships.');
 $assertContains('src/views/panel/level4/planner-hub/team/driver-mode/index.twig', 'Html5Qrcode', 'Driver Mode must expose the package QR scanner.');
 $assertContains('src/views/panel/level4/planner-hub/team/driver-mode/index.twig', 'data-public-token', 'Driver Mode must match QR tokens to assigned tasks.');
+$assertContains('src/views/panel/level4/planner-hub/team/driver-mode/index.twig', 'data-package-qr', 'Delivery details must render the assigned package QR.');
+$assertContains('src/views/panel/level4/planner-hub/team/driver-mode/index.twig', 'occurrence_photo_2', 'Delivery incidents must require two evidence photos.');
+$assertContains('src/views/panel/level4/planner-hub/team/driver-mode/index.twig', 'OUT_OF_ROUTE', 'Delivery incidents must offer the approved reason list.');
+$assertContains('src/Repositories/StoreOrderWorkflowRepository.php', 'delivery_attempt_count', 'Delivery incidents must preserve an auditable attempt count.');
 $assertContains('src/views/panel/level4/planner-hub/team/my-work/index.twig', 'print-package-tag', 'Preparation tasks must be able to print a package tag.');
 $assertContains('src/views/public/commerce/store/home/index.php', "\$_GET['category']", 'The existing public Store must accept category filters.');
 $assertContains('src/views/public/commerce/store/home/index.php', "\$_GET['product']", 'The existing public Store must accept product focus.');
