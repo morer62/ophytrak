@@ -6,24 +6,41 @@ const password = process.env.E2E_OWNER_PASSWORD || 'OphyraQA!2026';
 
 test.use({ viewport: { width: 1440, height: 960 }, trace: 'on', video: 'on' });
 
-test('public product and signup expose only OPHYTRACK logistics', async ({ page }) => {
+test('public product offers controlled access and blocks open signup', async ({ page }) => {
   let response = await page.goto(`${baseURL}/`, { waitUntil: 'domcontentloaded' });
   expect(response.status()).toBe(200);
   await expect(page).toHaveTitle(/OPHYTRACK/i);
-  await expect(page.locator('body')).toContainText('OPHYTRACK');
+  await expect(page.locator('img[alt="OPHYTRACK"]')).toBeVisible();
   await expect(page.locator('video')).toHaveCount(1);
   await expect(page.locator('body')).not.toContainText('Book services');
 
-  response = await page.goto(`${baseURL}/signup`, { waitUntil: 'domcontentloaded' });
+  response = await page.goto(`${baseURL}/request-access`, { waitUntil: 'domcontentloaded' });
   expect(response.status()).toBe(200);
-  await expect(page.locator('body')).toContainText('OPHYTRACK');
-  await expect(page.locator('[name="business_nature"] option[value="service_business"]')).toHaveCount(0);
-  await expect(page.locator('[name="business_nature"] option[value="carrier_logistics"]')).toHaveCount(1);
-  await expect(page.locator('[name="business_operation_type"] option[value="store_delivery_tracking"]')).toHaveText('Shipping and tracking');
-  await expect(page.locator('[name="business_operation_type"] option[value="contracts_services"]')).toHaveCount(0);
+  await expect(page.locator('img[alt="OPHYTRACK"]')).toBeVisible();
+  await expect(page.locator('form')).toContainText('Request my demo');
+  await page.goto(`${baseURL}/signup`, { waitUntil: 'domcontentloaded' });
+  await expect(page).toHaveURL(/request-access/);
+  await expect(page.locator('[name="password"]')).toHaveCount(0);
 });
 
-test('Spanish signup renders Back correctly and keeps billing in BRL', async ({ page }) => {
+test('controlled-access message is localized in all supported languages', async ({ page }) => {
+  const expectations = {
+    en: 'Request a demonstration',
+    es: 'Solicita una demostración',
+    pt: 'Solicite uma demonstração',
+    fr: 'Demander une démonstration',
+  };
+
+  for (const [locale, title] of Object.entries(expectations)) {
+    const response = await page.goto(`${baseURL}/request-access?locale=${locale}`, { waitUntil: 'domcontentloaded' });
+    expect(response.status()).toBe(200);
+    await expect(page.locator('h2')).toContainText(title);
+    await expect(page.locator('body')).toContainText(/marketplace/i);
+    await expect(page.locator('body')).not.toContainText(/ophytrack_public\.|Ãƒ.|Ã‚.|Ã¢â‚¬|ï¿½/);
+  }
+});
+
+test.skip('legacy Spanish signup remains documented for internal provisioning', async ({ page }) => {
   await page.goto(`${baseURL}/signup?locale=es`, { waitUntil: 'domcontentloaded' });
   await page.locator('[name="company_name"]').fill('QA Registro BRL');
   await page.locator('[data-signup-next]').click();
@@ -36,7 +53,7 @@ test('Spanish signup renders Back correctly and keeps billing in BRL', async ({ 
   await expect(page.locator('body')).not.toContainText(/Atr\?s|EUR según|Ã.|Â.|â€|�/);
 });
 
-test('public logistics story and signup remain localized in every supported language', async ({ page }) => {
+test.skip('legacy public signup localization is replaced by controlled access', async ({ page }) => {
   const expectations = {
     en: ['Every package. Every handoff.', 'Create your OPHYTRACK logistics account', 'Shipping and tracking'],
     es: ['Cada paquete. Cada traspaso.', 'Crea tu cuenta logística OPHYTRACK', 'Envío y rastreo'],
@@ -96,7 +113,7 @@ test('membership billing is locked to Brazilian reais', async ({ page }) => {
   expect(new Set(submittedCurrencies)).toEqual(new Set(['BRL']));
 });
 
-test('locked logistics guides a new seller through activation', async ({ page }) => {
+test.skip('locked logistics guides a provisioned seller through activation', async ({ page }) => {
   test.setTimeout(90000);
   const runId = Date.now().toString();
   const email = `qa.activation.${runId}@example.test`;

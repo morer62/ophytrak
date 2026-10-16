@@ -146,6 +146,12 @@ class Kernel
                 $this->includeViewAndExit($this->getPublicView([self::$homeIndex]));
             }
 
+            if (!\App\Services\ProductProfileService::allowsPublicBusinessSignup()
+                && ($urlViews[0] ?? '') === 'signup') {
+                LocationUtils::redirectInternal('request-access');
+                return;
+            }
+
             $publicPath = implode('/', $urlViews);
             if (\App\Services\ProductProfileService::isDisabledPublicRoute($publicPath)) {
                 LocationUtils::redirectInternal('planner-hub');

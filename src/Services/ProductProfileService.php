@@ -103,4 +103,9 @@ final class ProductProfileService
         }
         return false;
     }
+
+    public static function allowsPublicBusinessSignup(): bool
+    {
+        return !self::isOphytrack();
+    }
 }
