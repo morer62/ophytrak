@@ -1,4 +1,5 @@
 {
+    "ophytrack_driver_profile": {"profile_photo":"Foto de perfil do entregador","take_photo":"Tirar Foto","bank_data":"Dados bancários","name":"Nome","document_type":"Tipo de documento","document_number":"Número do documento","bank":"Banco","agency":"Agência","account_type":"Tipo de conta","account":"Conta","pix_key":"Chave PIX","select":"Selecionar","other":"Outro","checking":"Conta corrente","savings":"Conta poupança","payment":"Conta de pagamento","invalid_photo":"Use uma foto JPG, PNG ou WEBP de até 8 MB.","save_error":"Não foi possível salvar o perfil do entregador."},
     "ophytrack_public": {
         "nav_plans": "Planos",
         "request_demo": "Solicitar demonstração",

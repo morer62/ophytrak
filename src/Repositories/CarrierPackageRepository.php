@@ -24,6 +24,36 @@ class CarrierPackageRepository extends StoreRepository
         $this->db->bind(':code',trim($code)); return $this->db->fetchOne() ?: null;
     }
 
+    public function resolveCollectionReference(int $carrierOwner, string $type, string $value): ?object
+    {
+        $type = strtolower(trim($type));
+        $value = trim($value);
+        if ($value === '' || !in_array($type, ['order', 'remittance', 'invoice', 'custom'], true)) {
+            return null;
+        }
+
+        $where = match ($type) {
+            'order' => '(CAST(o.id AS CHAR) = :reference OR o.external_order_id = :reference)',
+            'remittance' => '(o.external_shipment_id = :reference OR o.external_pack_id = :reference)',
+            'invoice' => 'o.external_order_id = :reference',
+            default => '(o.public_token = :reference OR p.package_code = :reference OR o.external_order_id = :reference OR o.external_pack_id = :reference OR o.external_shipment_id = :reference)',
+        };
+
+        $this->db->query("SELECT p.*, o.public_token
+            FROM store_packages p
+            JOIN store_orders o ON o.id = p.id_store_order AND o.id_owner = p.id_owner
+            LEFT JOIN store_package_carrier_assignments a
+              ON a.id_store_package = p.id AND a.carrier_owner_id = :carrier
+            WHERE {$where}
+              AND (p.current_custodian_owner_id = :carrier_scope OR a.id IS NOT NULL)
+            ORDER BY p.id DESC
+            LIMIT 1");
+        $this->db->bind(':reference', $value);
+        $this->db->bind(':carrier', $carrierOwner);
+        $this->db->bind(':carrier_scope', $carrierOwner);
+        return $this->db->fetchOne() ?: null;
+    }
+
     public function requestManualCustody(int $carrierOwner,int $userId,string $code,string $notes=''): array
     {
         return [false,'Custody can only be accepted by scanning the secure package QR.'];

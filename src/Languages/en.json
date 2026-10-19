@@ -1,4 +1,5 @@
 {
+    "ophytrack_driver_profile": {"profile_photo":"Delivery driver profile photo","take_photo":"Take Photo","bank_data":"Bank details","name":"Name","document_type":"Document type","document_number":"Document number","bank":"Bank","agency":"Agency","account_type":"Account type","account":"Account","pix_key":"PIX key","select":"Select","other":"Other","checking":"Checking","savings":"Savings","payment":"Payment account","invalid_photo":"Use a JPG, PNG or WEBP photo up to 8 MB.","save_error":"The delivery driver profile could not be saved."},
     "home": {
         "hero": {
             "title": "Run your entire event business from one place.",

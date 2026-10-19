@@ -1,4 +1,5 @@
 {
+    "ophytrack_driver_profile": {"profile_photo":"Photo de profil du livreur","take_photo":"Prendre une photo","bank_data":"Coordonnées bancaires","name":"Nom","document_type":"Type de document","document_number":"Numéro du document","bank":"Banque","agency":"Agence","account_type":"Type de compte","account":"Compte","pix_key":"Clé PIX","select":"Sélectionner","other":"Autre","checking":"Compte courant","savings":"Compte d'épargne","payment":"Compte de paiement","invalid_photo":"Utilisez une photo JPG, PNG ou WEBP de 8 Mo maximum.","save_error":"Le profil du livreur n'a pas pu être enregistré."},
     "home": {
         "hero": {
             "title": "Gérez toute votre entreprise d'événements depuis un seul endroit.",

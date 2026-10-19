@@ -65,7 +65,19 @@
     <div class="d-flex justify-content-center align-items-center">
         <div class="card shadow-lg p-4 w-100 w-md-75">
             <div class="card-body">
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
+                    {% if isCarrierOrganization %}
+                    <div class="d-flex justify-content-end mb-4">
+                        <div class="text-center">
+                            <div class="rounded-circle border bg-light d-flex align-items-center justify-content-center overflow-hidden mx-auto" style="width:132px;height:132px">
+                                {% if driverProfile.profile_photo_url %}<img id="driverProfilePhotoPreview" src="{{ driverProfile.profile_photo_url }}" alt="{{ trans('ophytrack_driver_profile.profile_photo') }}" class="w-100 h-100" style="object-fit:cover">
+                                {% else %}<i id="driverProfilePhotoPlaceholder" data-feather="user" style="width:64px;height:64px"></i>{% endif %}
+                            </div>
+                            <label for="driverProfilePhoto" class="btn btn-outline-primary mt-2 mb-0"><i data-feather="camera"></i> {{ trans('ophytrack_driver_profile.take_photo') }}</label>
+                            <input class="visually-hidden" id="driverProfilePhoto" name="profile_photo" type="file" accept="image/jpeg,image/png,image/webp" capture="user">
+                        </div>
+                    </div>
+                    {% endif %}
                     <div class="mb-3">
                         <label class="form-label">{{ trans('planner_hub.first_name') }}</label>
                         <input class="form-control" name="name" required type="text" value="{{ user.name }}" />
@@ -92,6 +104,24 @@
                         <label class="form-label">{{ trans('planner_hub.confirm_new_password') }}</label>
                         <input class="form-control" name="password_repeat" type="password" />
                     </div>
+
+                    {% if isCarrierOrganization %}
+                    <section class="card border mt-4 mb-4">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3"><i data-feather="credit-card"></i> {{ trans('ophytrack_driver_profile.bank_data') }}</h2>
+                            <div class="row g-3">
+                                <div class="col-12"><label class="form-label">{{ trans('ophytrack_driver_profile.name') }}</label><input class="form-control" name="bank_account_name" value="{{ driverProfile.bank_account_name|default('') }}"></div>
+                                <div class="col-md-6"><label class="form-label">{{ trans('ophytrack_driver_profile.document_type') }}</label><select class="form-select" name="document_type"><option value="">{{ trans('ophytrack_driver_profile.select') }}</option><option value="CPF" {{ driverProfile.document_type|default('') == 'CPF' ? 'selected' : '' }}>CPF</option><option value="CNPJ" {{ driverProfile.document_type|default('') == 'CNPJ' ? 'selected' : '' }}>CNPJ</option><option value="RG" {{ driverProfile.document_type|default('') == 'RG' ? 'selected' : '' }}>RG</option><option value="OTHER" {{ driverProfile.document_type|default('') == 'OTHER' ? 'selected' : '' }}>{{ trans('ophytrack_driver_profile.other') }}</option></select></div>
+                                <div class="col-md-6"><label class="form-label">{{ trans('ophytrack_driver_profile.document_number') }}</label><input class="form-control" name="document_number" value="{{ driverProfile.document_number|default('') }}"></div>
+                                <div class="col-md-6"><label class="form-label">{{ trans('ophytrack_driver_profile.bank') }}</label><input class="form-control" name="bank_name" value="{{ driverProfile.bank_name|default('') }}"></div>
+                                <div class="col-md-6"><label class="form-label">{{ trans('ophytrack_driver_profile.agency') }}</label><input class="form-control" name="bank_agency" value="{{ driverProfile.bank_agency|default('') }}"></div>
+                                <div class="col-md-6"><label class="form-label">{{ trans('ophytrack_driver_profile.account_type') }}</label><select class="form-select" name="bank_account_type"><option value="">{{ trans('ophytrack_driver_profile.select') }}</option><option value="CHECKING" {{ driverProfile.bank_account_type|default('') == 'CHECKING' ? 'selected' : '' }}>{{ trans('ophytrack_driver_profile.checking') }}</option><option value="SAVINGS" {{ driverProfile.bank_account_type|default('') == 'SAVINGS' ? 'selected' : '' }}>{{ trans('ophytrack_driver_profile.savings') }}</option><option value="PAYMENT" {{ driverProfile.bank_account_type|default('') == 'PAYMENT' ? 'selected' : '' }}>{{ trans('ophytrack_driver_profile.payment') }}</option></select></div>
+                                <div class="col-md-6"><label class="form-label">{{ trans('ophytrack_driver_profile.account') }}</label><input class="form-control" name="bank_account_number" value="{{ driverProfile.bank_account_number|default('') }}"></div>
+                                <div class="col-12"><label class="form-label">{{ trans('ophytrack_driver_profile.pix_key') }}</label><input class="form-control" name="pix_key" value="{{ driverProfile.pix_key|default('') }}"></div>
+                            </div>
+                        </div>
+                    </section>
+                    {% endif %}
 
                     <hr>
 
@@ -123,6 +153,20 @@
 function openConfirmModal() {
     document.getElementById('customModal').style.display = 'flex';
 }
+
+document.getElementById('driverProfilePhoto')?.addEventListener('change', function () {
+    const file = this.files && this.files[0];
+    if (!file) return;
+    let preview = document.getElementById('driverProfilePhotoPreview');
+    if (!preview) {
+        preview = document.createElement('img');
+        preview.id = 'driverProfilePhotoPreview';
+        preview.className = 'w-100 h-100';
+        preview.style.objectFit = 'cover';
+        document.getElementById('driverProfilePhotoPlaceholder')?.replaceWith(preview);
+    }
+    preview.src = URL.createObjectURL(file);
+});
 
 function closeConfirmModal() {
     document.getElementById('customModal').style.display = 'none';
