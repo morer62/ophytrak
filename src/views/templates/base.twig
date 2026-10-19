@@ -96,8 +96,8 @@
     {% endif %}
     {% set googleMapsKey = env.GOOGLE_MAPS_API_KEY|default(env.GOOGLE_KEY|default('')) %}
     {% if uses_google_maps|default(false) and googleMapsKey %}
-        <script src="https://maps.googleapis.com/maps/api/js?key={{ googleMapsKey }}&libraries=places&callback=initMap" async defer></script>
         <script src="{{ asset_for('assets/js/googleMaps.js') }}"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key={{ googleMapsKey }}&libraries=places&callback=initMap" async defer></script>
     {% endif %}
     
     <!-- Bootstrap JS -->

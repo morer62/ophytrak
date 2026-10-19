@@ -1,5 +1,5 @@
 {
-    "ophytrack_driver_profile": {"profile_photo":"Foto de perfil del repartidor","take_photo":"Tomar Foto","bank_data":"Datos bancarios","name":"Nombre","document_type":"Tipo de documento","document_number":"Número de documento","bank":"Banco","agency":"Agencia","account_type":"Tipo de cuenta","account":"Cuenta","pix_key":"Chave PIX","select":"Seleccionar","other":"Otro","checking":"Cuenta corriente","savings":"Cuenta de ahorro","payment":"Cuenta de pago","invalid_photo":"Usa una foto JPG, PNG o WEBP de hasta 8 MB.","save_error":"No se pudo guardar el perfil del repartidor."},
+    "ophytrack_driver_profile": {"profile_photo":"Foto de perfil del repartidor","take_photo":"Tomar Foto","bank_data":"Datos bancarios","name":"Nombre","document_type":"Tipo de documento","document_number":"Número de documento","bank":"Banco","agency":"Agencia","account_type":"Tipo de cuenta","account":"Cuenta","pix_key":"Clave PIX","select":"Seleccionar","other":"Otro","checking":"Cuenta corriente","savings":"Cuenta de ahorro","payment":"Cuenta de pago","invalid_photo":"Usa una foto JPG, PNG o WEBP de hasta 8 MB.","save_error":"No se pudo guardar el perfil del repartidor."},
     "home": {
         "hero": {
             "title": "Gestiona todo tu negocio de eventos desde un solo lugar.",
