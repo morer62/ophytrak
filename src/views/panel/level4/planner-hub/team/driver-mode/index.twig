@@ -432,15 +432,19 @@
         {% endif %}
     </section>
 
-    <div class="modal fade" id="packageScannerModal" tabindex="-1" aria-hidden="true">
+    {% set collectionScannerOnly = isCarrierOrganization and not isCarrierOwner and carrierView == 'collection' and showCarrierDetails and carrierStage == 'collected' %}
+    <div class="modal fade" id="packageScannerModal" tabindex="-1" aria-hidden="true" data-collection-scanner-only="{{ collectionScannerOnly ? '1' : '0' }}">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
+                {% if not collectionScannerOnly %}
                 <div class="modal-header">
                     <h2 class="modal-title fs-5">{{ trans('store_logistics.scan_package_qr') }}</h2>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    {% if not (isCarrierOrganization and carrierView == 'deliveries') %}
+                {% endif %}
+                <div class="modal-body position-relative{{ collectionScannerOnly ? ' p-0' : '' }}">
+                    {% if collectionScannerOnly %}<button type="button" class="btn-close position-absolute top-0 end-0 m-2 bg-white rounded-circle p-2" data-bs-dismiss="modal" aria-label="Cerrar" style="z-index:3"></button>{% endif %}
+                    {% if not collectionScannerOnly and not (isCarrierOrganization and carrierView == 'deliveries') %}
                     <p class="text-muted">{{ trans('store_logistics.scan_package_help') }}</p>
                     <div class="alert alert-info small" role="note">
                         <strong>{{ trans('store_logistics.scan_package_requirement_title') }}</strong><br>
@@ -451,7 +455,7 @@
                         <div id="packageQrCapture"><div id="packageQrReader" style="width:100%"></div></div>
                     </div>
                     <div id="packageQrFeedback" class="alert d-none mt-3" role="alert"></div>
-                    {% if isCarrierOrganization and carrierView != 'deliveries' %}<hr><details><summary class="fw-semibold">{{ trans('carrier_fallback.title') }}</summary><p class="small text-muted mt-2">{{ trans('carrier_fallback.help') }}</p><form method="post" enctype="multipart/form-data" class="carrier-manual-claim-form"><input type="hidden" name="action" value="carrier_manual_secure_claim"><input type="hidden" name="latitude"><input type="hidden" name="longitude"><input class="form-control mb-2" name="secure_package_token" placeholder="{{ trans('carrier_fallback.code') }}" required><input class="form-control mb-2" type="file" name="manual_claim_photo" accept="image/jpeg,image/png,image/webp" capture="environment" required><button class="btn btn-outline-success w-100">{{ trans('carrier_fallback.accept') }}</button></form></details>{% endif %}
+                    {% if not collectionScannerOnly and isCarrierOrganization and carrierView != 'deliveries' %}<hr><details><summary class="fw-semibold">{{ trans('carrier_fallback.title') }}</summary><p class="small text-muted mt-2">{{ trans('carrier_fallback.help') }}</p><form method="post" enctype="multipart/form-data" class="carrier-manual-claim-form"><input type="hidden" name="action" value="carrier_manual_secure_claim"><input type="hidden" name="latitude"><input type="hidden" name="longitude"><input class="form-control mb-2" name="secure_package_token" placeholder="{{ trans('carrier_fallback.code') }}" required><input class="form-control mb-2" type="file" name="manual_claim_photo" accept="image/jpeg,image/png,image/webp" capture="environment" required><button class="btn btn-outline-success w-100">{{ trans('carrier_fallback.accept') }}</button></form></details>{% endif %}
                 </div>
             </div>
         </div>
