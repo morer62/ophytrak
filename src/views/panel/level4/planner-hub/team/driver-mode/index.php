@@ -166,7 +166,8 @@ $router->post(function () {
             $reason=trim((string)($_POST['occurrence_reason']??''));$allowedReasons=['CUSTOMER_REJECTED','RISK_AREA','OUT_OF_ROUTE','ADDRESS_NOT_FOUND','CUSTOMER_ABSENT'];
             if(!in_array($reason,$allowedReasons,true)||$notes==='')$respond(false,'Selecciona el motivo de la ocurrencia y describe lo sucedido.');
             $photo=$saveEvidence('occurrence_photo_1');$photo2=$saveEvidence('occurrence_photo_2');
-            if($photo===''||$photo2==='')$respond(false,'Agrega las dos fotos de evidencia antes de confirmar la ocurrencia.');
+            $capturedAt=max(0,(int)($_POST['evidence_captured_at']??0));
+            if($photo===''||$photo2===''||$capturedAt===0||abs(time()-$capturedAt)>600)$respond(false,'Las dos fotos deben tomarse con la cámara al momento de registrar la ocurrencia.');
             $meta['failure_code']=$reason;$meta['occurrence_reason']=$reason;$meta['photo_url_2']=$photo2;
             $stage=$reason==='CUSTOMER_REJECTED'?'customer_rejected':'customer_absent';
         }else{

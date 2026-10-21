@@ -69,6 +69,11 @@ $router->post(function () {
             'pix_key' => $_POST['pix_key'] ?? '',
         ];
         if (FileUtils::hasFile($_FILES, 'profile_photo')) {
+            $capturedAt = max(0, (int)($_POST['profile_photo_captured_at'] ?? 0));
+            if ($capturedAt === 0 || abs(time() - $capturedAt) > 600) {
+                MessageUtil::setMessage(TranslationService::trans('ophytrack_driver_profile.camera_required'), 'Error', 'error');
+                LocationUtils::redirectInternal('panel/settings');
+            }
             $photo = $_FILES['profile_photo'];
             if (!in_array((string)($photo['type'] ?? ''), ['image/jpeg', 'image/png', 'image/webp'], true) || (int)($photo['size'] ?? 0) > 8 * 1024 * 1024) {
                 MessageUtil::setMessage(TranslationService::trans('ophytrack_driver_profile.invalid_photo'), 'Error', 'error');

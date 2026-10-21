@@ -73,8 +73,12 @@
                                 {% if driverProfile.profile_photo_url %}<img id="driverProfilePhotoPreview" src="{{ driverProfile.profile_photo_url }}" alt="{{ trans('ophytrack_driver_profile.profile_photo') }}" class="w-100 h-100" style="object-fit:cover">
                                 {% else %}<i id="driverProfilePhotoPlaceholder" data-feather="user" style="width:64px;height:64px"></i>{% endif %}
                             </div>
-                            <label for="driverProfilePhoto" class="btn btn-outline-primary mt-2 mb-0"><i data-feather="camera"></i> {{ trans('ophytrack_driver_profile.take_photo') }}</label>
-                            <input class="visually-hidden" id="driverProfilePhoto" name="profile_photo" type="file" accept="image/jpeg,image/png,image/webp" capture="user">
+                            <video id="driverProfileCamera" class="rounded border w-100 mt-2 bg-dark" playsinline autoplay muted hidden></video>
+                            <canvas id="driverProfileCameraCanvas" hidden></canvas>
+                            <button id="driverProfilePhotoCapture" type="button" class="btn btn-outline-primary mt-2 mb-0"><i data-feather="camera"></i> {{ trans('ophytrack_driver_profile.take_photo') }}</button>
+                            <input id="driverProfilePhoto" name="profile_photo" type="file" accept="image/jpeg" hidden>
+                            <input id="driverProfilePhotoCapturedAt" name="profile_photo_captured_at" type="hidden">
+                            <div id="driverProfileCameraStatus" class="small text-muted mt-2" aria-live="polite"></div>
                         </div>
                     </div>
                     {% endif %}
@@ -154,9 +158,20 @@ function openConfirmModal() {
     document.getElementById('customModal').style.display = 'flex';
 }
 
-document.getElementById('driverProfilePhoto')?.addEventListener('change', function () {
-    const file = this.files && this.files[0];
-    if (!file) return;
+const driverProfilePhoto = document.getElementById('driverProfilePhoto');
+const driverProfileCamera = document.getElementById('driverProfileCamera');
+const driverProfileCanvas = document.getElementById('driverProfileCameraCanvas');
+const driverProfileCapture = document.getElementById('driverProfilePhotoCapture');
+const driverProfileStatus = document.getElementById('driverProfileCameraStatus');
+let driverProfileStream = null;
+
+function stopDriverProfileCamera() {
+    driverProfileStream?.getTracks().forEach(track => track.stop());
+    driverProfileStream = null;
+    if (driverProfileCamera) driverProfileCamera.hidden = true;
+}
+
+function previewDriverProfilePhoto(file) {
     let preview = document.getElementById('driverProfilePhotoPreview');
     if (!preview) {
         preview = document.createElement('img');
@@ -166,7 +181,35 @@ document.getElementById('driverProfilePhoto')?.addEventListener('change', functi
         document.getElementById('driverProfilePhotoPlaceholder')?.replaceWith(preview);
     }
     preview.src = URL.createObjectURL(file);
+}
+
+driverProfileCapture?.addEventListener('click', async function () {
+    if (!driverProfileStream) {
+        try {
+            if (!navigator.mediaDevices?.getUserMedia) throw new Error('camera-unavailable');
+            driverProfileStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'user'}},audio:false});
+            driverProfileCamera.srcObject = driverProfileStream;
+            driverProfileCamera.hidden = false;
+            driverProfileStatus.textContent = {{ trans('ophytrack_driver_profile.camera_active')|json_encode|raw }};
+        } catch (error) {
+            driverProfileStatus.textContent = {{ trans('ophytrack_driver_profile.camera_required')|json_encode|raw }};
+        }
+        return;
+    }
+    driverProfileCanvas.width = driverProfileCamera.videoWidth || 1280;
+    driverProfileCanvas.height = driverProfileCamera.videoHeight || 720;
+    driverProfileCanvas.getContext('2d').drawImage(driverProfileCamera, 0, 0, driverProfileCanvas.width, driverProfileCanvas.height);
+    driverProfileCanvas.toBlob(function (blob) {
+        if (!blob) return;
+        const file = new File([blob], 'driver-profile-live.jpg', {type:'image/jpeg', lastModified:Date.now()});
+        const transfer = new DataTransfer(); transfer.items.add(file); driverProfilePhoto.files = transfer.files;
+        document.getElementById('driverProfilePhotoCapturedAt').value = Math.floor(Date.now()/1000);
+        previewDriverProfilePhoto(file);
+        driverProfileStatus.textContent = {{ trans('ophytrack_driver_profile.photo_captured')|json_encode|raw }};
+        stopDriverProfileCamera();
+    }, 'image/jpeg', 0.9);
 });
+window.addEventListener('beforeunload', stopDriverProfileCamera);
 
 function closeConfirmModal() {
     document.getElementById('customModal').style.display = 'none';

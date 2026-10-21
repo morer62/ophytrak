@@ -150,8 +150,9 @@
                            <select id="occurrenceReason{{ package.id }}" name="occurrence_reason" class="form-select mb-3" required><option value="">{{ trans('store_logistics.select_option') }}</option><option value="CUSTOMER_REJECTED">{{ trans('delivery_manifest.rejected') }}</option><option value="RISK_AREA">{{ trans('delivery_manifest.risk_area') }}</option><option value="OUT_OF_ROUTE">{{ trans('store_logistics.package_out_of_route') }}</option><option value="ADDRESS_NOT_FOUND">{{ trans('delivery_manifest.address_not_found') }}</option><option value="CUSTOMER_ABSENT">{{ trans('delivery_manifest.absent') }}</option></select>
                            <label class="form-label" for="occurrenceNotes{{ package.id }}">{{ trans('store_logistics.what_happened') }} *</label><textarea id="occurrenceNotes{{ package.id }}" name="notes" class="form-control mb-3" rows="3" maxlength="500" required></textarea>
                            <label class="form-label">{{ trans('store_logistics.evidence_photos') }} *</label>
+                           <video class="occurrence-camera-video rounded w-100 mb-2 bg-dark" playsinline autoplay muted hidden></video><canvas class="occurrence-camera-canvas" hidden></canvas>
                            <div class="row g-2 mb-2"><div class="col-6"><div class="driver-occurrence-photo-box"><img class="driver-photo-preview" data-occurrence-preview="1" alt=""><span>{{ trans('store_logistics.occurrence_photo_one') }}</span></div></div><div class="col-6"><div class="driver-occurrence-photo-box"><img class="driver-photo-preview" data-occurrence-preview="2" alt=""><span>{{ trans('store_logistics.occurrence_photo_two') }}</span></div></div></div>
-                           <input type="file" name="occurrence_photo_1" class="visually-hidden" accept="image/jpeg,image/png,image/webp" capture="environment"><input type="file" name="occurrence_photo_2" class="visually-hidden" accept="image/jpeg,image/png,image/webp" capture="environment">
+                           <input type="file" name="occurrence_photo_1" accept="image/jpeg" hidden><input type="file" name="occurrence_photo_2" accept="image/jpeg" hidden>
                            <button class="btn btn-outline-danger w-100 mb-2" type="button" data-occurrence-photo-capture>{{ trans('store_logistics.occurrence_capture_button') }}</button><div class="small text-muted mb-3" data-occurrence-photo-status aria-live="polite"></div>
                            <button class="driver-action secondary danger" type="submit">{{ trans('store_logistics.confirm_occurrence') }}</button>
                        </form>
@@ -723,9 +724,16 @@ document.querySelectorAll('.carrier-occurrence-form').forEach(function(form){
     const inputs=[form.querySelector('[name="occurrence_photo_1"]'),form.querySelector('[name="occurrence_photo_2"]')];
     const trigger=form.querySelector('[data-occurrence-photo-capture]');
     const status=form.querySelector('[data-occurrence-photo-status]');
-    inputs.forEach(function(input,index){input.addEventListener('change',function(){const file=input.files&&input.files[0];if(!file)return;const preview=form.querySelector('[data-occurrence-preview="'+(index+1)+'"]');preview.src=URL.createObjectURL(file);preview.style.display='block';const count=inputs.filter(function(item){return item.files&&item.files.length;}).length;if(status)status.textContent=count+'/2';});});
-    trigger?.addEventListener('click',function(){const next=inputs.find(function(input){return!input.files||!input.files.length;});if(next)next.click();});
-    form.addEventListener('submit',function(event){if(inputs.some(function(input){return!input.files||!input.files.length;})){event.preventDefault();status.textContent='0/2';inputs.find(function(input){return!input.files||!input.files.length;})?.click();}});
+    const video=form.querySelector('.occurrence-camera-video'),canvas=form.querySelector('.occurrence-camera-canvas');let stream=null;
+    const stopCamera=function(){stream?.getTracks().forEach(function(track){track.stop();});stream=null;video.hidden=true;};
+    trigger?.addEventListener('click',async function(){
+        if(!stream){try{if(!navigator.mediaDevices?.getUserMedia)throw new Error('camera-unavailable');stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});video.srcObject=stream;video.hidden=false;status.textContent={{ trans('store_logistics.occurrence_camera_active')|json_encode|raw }};}catch(error){status.textContent={{ trans('store_logistics.occurrence_camera_required')|json_encode|raw }};}return;}
+        const index=inputs.findIndex(function(input){return!input.files||!input.files.length;});if(index<0){stopCamera();return;}
+        canvas.width=video.videoWidth||1280;canvas.height=video.videoHeight||720;canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+        canvas.toBlob(function(blob){if(!blob)return;const file=new File([blob],'occurrence-live-'+(index+1)+'.jpg',{type:'image/jpeg',lastModified:Date.now()});const transfer=new DataTransfer();transfer.items.add(file);inputs[index].files=transfer.files;const preview=form.querySelector('[data-occurrence-preview="'+(index+1)+'"]');preview.src=URL.createObjectURL(file);preview.style.display='block';const count=inputs.filter(function(item){return item.files&&item.files.length;}).length;status.textContent=count+'/2';if(count===2){form.querySelector('[name="evidence_captured_at"]').value=Math.floor(Date.now()/1000);status.textContent={{ trans('store_logistics.occurrence_camera_complete')|json_encode|raw }};stopCamera();}},'image/jpeg',0.9);
+    });
+    form.addEventListener('submit',function(event){if(inputs.some(function(input){return!input.files||!input.files.length;})){event.preventDefault();status.textContent={{ trans('store_logistics.occurrence_camera_required')|json_encode|raw }};}});
+    form.closest('.modal')?.addEventListener('hidden.bs.modal',stopCamera);
 });
 
 document.querySelectorAll('[data-driver-tab]').forEach(function (tab) {

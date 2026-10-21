@@ -1,5 +1,5 @@
 {
-    "ophytrack_driver_profile": {"profile_photo":"Foto de perfil del repartidor","take_photo":"Tomar Foto","bank_data":"Datos bancarios","name":"Nombre","document_type":"Tipo de documento","document_number":"Número de documento","bank":"Banco","agency":"Agencia","account_type":"Tipo de cuenta","account":"Cuenta","pix_key":"Clave PIX","select":"Seleccionar","other":"Otro","checking":"Cuenta corriente","savings":"Cuenta de ahorro","payment":"Cuenta de pago","invalid_photo":"Usa una foto JPG, PNG o WEBP de hasta 8 MB.","save_error":"No se pudo guardar el perfil del repartidor."},
+    "ophytrack_driver_profile": {"profile_photo":"Foto de perfil del repartidor","take_photo":"Tirar Foto","camera_active":"Cámara lista. Presiona Tirar Foto otra vez para capturar.","photo_captured":"Foto en vivo capturada.","camera_required":"Debes permitir la cámara. No se aceptan imágenes de la galería.","bank_data":"Datos bancarios","name":"Nombre","document_type":"Tipo de documento","document_number":"Número de documento","bank":"Banco","agency":"Agencia","account_type":"Tipo de cuenta","account":"Cuenta","pix_key":"Clave PIX","select":"Seleccionar","other":"Otro","checking":"Cuenta corriente","savings":"Cuenta de ahorro","payment":"Cuenta de pago","invalid_photo":"Usa una foto JPG, PNG o WEBP de hasta 8 MB.","save_error":"No se pudo guardar el perfil del repartidor."},
     "home": {
         "hero": {
             "title": "Gestiona todo tu negocio de eventos desde un solo lugar.",
@@ -7997,7 +7997,10 @@
         "save_occurrence": "Guardar incidencia",
         "occurrence_reasons": "Motivos de incidencias",
         "occurrence_button": "Ocurrencia",
-        "occurrence_capture_button": "Foto de evidencia",
+        "occurrence_capture_button": "Tirar Foto",
+        "occurrence_camera_active": "Cámara lista. Presiona Tirar Foto otra vez para cada foto.",
+        "occurrence_camera_required": "Toma ahora las dos fotos con la cámara. No se aceptan imágenes de la galería.",
+        "occurrence_camera_complete": "2/2 fotos en vivo capturadas.",
         "occurrence_photo_one": "Foto 1",
         "occurrence_photo_two": "Foto 2",
         "confirm_occurrence": "Confirmar incidencia",

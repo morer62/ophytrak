@@ -1,5 +1,5 @@
 {
-    "ophytrack_driver_profile": {"profile_photo":"Photo de profil du livreur","take_photo":"Prendre une photo","bank_data":"Coordonnées bancaires","name":"Nom","document_type":"Type de document","document_number":"Numéro du document","bank":"Banque","agency":"Agence","account_type":"Type de compte","account":"Compte","pix_key":"Clé PIX","select":"Sélectionner","other":"Autre","checking":"Compte courant","savings":"Compte d'épargne","payment":"Compte de paiement","invalid_photo":"Utilisez une photo JPG, PNG ou WEBP de 8 Mo maximum.","save_error":"Le profil du livreur n'a pas pu être enregistré."},
+    "ophytrack_driver_profile": {"profile_photo":"Photo de profil du livreur","take_photo":"Prendre une photo","camera_active":"Caméra prête. Appuyez à nouveau pour prendre la photo.","photo_captured":"Photo en direct capturée.","camera_required":"L'accès à la caméra est requis. La galerie n'est pas autorisée.","bank_data":"Coordonnées bancaires","name":"Nom","document_type":"Type de document","document_number":"Numéro du document","bank":"Banque","agency":"Agence","account_type":"Type de compte","account":"Compte","pix_key":"Clé PIX","select":"Sélectionner","other":"Autre","checking":"Compte courant","savings":"Compte d'épargne","payment":"Compte de paiement","invalid_photo":"Utilisez une photo JPG, PNG ou WEBP de 8 Mo maximum.","save_error":"Le profil du livreur n'a pas pu être enregistré."},
     "home": {
         "hero": {
             "title": "Gérez toute votre entreprise d'événements depuis un seul endroit.",
@@ -7836,7 +7836,10 @@
         "save_occurrence": "Enregistrer l'incident",
         "occurrence_reasons": "Motifs d'incident",
         "occurrence_button": "Incident",
-        "occurrence_capture_button": "Photo justificative",
+        "occurrence_capture_button": "Prendre une photo",
+        "occurrence_camera_active": "Caméra prête. Appuyez à nouveau pour chaque photo.",
+        "occurrence_camera_required": "Prenez les deux photos maintenant avec la caméra. La galerie n'est pas autorisée.",
+        "occurrence_camera_complete": "2/2 photos en direct capturées.",
         "occurrence_photo_one": "Photo 1",
         "occurrence_photo_two": "Photo 2",
         "confirm_occurrence": "Confirmer l'incident",
