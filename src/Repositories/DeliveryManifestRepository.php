@@ -62,6 +62,17 @@ class DeliveryManifestRepository extends StoreRepository
     {
         $driverSql=$driverUser>0?' AND delivery_user_id=:driver':'';$this->db->query("SELECT * FROM {$this->table} WHERE id=:id AND carrier_owner_id=:owner {$driverSql} AND status='DRAFT' LIMIT 1");$this->db->bind(':id',$manifestId);$this->db->bind(':owner',$carrierOwner);if($driverUser>0)$this->db->bind(':driver',$driverUser);$manifest=$this->db->fetchOne();if(!$manifest)return[false,'Draft manifest not found.'];$assignedDriver=(int)$manifest->delivery_user_id;
         $items=$this->getItems($manifestId,$carrierOwner,$driverUser);if(!$items)return[false,'Scan at least one package before generating the manifest.'];
+        $this->db->query("SELECT o.notes,o.guest_name,o.shipping_address_1,o.shipping_zip FROM store_orders o
+            JOIN store_packages p ON p.id_store_order=o.id AND p.id_owner=o.id_owner
+            JOIN store_delivery_manifest_items i ON i.id_store_package=p.id
+            WHERE i.id_manifest=:manifest AND i.status='PENDING' AND p.current_custodian_owner_id=:owner");
+        $this->db->bind(':manifest',$manifestId);$this->db->bind(':owner',$carrierOwner);
+        foreach($this->db->fetchAll() as $intake){
+            $details=json_decode((string)($intake->notes??''),true);
+            if(!empty($details['logistics_intake']) && (trim((string)$intake->guest_name)==='Datos del destinatario pendientes'
+                ||trim((string)$intake->shipping_address_1)===''||trim((string)$intake->shipping_zip)===''))
+                return[false,'Completa destinatario, dirección y CEP de los paquetes recibidos por etiqueta externa antes de generar la ruta.'];
+        }
         usort($items,static fn($a,$b)=>strcmp(preg_replace('/\D/','',(string)$a->shipping_zip).strtolower((string)$a->shipping_address_1),preg_replace('/\D/','',(string)$b->shipping_zip).strtolower((string)$b->shipping_address_1)));
         foreach($items as $index=>$item){$this->db->query("UPDATE store_delivery_manifest_items SET stop_sequence=:sequence,updated_at=NOW() WHERE id=:id");$this->db->bind(':sequence',$index+1);$this->db->bind(':id',(int)$item->id);$this->db->execute();}
         $this->db->query("UPDATE {$this->table} SET status='GENERATED',package_count=:count,generated_at=NOW(),updated_at=NOW() WHERE id=:id");$this->db->bind(':count',count($items));$this->db->bind(':id',$manifestId);$this->db->execute();

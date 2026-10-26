@@ -39,19 +39,85 @@ class CarrierPackageRepository extends StoreRepository
             default => '(o.public_token = :reference OR p.package_code = :reference OR o.external_order_id = :reference OR o.external_pack_id = :reference OR o.external_shipment_id = :reference)',
         };
 
-        $this->db->query("SELECT p.*, o.public_token
+        $this->db->query("SELECT DISTINCT p.*, o.public_token
             FROM store_packages p
             JOIN store_orders o ON o.id = p.id_store_order AND o.id_owner = p.id_owner
             LEFT JOIN store_package_carrier_assignments a
               ON a.id_store_package = p.id AND a.carrier_owner_id = :carrier
             WHERE {$where}
-              AND (p.current_custodian_owner_id = :carrier_scope OR a.id IS NOT NULL)
+              AND (p.id_owner = :own_scope OR p.current_custodian_owner_id = :carrier_scope OR a.id IS NOT NULL
+                OR EXISTS (SELECT 1 FROM store_carrier_relationships r WHERE r.seller_owner_id=p.id_owner AND r.carrier_owner_id=:related_carrier AND r.status='ACTIVE'))
             ORDER BY p.id DESC
-            LIMIT 1");
+            LIMIT 2");
         $this->db->bind(':reference', $value);
         $this->db->bind(':carrier', $carrierOwner);
         $this->db->bind(':carrier_scope', $carrierOwner);
-        return $this->db->fetchOne() ?: null;
+        $this->db->bind(':own_scope', $carrierOwner);
+        $this->db->bind(':related_carrier', $carrierOwner);
+        $matches=$this->db->fetchAll();
+        return count($matches)===1?$matches[0]:null;
+    }
+
+    public function findForCarrierScan(int $carrierOwner,string $raw): ?object
+    {
+        $label=\App\Services\CarrierLabelReference::parse($raw);
+        if(!$label)return null;
+        if($label['kind']==='internal' && ($package=$this->findBySecureToken($label['reference'])))return $package;
+        $package=$this->resolveCollectionReference($carrierOwner,'custom',$label['reference']);
+        return $package?$this->findBySecureToken((string)$package->public_token):null;
+    }
+
+    /** Collection accepts marketplace labels without a preassigned DELIVERY task. */
+    public function collectScannedLabel(int $carrierOwner,int $userId,string $raw,array $proof=[]): array
+    {
+        if(!$this->isCarrier($carrierOwner))return[false,'El espacio seleccionado no es una transportadora.',null];
+        if($userId!==$carrierOwner && !(new StoreUserRolesRepository())->userBelongsToOwner($carrierOwner,$userId))
+            return[false,'El entregador no pertenece a esta transportadora.',null];
+        $label=\App\Services\CarrierLabelReference::parse($raw);
+        if(!$label)return[false,'La etiqueta no contiene un token Ophytrack ni una referencia Shopee/Mercado Libre reconocida.',null];
+        $lock='collection:'.substr(hash('sha256',$carrierOwner.':'.$label['reference']),0,48);
+        $this->db->query('SELECT GET_LOCK(:name,5) AS acquired');$this->db->bind(':name',$lock);
+        if((int)($this->db->fetchOne()->acquired??0)!==1)return[false,'Este paquete se está confirmando. Intenta nuevamente.',null];
+        try{
+            $package=$label['kind']==='internal'?$this->findBySecureToken($label['reference']):null;
+            if(!$package){
+                $this->db->query("SELECT DISTINCT p.*,o.public_token FROM store_packages p
+                    JOIN store_orders o ON o.id=p.id_store_order AND o.id_owner=p.id_owner
+                    WHERE (p.id_owner=:owner OR p.current_custodian_owner_id=:custodian
+                        OR EXISTS (SELECT 1 FROM store_carrier_relationships r WHERE r.seller_owner_id=p.id_owner AND r.carrier_owner_id=:carrier AND r.status='ACTIVE'))
+                    AND (o.public_token=:token OR p.package_code=:code OR o.external_order_id=:order_ref OR o.external_pack_id=:pack_ref OR o.external_shipment_id=:shipment_ref)
+                    LIMIT 2");
+                foreach(['owner','custodian','carrier'] as $key)$this->db->bind(':'.$key,$carrierOwner);
+                foreach(['token','code','order_ref','pack_ref','shipment_ref'] as $key)$this->db->bind(':'.$key,$label['reference']);
+                $matches=$this->db->fetchAll();
+                if(count($matches)>1)return[false,'La referencia identifica varios paquetes. Escanea el QR interno del paquete correcto.',null];
+                $package=$matches[0]??null;
+            }
+            if($package)return $this->claimByQr($carrierOwner,$userId,(string)$package->public_token,null,null,null,'COLLECTION_BATCH',$proof);
+            if($label['kind']!=='external')return[false,'No se encontró el paquete de esta etiqueta. Sincroniza el pedido o escanea su etiqueta externa.',null];
+
+            // Intake belongs to this carrier only; no customer/address/payment data is invented.
+            // It is a logistics receipt, not an imported marketplace sale or a paid order.
+            $this->db->beginTransaction();
+            try{
+                $token=bin2hex(random_bytes(24));
+                $notes=json_encode(['logistics_intake'=>true,'recipient_data_status'=>'PENDING','source'=>$label['provider'],'label_reference'=>$label['reference']],JSON_UNESCAPED_UNICODE);
+                $this->db->query("INSERT INTO store_orders (id_owner,public_token,order_source,external_shipment_id,guest_name,guest_email,status,payment_status,total,notes,created_at,updated_at)
+                    VALUES (:owner,:token,:source,:reference,'Datos del destinatario pendientes','','NEW','PENDING',0,:notes,NOW(),NOW())");
+                $this->db->bind(':owner',$carrierOwner);$this->db->bind(':token',$token);$this->db->bind(':source',$label['provider']);$this->db->bind(':reference',$label['reference']);$this->db->bind(':notes',$notes);$this->db->execute();
+                $orderId=(int)$this->db->lastId();$code='EXT-'.$carrierOwner.'-'.$label['reference'];
+                $this->db->query("INSERT INTO store_packages (id_owner,id_store_order,package_sequence,package_code,current_custodian_owner_id,current_custodian_user_id,custody_status,logistics_mode,current_status,current_location_label,custody_started_at,last_event_at,created_at,updated_at)
+                    VALUES (:owner,:order_id,1,:code,:custodian,:user,'PICKED_UP','INTERNAL','PICKED_UP','Recolección de etiqueta externa · datos pendientes',NOW(),NOW(),NOW(),NOW())");
+                $this->db->bind(':owner',$carrierOwner);$this->db->bind(':order_id',$orderId);$this->db->bind(':code',$code);$this->db->bind(':custodian',$carrierOwner);$this->db->bind(':user',$userId);$this->db->execute();
+                $package=$this->findBySecureToken($token);
+                if(!$package)throw new \RuntimeException('No se pudo verificar el paquete recibido.');
+                $this->assign((int)$package->id,$carrierOwner,$userId,$userId,'PICKUP');
+                $this->event($package,$carrierOwner,$userId,'QR_CUSTODY_ACCEPTED','PICKED_UP','Recolección de etiqueta externa','Datos de destinatario y dirección pendientes de completar.',
+                    ['method'=>'COLLECTION_BATCH','source'=>$label['provider'],'label_reference'=>$label['reference'],'handover'=>$proof]);
+                $this->db->commit();
+                return[true,'Paquete recolectado. Completa los datos del destinatario antes de planificar su entrega.',$package];
+            }catch(\Throwable $error){$this->db->rollback();throw $error;}
+        }finally{$this->db->query('SELECT RELEASE_LOCK(:name)');$this->db->bind(':name',$lock);$this->db->fetchOne();}
     }
 
     public function requestManualCustody(int $carrierOwner,int $userId,string $code,string $notes=''): array
@@ -73,20 +139,23 @@ class CarrierPackageRepository extends StoreRepository
     public function previewClaimByQr(int $carrierOwner,string $token): array
     {
         if(!$this->isCarrier($carrierOwner))return[false,'The selected workspace is not a carrier organization.',null];
-        $package=$this->findBySecureToken($token);if(!$package)return[false,'The QR is invalid or no longer identifies a package.',null];
-        if(!(new CarrierRelationshipRepository())->isAssociated((int)$package->id_owner,$carrierOwner))return[false,'This carrier is not authorized by the seller for this package.',null];
+        $package=$this->findForCarrierScan($carrierOwner,$token);if(!$package)return[false,'The QR is invalid or no longer identifies a package.',null];
+        if((int)$package->id_owner!==$carrierOwner && !(new CarrierRelationshipRepository())->isAssociated((int)$package->id_owner,$carrierOwner))return[false,'This carrier is not authorized by the seller for this package.',null];
         if(in_array((string)$package->custody_status,['DELIVERED','CLOSED'],true))return[false,'This package is already closed or delivered.',null];
         if((int)($package->current_custodian_owner_id??0)>0 && (int)$package->current_custodian_owner_id!==(int)$package->id_owner && (int)$package->current_custodian_owner_id!==$carrierOwner)return[false,'This package is under another carrier custody.',null];
         return[true,'Package detected. Confirm to add it to your carrier workspace.',$package];
     }
 
-    public function claimByQr(int $carrierOwner,int $userId,string $token,?string $photoUrl=null,?float $lat=null,?float $lng=null,string $method='SECURE_QR'): array
+    public function claimByQr(int $carrierOwner,int $userId,string $token,?string $photoUrl=null,?float $lat=null,?float $lng=null,string $method='SECURE_QR',array $collectionProof=[]): array
     {
         if(!$this->isCarrier($carrierOwner))return[false,'The selected workspace is not a carrier organization.',null];
-        $package=$this->findBySecureToken($token);if(!$package)return[false,'The QR is invalid or no longer identifies a package.',null];
-        if(!(new CarrierRelationshipRepository())->isAssociated((int)$package->id_owner,$carrierOwner))return[false,'This carrier is not authorized by the seller for this package.',null];
+        $package=$this->findForCarrierScan($carrierOwner,$token);if(!$package)return[false,'The QR is invalid or no longer identifies a package.',null];
+        if((int)$package->id_owner!==$carrierOwner && !(new CarrierRelationshipRepository())->isAssociated((int)$package->id_owner,$carrierOwner))return[false,'This carrier is not authorized by the seller for this package.',null];
         if(in_array((string)$package->custody_status,['DELIVERED','CLOSED'],true))return[false,'This package is already closed or delivered.',null];
         if((int)($package->current_custodian_owner_id??0)===$carrierOwner){
+            if($method==='COLLECTION_BATCH')return (string)$package->custody_status==='PICKED_UP'
+                ?[true,'Este paquete ya fue recolectado; no se duplicó ni se cambió su etapa.',$package]
+                :[false,'Este paquete ya avanzó de la recolección; utiliza su sección logística actual.',null];
             if(in_array((string)$package->custody_status,['CUSTOMER_ABSENT','CUSTOMER_REJECTED'],true)){
                 $this->db->query("UPDATE store_packages SET current_custodian_user_id=:user,custody_status='RECEIVED_AT_HUB',current_status='RECEIVED_AT_HUB',current_location_label='Returned to carrier warehouse for a new attempt',last_event_at=NOW(),updated_at=NOW() WHERE id=:id AND current_custodian_owner_id=:carrier");$this->db->bind(':user',$userId);$this->db->bind(':id',(int)$package->id);$this->db->bind(':carrier',$carrierOwner);$this->db->execute();$this->event($package,$carrierOwner,$userId,'QR_RETURNED_TO_HUB','RECEIVED_AT_HUB','Returned to carrier warehouse for a new delivery attempt','',['latitude'=>$lat,'longitude'=>$lng]);return[true,'Package returned to the warehouse and is ready for a new delivery attempt.',$package];
             }
@@ -106,6 +175,7 @@ class CarrierPackageRepository extends StoreRepository
         $this->assign((int)$package->id,$carrierOwner,$userId,$userId,'PICKUP');
         (new OphytrackPackageBillingRepository())->recordForCustody($package,$carrierOwner);
         $meta=['photo_url'=>$photoUrl,'latitude'=>$lat,'longitude'=>$lng,'method'=>$method];
+        if($method==='COLLECTION_BATCH')$meta['handover']=$collectionProof;
         $this->event($package,$carrierOwner,$userId,'QR_CUSTODY_ACCEPTED','PICKED_UP','Carrier accepted custody through secure QR scan','', $meta);
         $this->notify((int)$package->id_owner,'La transportadora recolectó el paquete '.$package->package_code.' mediante escaneo QR seguro.','panel/planner-hub/store/orders/home?package='.urlencode((string)$package->package_code));
         return[true,'Package added to your carrier workspace.',$package];
@@ -180,7 +250,7 @@ class CarrierPackageRepository extends StoreRepository
     {
         $userSql=$userId?' AND e.id_user=:user':'';
         $dateSql=$from&&$to?" AND DATE(CONVERT_TZ(e.created_at,'+00:00','-03:00')) BETWEEN :from_date AND :to_date":'';
-        $this->db->query("SELECT e.id AS event_id,CONVERT_TZ(e.created_at,'+00:00','-03:00') AS collected_at,e.status_to AS custody_status,p.id,p.package_code,p.id_store_order,o.public_token,o.guest_name,o.guest_email,o.guest_phone,o.shipping_address_1,o.shipping_address_2,o.shipping_city,o.shipping_state,o.shipping_zip,ip.company_name AS seller_name FROM store_package_events e JOIN store_packages p ON p.id=e.id_store_package JOIN store_orders o ON o.id=p.id_store_order AND o.id_owner=p.id_owner JOIN store_package_carrier_assignments a ON a.id_store_package=p.id AND a.carrier_owner_id=:carrier LEFT JOIN institution_profile ip ON ip.id_owner=p.id_owner WHERE e.event_type='QR_CUSTODY_ACCEPTED' {$userSql} {$dateSql} ORDER BY e.created_at DESC,e.id DESC LIMIT 500");
+        $this->db->query("SELECT DISTINCT e.id AS event_id,CONVERT_TZ(e.created_at,'+00:00','-03:00') AS collected_at,e.status_to AS custody_status,p.id,p.package_code,p.id_store_order,o.public_token,o.guest_name,o.guest_email,o.guest_phone,o.shipping_address_1,o.shipping_address_2,o.shipping_city,o.shipping_state,o.shipping_zip,ip.company_name AS seller_name FROM store_package_events e JOIN store_packages p ON p.id=e.id_store_package JOIN store_orders o ON o.id=p.id_store_order AND o.id_owner=p.id_owner JOIN store_package_carrier_assignments a ON a.id_store_package=p.id AND a.carrier_owner_id=:carrier LEFT JOIN institution_profile ip ON ip.id_owner=p.id_owner WHERE e.event_type='QR_CUSTODY_ACCEPTED' {$userSql} {$dateSql} ORDER BY e.created_at DESC,e.id DESC LIMIT 500");
         $this->db->bind(':carrier',$carrierOwner);if($userId)$this->db->bind(':user',$userId);if($dateSql){$this->db->bind(':from_date',$from);$this->db->bind(':to_date',$to);}return$this->db->fetchAll();
     }
 

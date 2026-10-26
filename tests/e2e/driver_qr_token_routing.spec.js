@@ -58,6 +58,16 @@ test('detailed collection stages a raw QR without requiring a seller DELIVERY as
   expect(calls.some(call => call[0] === 'request' || call[1] === 'store_logistics.qr_not_assigned')).toBe(false);
 });
 
+test('Mercado Livre JSON and native Shopee labels stage in collection, never seller assignment checks', async () => {
+  const labels = [JSON.stringify({id:'998877665544',sender_id:123,hash_code:'synthetic'}), 'BR265885228923I'];
+  for (const label of labels) {
+    const {context,calls}=scanner({area:'detailedCollection'});
+    await context.openAssignedPackageFromQr(label);
+    expect(calls).toContainEqual(['collection',label]);
+    expect(calls.some(call=>call[0]==='request'||call[1]==='store_logistics.qr_not_assigned')).toBe(false);
+  }
+});
+
 for (const [area, workflow] of [['physicalReception', 'physical_reception'], ['departureManifest', 'departure_manifest'], ['', null]]) {
   test(`carrier QR reaches server validation in ${area || 'deliveries'}`, async () => {
     const { context, calls } = scanner({ area, row: { dataset: { publicToken: token, taskId: '1' } } });
