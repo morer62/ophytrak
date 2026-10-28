@@ -294,10 +294,33 @@ class AddonBillingService
     public function getAddonRenewalDate(int $userId): ?string
     {
         if ($this->useSingleRenewalDate()) {
-            return $this->getUserMembershipDueDate($userId) ?: (new DateTimeImmutable('+1 month'))->format('Y-m-d');
+            return self::resolveRenewalDate($this->getUserMembershipDueDate($userId));
         }
 
         return (new DateTimeImmutable('+1 month'))->format('Y-m-d');
+    }
+
+    /**
+     * A past (or same-day) account renewal date cannot be reused for a new
+     * charge: doing so would activate the module already expired. Future dates
+     * remain aligned with the shared billing cycle and preserve proration.
+     */
+    public static function resolveRenewalDate(?string $membershipDueDate, ?DateTimeImmutable $today = null): string
+    {
+        $comparisonDate = ($today ?? new DateTimeImmutable('today'))->setTime(0, 0);
+
+        if ($membershipDueDate) {
+            try {
+                $dueDate = (new DateTimeImmutable($membershipDueDate))->setTime(0, 0);
+                if ($dueDate > $comparisonDate) {
+                    return $dueDate->format('Y-m-d');
+                }
+            } catch (Exception $exception) {
+                // Invalid legacy dates safely start a fresh monthly period.
+            }
+        }
+
+        return $comparisonDate->modify('+1 month')->format('Y-m-d');
     }
 
     public function getUserMembershipDueDate(int $userId): ?string
