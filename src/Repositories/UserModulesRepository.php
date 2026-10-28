@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use DateTimeImmutable;
+use Exception;
 use PDOException;
 
 class UserModulesRepository extends BaseRepository
@@ -78,6 +80,35 @@ class UserModulesRepository extends BaseRepository
         } catch (PDOException $e) {
             error_log('UserModulesRepository::getByUserAndSlug(): ' . $e->getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Keep every UI and access check aligned with the repository query used by
+     * getActiveByUserId(): ACTIVE is not enough when the paid period expired.
+     */
+    public static function isRecordCurrentlyActive(object|array|null $module, ?DateTimeImmutable $today = null): bool
+    {
+        if (!$module) {
+            return false;
+        }
+
+        $status = is_array($module) ? ($module['status'] ?? '') : ($module->status ?? '');
+        if (strtoupper((string)$status) !== self::STATUS_ACTIVE) {
+            return false;
+        }
+
+        $renewalAt = is_array($module) ? ($module['renewal_at'] ?? null) : ($module->renewal_at ?? null);
+        if (empty($renewalAt)) {
+            return true;
+        }
+
+        try {
+            $comparisonDate = ($today ?? new DateTimeImmutable('today'))->setTime(0, 0);
+            $renewalDate = (new DateTimeImmutable((string)$renewalAt))->setTime(0, 0);
+            return $renewalDate >= $comparisonDate;
+        } catch (Exception $exception) {
+            return false;
         }
     }
 

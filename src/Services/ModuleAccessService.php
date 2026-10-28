@@ -155,19 +155,7 @@ class ModuleAccessService
             }
         }
 
-        if (!$module || strtoupper((string)$module->status) !== UserModulesRepository::STATUS_ACTIVE) {
-            return false;
-        }
-
-        if (!empty($module->renewal_at)) {
-            try {
-                return new DateTimeImmutable((string)$module->renewal_at) >= new DateTimeImmutable('today');
-            } catch (Exception $e) {
-                return false;
-            }
-        }
-
-        return true;
+        return UserModulesRepository::isRecordCurrentlyActive($module);
     }
 
     public function getBaseModules(): array

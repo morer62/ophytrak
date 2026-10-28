@@ -50,13 +50,16 @@ $buildPayload = static function (string $moduleSlug, ?string $paymentCurrency = 
     $compatibleSlugs = $pricing->compatibleSlugs($moduleSlug);
     foreach ($activeModules as $module) {
         if (in_array((string)$module->slug, $compatibleSlugs, true)) {
-            $currentModule = $module;
-            break;
+            $currentModule ??= $module;
+            if (UserModulesRepository::isRecordCurrentlyActive($module)) {
+                $currentModule = $module;
+                break;
+            }
         }
     }
 
-    if ($currentModule && strtoupper((string)$currentModule->status) === UserModulesRepository::STATUS_ACTIVE) {
-        MessageUtil::setMessage('This module is already active.');
+    if (UserModulesRepository::isRecordCurrentlyActive($currentModule)) {
+        MessageUtil::setMessage(TranslationService::trans('billing.module_already_active'));
         LocationUtils::redirectInternal('panel/membership/manage');
     }
 

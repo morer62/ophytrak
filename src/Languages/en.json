@@ -3541,6 +3541,7 @@
         "confirm_and_pay": "Confirm and pay",
         "cancel_back_marketplace": "Cancel / Back to Marketplace",
         "status_active": "Active",
+        "module_already_active": "This module is already active for the current billing period.",
         "status_pending_payment": "Pending payment",
         "status_past_due": "Past due",
         "status_locked": "Locked",

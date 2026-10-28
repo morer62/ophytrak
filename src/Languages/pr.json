@@ -3519,6 +3519,7 @@
         "confirm_and_pay": "Confirmar e pagar",
         "cancel_back_marketplace": "Cancelar / Voltar ao Marketplace",
         "status_active": "Ativo",
+        "module_already_active": "Este modulo ja esta ativo no periodo de cobranca atual.",
         "status_pending_payment": "Pagamento pendente",
         "status_past_due": "Vencido",
         "status_locked": "Bloqueado",
