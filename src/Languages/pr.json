@@ -7859,7 +7859,12 @@
     },
     "level4_access_center": {
         "sidebar_access_center": "Centro de acesso",
-        "sidebar_approved_tools": "Ferramentas aprovadas"
+        "sidebar_approved_tools": "Ferramentas aprovadas",
+        "company_activation_required": "Ativacao da empresa necessaria",
+        "company_module_locked": "O modulo ainda nao esta ativo para esta empresa",
+        "company_module_locked_reason": "O administrador de {company} precisa ativar este modulo. Como membro da equipe, voce nao precisa nem pode pagar com o cartao da empresa.",
+        "selected_company": "a empresa selecionada",
+        "back_to_work": "Voltar ao inicio"
     },
     "wallet": {
         "client_wallet": "Carteira do cliente",
