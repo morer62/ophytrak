@@ -6,6 +6,7 @@ use App\Repositories\CarrierPackageRepository;
 use App\Repositories\DeliveryManifestRepository;
 use App\Services\LoginService;
 use App\Services\ModuleGuardService;
+use App\Services\TranslationService;
 use App\Services\UserWorkspaceContextService;
 use App\Utils\Router;
 use App\Utils\TemplateResponse;
@@ -173,29 +174,29 @@ $router->post(function () {
         if(strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH']??''))==='xmlhttprequest'){$updated=$ok?$repo->findForCarrierScan($ownerId,trim((string)($_POST['qr_token']??''))):null;$status=(string)($updated->custody_status??'');$listStage=in_array($status,['PICKED_UP'],true)?'collected':(in_array($status,['RECEIVED_AT_HUB','SORTED_AT_HUB'],true)?'warehouse':(in_array($status,['OUT_FOR_DELIVERY'],true)?'route':(in_array($status,['CANCELLED_RETURN_PENDING'],true)?'cancelled':'closed')));header('Content-Type: application/json');http_response_code($ok?200:422);echo json_encode(['success'=>$ok,'message'=>$message,'package_id'=>$package->id??null,'custody_status'=>$status,'list_stage'=>$listStage]);exit;}MessageUtil::setMessage($message);LocationUtils::reload();
     }
     if($action==='carrier_manual_secure_claim'){
-        $photo='';if(FileUtils::hasFile($_FILES,'manual_claim_photo')){$file=$_FILES['manual_claim_photo'];if(!in_array((string)($file['type']??''),['image/jpeg','image/png','image/webp'],true)||(int)($file['size']??0)>8*1024*1024){$respond(false,'Evidence must be JPG, PNG or WEBP up to 8 MB.');}$photo=FileUtils::saveFile($file,'store-carrier-evidence');}
+        $photo='';if(FileUtils::hasFile($_FILES,'manual_claim_photo')){$file=$_FILES['manual_claim_photo'];if(!in_array((string)($file['type']??''),['image/jpeg','image/png','image/webp'],true)||(int)($file['size']??0)>8*1024*1024){$respond(false,TranslationService::trans('store_logistics.evidence_file_invalid'));}$photo=FileUtils::saveFile($file,'store-carrier-evidence');}
         if($photo===''){$respond(false,'Take a package photo to use the secure manual fallback.');}
         [$ok,$message,$package]=$repo->claimByQr($ownerId,(int)$user->getId(),trim((string)($_POST['secure_package_token']??'')),$photo,is_numeric($_POST['latitude']??null)?(float)$_POST['latitude']:null,is_numeric($_POST['longitude']??null)?(float)$_POST['longitude']:null,'MANUAL_SECURE_CODE');$respond($ok,$message,['package_id'=>$package->id??null]);
     }
     if($action==='carrier_advance'){
-        $saveEvidence=function(string $field)use($respond):string{if(!FileUtils::hasFile($_FILES,$field))return'';$file=$_FILES[$field];if(!in_array((string)($file['type']??''),['image/jpeg','image/png','image/webp'],true)||(int)($file['size']??0)>8*1024*1024)$respond(false,'Evidence must be JPG, PNG or WEBP up to 8 MB.');return FileUtils::saveFile($file,'store-carrier-evidence');};
+        $saveEvidence=function(string $field)use($respond):string{if(!FileUtils::hasFile($_FILES,$field))return'';$file=$_FILES[$field];if(!in_array((string)($file['type']??''),['image/jpeg','image/png','image/webp'],true)||(int)($file['size']??0)>8*1024*1024)$respond(false,TranslationService::trans('store_logistics.evidence_file_invalid'));return FileUtils::saveFile($file,'store-carrier-evidence');};
         $stage=trim((string)($_POST['carrier_stage']??''));$notes=trim((string)($_POST['notes']??''));$meta=['receiver_type'=>trim((string)($_POST['receiver_type']??'')),'receiver_name'=>trim((string)($_POST['receiver_name']??'')),'document_type'=>trim((string)($_POST['document_type']??'')),'document_number'=>trim((string)($_POST['document_number']??'')),'failure_code'=>trim((string)($_POST['failure_code']??'')),'latitude'=>$_POST['latitude']??null,'longitude'=>$_POST['longitude']??null];
         if($stage==='delivery_occurrence'){
             $reason=trim((string)($_POST['occurrence_reason']??''));$allowedReasons=['CUSTOMER_REJECTED','RISK_AREA','OUT_OF_ROUTE','ADDRESS_NOT_FOUND','CUSTOMER_ABSENT'];
-            if(!in_array($reason,$allowedReasons,true)||$notes==='')$respond(false,'Selecciona el motivo de la ocurrencia y describe lo sucedido.');
+            if(!in_array($reason,$allowedReasons,true)||$notes==='')$respond(false,TranslationService::trans('store_logistics.occurrence_reason_required'));
             $photo=$saveEvidence('occurrence_photo_1');$photo2=$saveEvidence('occurrence_photo_2');
             $capturedAt=max(0,(int)($_POST['evidence_captured_at']??0));
-            if($photo===''||$photo2===''||$capturedAt===0||abs(time()-$capturedAt)>600)$respond(false,'Las dos fotos deben tomarse con la cámara al momento de registrar la ocurrencia.');
+            if($photo===''||$photo2===''||$capturedAt===0||abs(time()-$capturedAt)>600)$respond(false,TranslationService::trans('store_logistics.occurrence_live_photos_required'));
             $meta['failure_code']=$reason;$meta['occurrence_reason']=$reason;$meta['photo_url_2']=$photo2;
             $stage=$reason==='CUSTOMER_REJECTED'?'customer_rejected':'customer_absent';
         }else{
             $photo=$saveEvidence('evidence_photo');$photo2=$saveEvidence('evidence_photo_2');
         }
-        if(in_array($stage,['customer_absent','customer_rejected','delivery_cancelled'],true)&&$notes===''){$respond(false,'Describe the delivery incident.');}
-        if($stage==='delivered'){$capturedAt=max(0,(int)($_POST['evidence_captured_at']??0));if($meta['receiver_type']===''||$meta['receiver_name']===''||$meta['document_type']===''||$meta['document_number']===''||$notes===''||!is_numeric($meta['latitude'])||!is_numeric($meta['longitude']))$respond(false,'Completa receptor, documento, observaciones y ubicación para cerrar la entrega.');if($photo===''||$photo2==='')$respond(false,'No se recibieron las dos fotos de evidencia. Tómalas nuevamente antes de confirmar.');if($capturedAt===0)$respond(false,'Las fotos deben tomarse con la cámara al momento de la entrega.');$meta['photo_url_2']=$photo2;$meta['evidence_captured_at']=$capturedAt;}
+        if(in_array($stage,['customer_absent','customer_rejected','delivery_cancelled'],true)&&$notes===''){$respond(false,TranslationService::trans('store_logistics.incident_description_required'));}
+        if($stage==='delivered'){$capturedAt=max(0,(int)($_POST['evidence_captured_at']??0));if($meta['receiver_type']===''||$meta['receiver_name']===''||$meta['document_type']===''||$meta['document_number']===''||$notes===''||!is_numeric($meta['latitude'])||!is_numeric($meta['longitude']))$respond(false,TranslationService::trans('store_logistics.delivery_fields_required'));if($photo===''||$photo2==='')$respond(false,TranslationService::trans('store_logistics.delivery_two_photos_required'));if($capturedAt===0||abs(time()-$capturedAt)>600)$respond(false,TranslationService::trans('store_logistics.delivery_live_photos_required'));$meta['photo_url_2']=$photo2;$meta['evidence_captured_at']=$capturedAt;}
         [$ok,$message]=$repo->advance((int)($_POST['package_id']??0),$ownerId,(int)$user->getId(),$stage,$notes,$photo,$meta);$respond($ok,$message);
     }
-    MessageUtil::setMessage('Invalid carrier operation.');LocationUtils::reload();
+    MessageUtil::setMessage(TranslationService::trans('store_logistics.invalid_carrier_operation'));LocationUtils::reload();
 });
 
 $router->run();

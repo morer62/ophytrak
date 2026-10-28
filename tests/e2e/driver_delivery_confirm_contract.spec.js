@@ -21,6 +21,24 @@ test('delivery screen follows the reviewed driver flow', async () => {
   expect(view).toContain("width:{ideal:1280},height:{ideal:720}");
   expect(view).toContain("'image/jpeg',.82");
   expect(view).toContain("if(!input.files||!input.files.length)");
+  expect(view).toContain("delivery_live_photos_required");
+  expect(view).not.toContain("carrier-manual-claim-form");
+  expect(view).not.toContain("carrier_fallback.title");
   expect(controller).toContain("if($photo===''||$photo2==='')");
+  expect(controller).toContain("abs(time()-$capturedAt)>600");
   expect(controller).toContain("$meta['evidence_captured_at']=$capturedAt");
+});
+
+test('Ophytrack is Portuguese-only and hides language selectors', async () => {
+  const service = read('src/Services/TranslationService.php');
+  const header = read('src/views/templates/layout/headerLayout.html.twig');
+  const normalizedHeader = header.replace(/\r\n/g, '\n');
+  const publicSelector = read('src/views/templates/components/public-language-selector.twig');
+
+  expect(service).toContain("if (ProductProfileService::isOphytrack())");
+  expect(service).toContain("self::setLocale('pt')");
+  expect(service).toContain("ProductProfileService::isOphytrack() ? ['pt'] : self::SUPPORTED_LOCALES");
+  expect(normalizedHeader).toContain("{% set _current_locale = locale is defined ? locale : 'en' %}\n      {% if _locales|length > 1 %}\n      <li class=\"nav-item dropdown\" style=\"display: block !important;\">\n        <a class=\"nav-icon dropdown-toggle\" href=\"#\" id=\"languageDropdownHeader\"");
+  expect(header).toContain('id="alertsDropdown"');
+  expect(publicSelector).toContain('{% if _public_locales|length > 1 %}');
 });

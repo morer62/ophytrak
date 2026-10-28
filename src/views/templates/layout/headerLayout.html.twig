@@ -619,6 +619,7 @@
       </script>
       {% set _locales = supported_locales is defined and supported_locales is not empty ? supported_locales : ['en', 'es', 'pt', 'fr'] %}
       {% set _current_locale = locale is defined ? locale : 'en' %}
+      {% if _locales|length > 1 %}
       <li class="nav-item dropdown" style="display: block !important;">
         <a class="nav-icon dropdown-toggle" href="#" id="languageDropdownHeader" data-bs-toggle="dropdown" title="{{ trans('common.language') }}" style="display: inline-block !important;">
           <i class="align-middle" data-feather="globe" style="width: 20px; height: 20px;">🌐</i>
@@ -632,6 +633,7 @@
           {% endfor %}
         </div>
       </li>
+      {% endif %}
 
       {% if not isMobileApp %}
       <li class="nav-item dropdown">

@@ -1,6 +1,7 @@
 {% set _public_locales = supported_locales is defined and supported_locales is not empty ? supported_locales : ['en', 'es', 'pt', 'fr'] %}
 {% set _public_current_locale = locale is defined ? locale : 'en' %}
 
+{% if _public_locales|length > 1 %}
 <div class="public-language-switcher" data-public-language-switcher>
     <button class="public-language-button" type="button" aria-haspopup="true" aria-expanded="false" title="{{ trans('common.language') }}">
         <span aria-hidden="true">&#127760;</span>
@@ -17,6 +18,7 @@
         {% endfor %}
     </div>
 </div>
+{% endif %}
 
 <style>
 .public-language-switcher{

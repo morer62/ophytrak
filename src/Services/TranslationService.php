@@ -20,6 +20,11 @@ class TranslationService
      */
     public static function detectLocale(): string
     {
+        if (ProductProfileService::isOphytrack()) {
+            self::setLocale('pt');
+            return 'pt';
+        }
+
         $requestLocale = $_GET['locale'] ?? $_POST['locale'] ?? null;
         if (is_string($requestLocale)) {
             $locale = self::normalizeSupportedLocale($requestLocale, '');
@@ -138,6 +143,10 @@ class TranslationService
      */
     public static function setLocale(string $locale): bool
     {
+        if (ProductProfileService::isOphytrack()) {
+            $locale = 'pt';
+        }
+
         $locale = self::normalizeLocale($locale) ?? '';
         if (!in_array($locale, self::SUPPORTED_LOCALES)) {
             return false;
@@ -254,7 +263,7 @@ class TranslationService
      */
     public static function getSupportedLocales(): array
     {
-        return self::SUPPORTED_LOCALES;
+        return ProductProfileService::isOphytrack() ? ['pt'] : self::SUPPORTED_LOCALES;
     }
 
     /**
@@ -278,6 +287,10 @@ class TranslationService
      */
     public static function getSystemLanguage(): string
     {
+        if (ProductProfileService::isOphytrack()) {
+            return 'pt';
+        }
+
         if (class_exists('\App\Services\LoginService')) {
             $user = \App\Services\LoginService::getSession();
             if ($user && method_exists($user, 'getSystemLanguage')) {
