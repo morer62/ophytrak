@@ -84,6 +84,36 @@ class UserModulesRepository extends BaseRepository
     }
 
     /**
+     * Paid add-ons whose current billing period has reached its renewal date.
+     * Included modules and cancelled subscriptions are never charged.
+     */
+    public function getDuePaidRenewals(int $userId, ?DateTimeImmutable $today = null): array
+    {
+        try {
+            $this->db->query("
+                SELECT um.*, m.name
+                FROM {$this->table} um
+                INNER JOIN modules m ON m.slug = um.module_slug
+                WHERE um.id_user = :user_id
+                  AND um.status IN ('ACTIVE', 'EXPIRED')
+                  AND COALESCE(um.is_included_in_base, 0) = 0
+                  AND COALESCE(um.price, 0) > 0
+                  AND um.renewal_at IS NOT NULL
+                  AND um.renewal_at <= :today
+                  AND COALESCE(um.billing_status, 'current') NOT IN ('cancel_at_period_end', 'cancelled', 'not_required')
+                ORDER BY um.renewal_at ASC, um.id ASC
+            ");
+            $this->db->bind(':user_id', $userId);
+            $this->db->bind(':today', ($today ?? new DateTimeImmutable('today'))->format('Y-m-d'));
+
+            return $this->db->fetchAll();
+        } catch (PDOException $e) {
+            error_log('UserModulesRepository::getDuePaidRenewals(): ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Keep every UI and access check aligned with the repository query used by
      * getActiveByUserId(): ACTIVE is not enough when the paid period expired.
      */

@@ -207,6 +207,68 @@ class AddonBillingService
         ];
     }
 
+    /**
+     * Record a successful saved-card renewal without recalculating a prorated
+     * checkout. The caller supplies the full next-period amount and date.
+     */
+    public function renewAddonAfterAutopay(
+        int $userId,
+        string $moduleSlug,
+        float $amountPaid,
+        string $renewalAt,
+        string $paymentReference,
+        array $paymentSnapshot
+    ): array {
+        $moduleSlug = $this->modulesRepository->normalizeSlug($moduleSlug);
+        if (!$this->getOfficialAddon($moduleSlug) || !$this->supportsPaymentsAllAddonConcept()) {
+            return ['success' => false, 'message' => 'Add-on renewal ledger is not ready.'];
+        }
+
+        $paymentId = $this->logAddonPayment(
+            $userId,
+            $moduleSlug,
+            $amountPaid,
+            $renewalAt,
+            $paymentReference,
+            $paymentSnapshot
+        );
+        $renewed = $this->userModulesRepository->activateModuleBySlug($userId, $moduleSlug, $renewalAt);
+
+        if ($renewed) {
+            $this->markAddonPaidActivation($userId, $moduleSlug, $paymentId, $renewalAt);
+
+            try {
+                (new AffiliateService())->createCommission(
+                    $userId,
+                    'ophyra_addon',
+                    $amountPaid,
+                    $paymentReference,
+                    null,
+                    $paymentId ?: null,
+                    $this->modulesRepository->getCanonicalSlug($moduleSlug),
+                    (string)($paymentSnapshot['payment_currency'] ?? CurrencyPricingService::BASE_CURRENCY),
+                    false
+                );
+            } catch (Exception $e) {
+                error_log('AddonBillingService::renewAddonAfterAutopay() affiliate commission: ' . $e->getMessage());
+            }
+        }
+
+        return [
+            'success' => $renewed,
+            'module_slug' => $moduleSlug,
+            'renewal_at' => $renewalAt,
+            'payment_id' => $paymentId,
+            'amount_paid' => $amountPaid,
+        ];
+    }
+
+    public function markAddonRenewalFailed(int $userId, string $moduleSlug): void
+    {
+        $moduleSlug = $this->modulesRepository->normalizeSlug($moduleSlug);
+        $this->setAddonBillingStatus($userId, $moduleSlug, 'payment_failed', true);
+    }
+
     public function markAddonCheckoutStarted(int $userId, string $moduleSlug, ?string $paymentCurrency = null): array
     {
         $moduleSlug = $this->modulesRepository->normalizeSlug($moduleSlug);
@@ -474,6 +536,14 @@ class AddonBillingService
         ?string $paymentReference = null,
         array $paymentSnapshot = []
     ): int {
+        $billingTransactionId = trim((string)($paymentSnapshot['billing_transaction_id'] ?? ''));
+        if ($billingTransactionId !== '') {
+            $existingPaymentId = $this->findPaymentByBillingTransactionId($billingTransactionId);
+            if ($existingPaymentId > 0) {
+                return $existingPaymentId;
+            }
+        }
+
         $this->db->query("
             INSERT INTO payments_all
             (user_id, concept, concept_id, id_membership_plan, payment_date, renewal, total, status, reference,
@@ -497,11 +567,33 @@ class AddonBillingService
         $this->db->bind(':exchange_rate', $paymentSnapshot['exchange_rate'] ?? 1);
         $this->db->bind(':provider_type', $paymentSnapshot['provider_type'] ?? 'stripe');
         $this->db->bind(':payment_method', $paymentSnapshot['payment_method'] ?? 'saved_card');
-        $this->db->bind(':billing_transaction_id', $paymentSnapshot['billing_transaction_id'] ?? null);
+        $this->db->bind(':billing_transaction_id', $billingTransactionId !== '' ? $billingTransactionId : null);
         $this->db->bind(':module_slug', $moduleSlug);
-        $this->db->execute();
+        try {
+            $this->db->execute();
+        } catch (PDOException $e) {
+            $existingPaymentId = $billingTransactionId !== ''
+                ? $this->findPaymentByBillingTransactionId($billingTransactionId)
+                : 0;
+            if ($existingPaymentId > 0) {
+                return $existingPaymentId;
+            }
+            throw $e;
+        }
 
         return (int)$this->db->lastId();
+    }
+
+    private function findPaymentByBillingTransactionId(string $billingTransactionId): int
+    {
+        try {
+            $this->db->query('SELECT id FROM payments_all WHERE billing_transaction_id = :billing_transaction_id LIMIT 1');
+            $this->db->bind(':billing_transaction_id', $billingTransactionId);
+            $payment = $this->db->fetchOne();
+            return $payment ? (int)$payment->id : 0;
+        } catch (PDOException $e) {
+            return 0;
+        }
     }
 
     private function setAddonBillingStatus(int $userId, string $moduleSlug, string $billingStatus, bool $failed = false): void

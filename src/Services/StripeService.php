@@ -280,6 +280,46 @@ class StripeService
         return ($charge->paid && !$charge->refunded) ? $charge->id : false;
     }
 
+    /**
+     * Charge a saved method from the daily renewal job. Unlike the interactive
+     * checkout path, PaymentIntents created here are explicitly off-session.
+     */
+    public function createOffSessionChargeV1(
+        string $token,
+        float $amount,
+        string $currency,
+        array $metadata,
+        string $idempotencyKey
+    ): bool|string {
+        $client = new StripeClient($this->apiKey);
+        $requestOptions = ['idempotency_key' => substr($idempotencyKey, 0, 255)];
+        $savedMethod = $this->parseSavedPaymentMethodReference($token);
+
+        if ($savedMethod) {
+            $intent = $client->paymentIntents->create([
+                'amount' => $this->toMinorUnits($amount, $currency),
+                'currency' => strtolower($currency),
+                'customer' => $savedMethod['customer'],
+                'payment_method' => $savedMethod['payment_method'],
+                'payment_method_types' => ['card'],
+                'confirm' => true,
+                'off_session' => true,
+                'metadata' => $metadata,
+            ], $requestOptions);
+
+            return (string)$intent->status === 'succeeded' ? (string)$intent->id : false;
+        }
+
+        $charge = $client->charges->create([
+            'amount' => $this->toMinorUnits($amount, $currency),
+            'currency' => strtolower($currency),
+            'customer' => $token,
+            'metadata' => $metadata,
+        ], $requestOptions);
+
+        return ($charge->paid && !$charge->refunded) ? (string)$charge->id : false;
+    }
+
     
 
 

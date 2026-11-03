@@ -20,7 +20,7 @@ test('driver delivery tools stay hidden behind the gear menu and use real action
 test('delivery completion requires the requested receiver type before receiver name', async () => {
   const receiverType = view.indexOf('id="receiverType{{ package.id }}"');
   const receiverName = view.indexOf(
-    'name="receiver_name" placeholder="Nombre de quien recibe"',
+    'name="receiver_name" placeholder="{{ trans(\'store_logistics.receiver_name\') }}"',
     receiverType
   );
 

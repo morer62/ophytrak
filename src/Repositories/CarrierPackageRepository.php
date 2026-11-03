@@ -270,16 +270,34 @@ class CarrierPackageRepository extends StoreRepository
         $allowed=['PICKUP_ASSIGNED'=>['picked_up'],'WITH_SELLER'=>['picked_up'],'PICKED_UP'=>['received_hub'],'RECEIVED_AT_HUB'=>['sorted_hub'],'SORTED_AT_HUB'=>['out_for_delivery'],'CUSTOMER_ABSENT'=>['received_hub','out_for_delivery'],'CUSTOMER_REJECTED'=>['received_hub','out_for_delivery'],'DELIVERY_CANCELLED'=>['received_hub'],'OUT_FOR_DELIVERY'=>['delivered','customer_absent','customer_rejected','delivery_cancelled']];
         if(!in_array($action,$allowed[(string)$p->custody_status]??[],true))return[false,'This step is not allowed from the current package stage.'];
         [$status,$location]=$map[$action];if(in_array($action,['delivered','customer_absent','customer_rejected','delivery_cancelled'],true)&&!$photo)return[false,'Final delivery evidence photo is required.'];
-        $this->db->query("UPDATE store_packages SET current_custodian_user_id=:user,custody_status=:status,current_status=:status,current_location_label=:location,last_event_at=NOW(),updated_at=NOW() WHERE id=:id");$this->db->bind(':user',$userId);$this->db->bind(':status',$status);$this->db->bind(':location',$location);$this->db->bind(':id',$packageId);$this->db->execute();
-        $meta['photo_url']=$photo;$this->event($p,$carrierOwner,$userId,strtoupper($action),$status,$location,$notes,$meta);
-        if(is_numeric($meta['latitude']??null)&&is_numeric($meta['longitude']??null)){
-            (new StoreDeliveryLocationLogsRepository())->addLocation((int)$p->id_owner,(int)$p->id_store_order,null,$userId,$action==='delivered'?'DELIVERED':($action==='out_for_delivery'?'OUT_FOR_DELIVERY':'LOCATION_UPDATE'),(float)$meta['latitude'],(float)$meta['longitude'],['platform'=>'web_mobile_carrier','source'=>'carrier_stage','permission_status'=>'granted','context'=>'carrier_delivery']);
+        $meta['photo_url']=$photo;
+        $this->db->beginTransaction();
+        try{
+            $this->db->query("UPDATE store_packages SET current_custodian_user_id=:user,custody_status=:status,current_status=:status,current_location_label=:location,last_event_at=NOW(),updated_at=NOW() WHERE id=:id");$this->db->bind(':user',$userId);$this->db->bind(':status',$status);$this->db->bind(':location',$location);$this->db->bind(':id',$packageId);$this->db->execute();
+            $this->event($p,$carrierOwner,$userId,strtoupper($action),$status,$location,$notes,$meta);
+            $this->db->commit();
+        }catch(\Throwable $error){
+            $this->db->rollback();
+            error_log('CarrierPackageRepository::advance() core delivery save: '.$error->getMessage());
+            return[false,'The package evidence could not be saved. Please try again.'];
         }
-        if($action==='out_for_delivery')(new StoreOrdersRepository())->updateStatus((int)$p->id_store_order,StoreOrdersRepository::STATUS_OUT_FOR_DELIVERY);
-        if($action==='customer_absent')(new StoreOrdersRepository())->updateStatus((int)$p->id_store_order,StoreOrdersRepository::STATUS_DELIVERY_ATTEMPTED);
-        if(in_array($action,['customer_rejected','delivery_cancelled'],true))(new StoreOrdersRepository())->updateStatus((int)$p->id_store_order,StoreOrdersRepository::STATUS_RETURNED_TO_BUSINESS);
-        if($action==='delivered'){(new StoreOrdersRepository())->updateStatus((int)$p->id_store_order,StoreOrdersRepository::STATUS_DELIVERED);(new OphytrackDriverPayoutRepository())->recordDelivered($packageId,$userId,$carrierOwner);}
-        if(in_array($action,['delivered','customer_absent','customer_rejected','delivery_cancelled'],true))(new DeliveryManifestRepository())->recordOutcome($packageId,$action,(string)($meta['failure_code']??$action));
+
+        // The package state and its evidence event above are the authoritative
+        // delivery record. Secondary projections must never turn a confirmed
+        // delivery into an error after the photos and receiver data were saved.
+        try{
+            if(is_numeric($meta['latitude']??null)&&is_numeric($meta['longitude']??null)){
+                (new StoreDeliveryLocationLogsRepository())->addLocation((int)$p->id_owner,(int)$p->id_store_order,null,$userId,$action==='delivered'?'DELIVERED':($action==='out_for_delivery'?'OUT_FOR_DELIVERY':'LOCATION_UPDATE'),(float)$meta['latitude'],(float)$meta['longitude'],['platform'=>'web_mobile_carrier','source'=>'carrier_stage','permission_status'=>'granted','context'=>'carrier_delivery']);
+            }
+        }catch(\Throwable $error){error_log('CarrierPackageRepository::advance() location projection: '.$error->getMessage());}
+        try{
+            if($action==='out_for_delivery')(new StoreOrdersRepository())->updateStatus((int)$p->id_store_order,StoreOrdersRepository::STATUS_OUT_FOR_DELIVERY);
+            if($action==='customer_absent')(new StoreOrdersRepository())->updateStatus((int)$p->id_store_order,StoreOrdersRepository::STATUS_DELIVERY_ATTEMPTED);
+            if(in_array($action,['customer_rejected','delivery_cancelled'],true))(new StoreOrdersRepository())->updateStatus((int)$p->id_store_order,StoreOrdersRepository::STATUS_RETURNED_TO_BUSINESS);
+            if($action==='delivered')(new StoreOrdersRepository())->updateStatus((int)$p->id_store_order,StoreOrdersRepository::STATUS_DELIVERED);
+        }catch(\Throwable $error){error_log('CarrierPackageRepository::advance() order projection: '.$error->getMessage());}
+        if($action==='delivered')try{(new OphytrackDriverPayoutRepository())->recordDelivered($packageId,$userId,$carrierOwner);}catch(\Throwable $error){error_log('CarrierPackageRepository::advance() driver payout: '.$error->getMessage());}
+        if(in_array($action,['delivered','customer_absent','customer_rejected','delivery_cancelled'],true))try{(new DeliveryManifestRepository())->recordOutcome($packageId,$action,(string)($meta['failure_code']??$action));}catch(\Throwable $error){error_log('CarrierPackageRepository::advance() manifest projection: '.$error->getMessage());}
         return[true,'Package workflow updated.'];
     }
 

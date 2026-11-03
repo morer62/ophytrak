@@ -27,6 +27,20 @@ test('delivery screen follows the reviewed driver flow', async () => {
   expect(controller).toContain("if($photo===''||$photo2==='')");
   expect(controller).toContain("abs(time()-$capturedAt)>600");
   expect(controller).toContain("$meta['evidence_captured_at']=$capturedAt");
+  const repository = read('src/Repositories/CarrierPackageRepository.php');
+  expect(repository).toContain("CarrierPackageRepository::advance() core delivery save");
+  expect(repository).toContain("CarrierPackageRepository::advance() manifest projection");
+  expect(repository).toContain("$this->db->beginTransaction()");
+  expect(repository).toContain("$this->db->commit()");
+});
+
+test('carrier delivery keeps captured evidence when browser location is unavailable', async () => {
+  const view = read('src/views/panel/level4/planner-hub/team/driver-mode/index.twig');
+  const carrierLocationHandler = view.match(/document\.querySelectorAll\('\.carrier-stage-form'\)[\s\S]*?const occurrenceButtonLabel=/)?.[0] || '';
+
+  expect(carrierLocationHandler).toContain("form.dataset.locationPending='1'");
+  expect(carrierLocationHandler).toContain("form.dataset.locationPending='0';alert");
+  expect(carrierLocationHandler).not.toContain("function(){form.dataset.locationReady='1';form.requestSubmit();}");
 });
 
 test('Ophytrack is Portuguese-only and hides language selectors', async () => {

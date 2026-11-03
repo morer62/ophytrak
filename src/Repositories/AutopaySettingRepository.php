@@ -78,14 +78,30 @@ class AutopaySettingRepository extends BaseRepository
     /**
      * Get all users with autopay enabled and membership expired
      */
-    public function getUsersDueForRenewal(): array
+    public function getUsersDueForRenewal(bool $includeBaseMembership = true): array
     {
+        $baseMembershipDue = $includeBaseMembership
+            ? '(u.membership_due_date IS NOT NULL AND u.membership_due_date <= CURDATE())'
+            : '0 = 1';
         $sql = "
-            SELECT u.*, aps.* 
+            SELECT u.*, aps.id AS autopay_setting_id, aps.user_id, aps.plan_type, aps.enabled
             FROM users u 
             INNER JOIN autopay_settings aps ON u.id = aps.user_id 
             WHERE aps.enabled = 1 
-            AND u.membership_due_date <= CURDATE()
+              AND (
+                    {$baseMembershipDue}
+                    OR EXISTS (
+                        SELECT 1
+                        FROM user_modules um
+                        WHERE um.id_user = u.id
+                          AND um.status IN ('ACTIVE', 'EXPIRED')
+                          AND COALESCE(um.is_included_in_base, 0) = 0
+                          AND COALESCE(um.price, 0) > 0
+                          AND um.renewal_at IS NOT NULL
+                          AND um.renewal_at <= CURDATE()
+                          AND COALESCE(um.billing_status, 'current') NOT IN ('cancel_at_period_end', 'cancelled', 'not_required')
+                    )
+              )
         ";
         
         $this->db->query($sql);

@@ -20,7 +20,7 @@ test('occurrence evidence is generated only by the live camera', async () => {
   expect(view).toContain('name="occurrence_photo_1" accept="image/jpeg" hidden');
   expect(view).toContain('name="occurrence_photo_2" accept="image/jpeg" hidden');
   expect(controller).toContain("abs(time()-$capturedAt)>600");
-  expect(controller).toContain('Las dos fotos deben tomarse con la cámara');
+  expect(controller).toContain("TranslationService::trans('store_logistics.occurrence_live_photos_required')");
 });
 
 test('driver profile photo is generated only by the live camera', async () => {

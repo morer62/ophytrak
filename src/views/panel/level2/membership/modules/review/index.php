@@ -2,6 +2,7 @@
 
 use App\Repositories\UserCardsRepository;
 use App\Repositories\UserModulesRepository;
+use App\Repositories\AutopaySettingRepository;
 use App\Services\AddonBillingService;
 use App\Services\CurrencyPricingService;
 use App\Services\LoginService;
@@ -175,6 +176,10 @@ $router->post(function () use ($resolveModuleSlug, $buildPayload) {
         MessageUtil::setMessage($result['message'] ?? 'Payment was confirmed, but module activation needs review.', 'Error', 'error');
         LocationUtils::redirectInternal('panel/membership/manage');
     }
+
+    // The confirmation explicitly accepts monthly billing until cancellation,
+    // so the paid module must participate in the existing daily autopay cycle.
+    (new AutopaySettingRepository())->upsertAutopay($billingOwnerId, 'monthly', true);
 
     LocationUtils::redirectInternal('panel/membership/modules/success?payment_id=' . urlencode((string)($result['payment_id'] ?? '')) . '&module_slug=' . urlencode($moduleSlug));
 });
