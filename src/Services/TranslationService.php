@@ -189,8 +189,9 @@ class TranslationService
         $locale = self::getCurrentLocale();
         $translation = self::getTranslation($key, $locale);
 
-        // Si no se encuentra, intentar con ingles como fallback
-        if ($translation === $key && $locale !== self::DEFAULT_LOCALE) {
+        // O OPHYTRACK opera exclusivamente em pt-BR. Nunca permita que uma
+        // chave ausente exponha o fallback em ingles nessa marca.
+        if ($translation === $key && $locale !== self::DEFAULT_LOCALE && !ProductProfileService::isOphytrack()) {
             $translation = self::getTranslation($key, self::DEFAULT_LOCALE);
         }
 

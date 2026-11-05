@@ -22,23 +22,23 @@ class DeliveryManifestRepository extends StoreRepository
 
     public function addPackage(int $carrierOwner,int $driverUser,int $packageId):array
     {
-        $draft=$this->getOrCreateDraft($carrierOwner,$driverUser);if(!$draft)return[false,'The manifest structure is not installed.',null];
-        $this->db->query("SELECT id,custody_status FROM store_packages WHERE id=:package AND current_custodian_owner_id=:owner AND custody_status IN ('RECEIVED_AT_HUB','SORTED_AT_HUB') LIMIT 1");$this->db->bind(':package',$packageId);$this->db->bind(':owner',$carrierOwner);$package=$this->db->fetchOne();if(!$package)return[false,'This package is not ready to enter a delivery manifest.',null];
-        $this->db->query("SELECT i.id,m.manifest_code,m.status FROM store_delivery_manifest_items i JOIN {$this->table} m ON m.id=i.id_manifest WHERE i.id_store_package=:package AND i.status='PENDING' AND m.status IN ('DRAFT','GENERATED','IN_PROGRESS') LIMIT 1");$this->db->bind(':package',$packageId);$existing=$this->db->fetchOne();if($existing)return[false,'This package already belongs to manifest '.$existing->manifest_code.'.',$draft];
+        $draft=$this->getOrCreateDraft($carrierOwner,$driverUser);if(!$draft)return[false,'A estrutura de manifestos não está instalada.',null];
+        $this->db->query("SELECT id,custody_status FROM store_packages WHERE id=:package AND current_custodian_owner_id=:owner AND custody_status IN ('RECEIVED_AT_HUB','SORTED_AT_HUB') LIMIT 1");$this->db->bind(':package',$packageId);$this->db->bind(':owner',$carrierOwner);$package=$this->db->fetchOne();if(!$package)return[false,'Este pacote ainda não está pronto para entrar em um manifesto de entrega.',null];
+        $this->db->query("SELECT i.id,m.manifest_code,m.status FROM store_delivery_manifest_items i JOIN {$this->table} m ON m.id=i.id_manifest WHERE i.id_store_package=:package AND i.status='PENDING' AND m.status IN ('DRAFT','GENERATED','IN_PROGRESS') LIMIT 1");$this->db->bind(':package',$packageId);$existing=$this->db->fetchOne();if($existing)return[false,'Este pacote já pertence ao manifesto '.$existing->manifest_code.'.',$draft];
         $this->db->query("SELECT COALESCE(MAX(stop_sequence),0)+1 AS next_stop FROM store_delivery_manifest_items WHERE id_manifest=:manifest");$this->db->bind(':manifest',(int)$draft->id);$sequence=(int)($this->db->fetchOne()->next_stop??1);
         $this->db->query("INSERT INTO store_delivery_manifest_items(id_manifest,id_store_package,stop_sequence,status,created_at,updated_at) VALUES(:manifest,:package,:sequence,'PENDING',NOW(),NOW())");$this->db->bind(':manifest',(int)$draft->id);$this->db->bind(':package',$packageId);$this->db->bind(':sequence',$sequence);$this->db->execute();
         $this->db->query("UPDATE {$this->table} SET package_count=(SELECT COUNT(*) FROM store_delivery_manifest_items WHERE id_manifest=:manifest_count AND status='PENDING'),updated_at=NOW() WHERE id=:manifest");$this->db->bind(':manifest_count',(int)$draft->id);$this->db->bind(':manifest',(int)$draft->id);$this->db->execute();
-        $this->db->query("UPDATE store_packages SET current_custodian_user_id=:driver,custody_status='SORTED_AT_HUB',current_status='SORTED_AT_HUB',current_location_label='Added to delivery manifest',last_event_at=NOW(),updated_at=NOW() WHERE id=:package AND current_custodian_owner_id=:owner");$this->db->bind(':driver',$driverUser);$this->db->bind(':package',$packageId);$this->db->bind(':owner',$carrierOwner);$this->db->execute();
-        return[true,'Package added to manifest '.$draft->manifest_code.'.',$draft];
+        $this->db->query("UPDATE store_packages SET current_custodian_user_id=:driver,custody_status='SORTED_AT_HUB',current_status='SORTED_AT_HUB',current_location_label='Adicionado ao manifesto de entrega',last_event_at=NOW(),updated_at=NOW() WHERE id=:package AND current_custodian_owner_id=:owner");$this->db->bind(':driver',$driverUser);$this->db->bind(':package',$packageId);$this->db->bind(':owner',$carrierOwner);$this->db->execute();
+        return[true,'Pacote adicionado ao manifesto '.$draft->manifest_code.'.',$draft];
     }
 
     public function transferPackageToDriver(int $carrierOwner,int $driverUser,string $secureToken,int $actorUser):array
     {
-        if(!$this->isReady())return[false,'La estructura de manifiestos no está instalada.',null];
-        $this->db->query("SELECT p.id,p.custody_status,p.current_custodian_user_id FROM store_packages p JOIN store_orders o ON o.id=p.id_store_order AND o.id_owner=p.id_owner WHERE o.public_token=:token AND p.current_custodian_owner_id=:owner AND p.custody_status IN ('RECEIVED_AT_HUB','SORTED_AT_HUB','OUT_FOR_DELIVERY') LIMIT 1");$this->db->bind(':token',trim($secureToken));$this->db->bind(':owner',$carrierOwner);$package=$this->db->fetchOne();if(!$package)return[false,'El paquete no está disponible para alteración de agente.',null];
+        if(!$this->isReady())return[false,'A estrutura de manifestos não está instalada.',null];
+        $this->db->query("SELECT p.id,p.custody_status,p.current_custodian_user_id FROM store_packages p JOIN store_orders o ON o.id=p.id_store_order AND o.id_owner=p.id_owner WHERE o.public_token=:token AND p.current_custodian_owner_id=:owner AND p.custody_status IN ('RECEIVED_AT_HUB','SORTED_AT_HUB','OUT_FOR_DELIVERY') LIMIT 1");$this->db->bind(':token',trim($secureToken));$this->db->bind(':owner',$carrierOwner);$package=$this->db->fetchOne();if(!$package)return[false,'O pacote não está disponível para alteração de agente.',null];
         $this->db->query("UPDATE store_delivery_manifest_items i JOIN {$this->table} m ON m.id=i.id_manifest SET i.status='REMOVED',i.updated_at=NOW() WHERE i.id_store_package=:package AND i.status='PENDING' AND m.carrier_owner_id=:owner AND m.delivery_user_id<>:driver AND m.status IN ('DRAFT','GENERATED','IN_PROGRESS')");$this->db->bind(':package',(int)$package->id);$this->db->bind(':owner',$carrierOwner);$this->db->bind(':driver',$driverUser);$this->db->execute();
         $this->db->query("UPDATE {$this->table} m SET m.package_count=(SELECT COUNT(*) FROM store_delivery_manifest_items i WHERE i.id_manifest=m.id AND i.status='PENDING'),m.updated_at=NOW() WHERE m.carrier_owner_id=:owner AND m.status IN ('DRAFT','GENERATED','IN_PROGRESS')");$this->db->bind(':owner',$carrierOwner);$this->db->execute();
-        $this->db->query("UPDATE store_packages SET custody_status='SORTED_AT_HUB',current_status='SORTED_AT_HUB',current_custodian_user_id=:driver,current_location_label='Transferred to delivery agent',updated_at=NOW() WHERE id=:package AND current_custodian_owner_id=:owner");$this->db->bind(':driver',$driverUser);$this->db->bind(':package',(int)$package->id);$this->db->bind(':owner',$carrierOwner);$this->db->execute();
+        $this->db->query("UPDATE store_packages SET custody_status='SORTED_AT_HUB',current_status='SORTED_AT_HUB',current_custodian_user_id=:driver,current_location_label='Transferido ao agente de entrega',updated_at=NOW() WHERE id=:package AND current_custodian_owner_id=:owner");$this->db->bind(':driver',$driverUser);$this->db->bind(':package',(int)$package->id);$this->db->bind(':owner',$carrierOwner);$this->db->execute();
         (new CarrierPackageRepository())->assignEmployee((int)$package->id,$carrierOwner,$driverUser,$actorUser,'DELIVERY');
         return$this->addPackage($carrierOwner,$driverUser,(int)$package->id);
     }
@@ -60,8 +60,8 @@ class DeliveryManifestRepository extends StoreRepository
 
     public function generate(int $manifestId,int $carrierOwner,int $driverUser):array
     {
-        $driverSql=$driverUser>0?' AND delivery_user_id=:driver':'';$this->db->query("SELECT * FROM {$this->table} WHERE id=:id AND carrier_owner_id=:owner {$driverSql} AND status='DRAFT' LIMIT 1");$this->db->bind(':id',$manifestId);$this->db->bind(':owner',$carrierOwner);if($driverUser>0)$this->db->bind(':driver',$driverUser);$manifest=$this->db->fetchOne();if(!$manifest)return[false,'Draft manifest not found.'];$assignedDriver=(int)$manifest->delivery_user_id;
-        $items=$this->getItems($manifestId,$carrierOwner,$driverUser);if(!$items)return[false,'Scan at least one package before generating the manifest.'];
+        $driverSql=$driverUser>0?' AND delivery_user_id=:driver':'';$this->db->query("SELECT * FROM {$this->table} WHERE id=:id AND carrier_owner_id=:owner {$driverSql} AND status='DRAFT' LIMIT 1");$this->db->bind(':id',$manifestId);$this->db->bind(':owner',$carrierOwner);if($driverUser>0)$this->db->bind(':driver',$driverUser);$manifest=$this->db->fetchOne();if(!$manifest)return[false,'Manifesto em rascunho não encontrado.'];$assignedDriver=(int)$manifest->delivery_user_id;
+        $items=$this->getItems($manifestId,$carrierOwner,$driverUser);if(!$items)return[false,'Escaneie pelo menos um pacote antes de gerar o manifesto.'];
         $this->db->query("SELECT o.notes,o.guest_name,o.shipping_address_1,o.shipping_zip FROM store_orders o
             JOIN store_packages p ON p.id_store_order=o.id AND p.id_owner=o.id_owner
             JOIN store_delivery_manifest_items i ON i.id_store_package=p.id
@@ -69,16 +69,19 @@ class DeliveryManifestRepository extends StoreRepository
         $this->db->bind(':manifest',$manifestId);$this->db->bind(':owner',$carrierOwner);
         foreach($this->db->fetchAll() as $intake){
             $details=json_decode((string)($intake->notes??''),true);
-            if(!empty($details['logistics_intake']) && (trim((string)$intake->guest_name)==='Datos del destinatario pendientes'
-                ||trim((string)$intake->shipping_address_1)===''||trim((string)$intake->shipping_zip)===''))
-                return[false,'Completa destinatario, dirección y CEP de los paquetes recibidos por etiqueta externa antes de generar la ruta.'];
+            // O nome provisório do destinatário não deve bloquear a saída. A
+            // rota precisa apenas dos dados já persistidos que realmente são
+            // necessários para chegar ao destino: endereço e CEP.
+            if(!empty($details['logistics_intake'])
+                && (trim((string)$intake->shipping_address_1)===''||trim((string)$intake->shipping_zip)===''))
+                return[false,'Complete o endereço e o CEP dos pacotes recebidos por etiqueta externa antes de gerar a rota.'];
         }
         usort($items,static fn($a,$b)=>strcmp(preg_replace('/\D/','',(string)$a->shipping_zip).strtolower((string)$a->shipping_address_1),preg_replace('/\D/','',(string)$b->shipping_zip).strtolower((string)$b->shipping_address_1)));
         foreach($items as $index=>$item){$this->db->query("UPDATE store_delivery_manifest_items SET stop_sequence=:sequence,updated_at=NOW() WHERE id=:id");$this->db->bind(':sequence',$index+1);$this->db->bind(':id',(int)$item->id);$this->db->execute();}
         $this->db->query("UPDATE {$this->table} SET status='GENERATED',package_count=:count,generated_at=NOW(),updated_at=NOW() WHERE id=:id");$this->db->bind(':count',count($items));$this->db->bind(':id',$manifestId);$this->db->execute();
-        $this->db->query("UPDATE store_packages p JOIN store_delivery_manifest_items i ON i.id_store_package=p.id SET p.custody_status='OUT_FOR_DELIVERY',p.current_status='OUT_FOR_DELIVERY',p.current_custodian_user_id=:driver,p.current_location_label='Loaded on generated delivery manifest',p.last_event_at=NOW(),p.updated_at=NOW() WHERE i.id_manifest=:manifest AND i.status='PENDING'");$this->db->bind(':driver',$assignedDriver);$this->db->bind(':manifest',$manifestId);$this->db->execute();
+        $this->db->query("UPDATE store_packages p JOIN store_delivery_manifest_items i ON i.id_store_package=p.id SET p.custody_status='OUT_FOR_DELIVERY',p.current_status='OUT_FOR_DELIVERY',p.current_custodian_user_id=:driver,p.current_location_label='Carregado no manifesto de entrega gerado',p.last_event_at=NOW(),p.updated_at=NOW() WHERE i.id_manifest=:manifest AND i.status='PENDING'");$this->db->bind(':driver',$assignedDriver);$this->db->bind(':manifest',$manifestId);$this->db->execute();
         foreach($items as $item)(new StoreOrdersRepository())->updateStatus((int)$item->id_store_order,StoreOrdersRepository::STATUS_OUT_FOR_DELIVERY);
-        return[true,'Manifest generated with '.count($items).' packages.'];
+        return[true,'Manifesto gerado com '.count($items).' pacotes.'];
     }
 
     public function recordOutcome(int $packageId,string $outcome,string $failureCode=''):void

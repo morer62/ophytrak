@@ -38,7 +38,11 @@ try{
     [$added,$message,$manifest]=$manifests->addPackage($carrier,$driver,(int)$market->id);$assert($added,$message);
     $q=$pdo->prepare("INSERT INTO store_package_carrier_assignments(id_store_package,carrier_owner_id,assigned_user_id,assigned_by_user_id,assignment_role,status,assigned_at)VALUES(?,?,?,?,'DELIVERY','IN_PROGRESS',NOW())");$q->execute([(int)$market->id,$carrier,$driver,$driver]);
     $assert($repo->findForCarrierScan($carrier,$ml)->id===$market->id,'Historical pickup/delivery assignments must not make one package ambiguous');
-    [$generated]=$manifests->generate((int)$manifest->id,$carrier,$driver);$assert(!$generated,'An intake without a real recipient/address cannot become a delivery route');
+    [$generated]=$manifests->generate((int)$manifest->id,$carrier,$driver);$assert(!$generated,'An intake without an address cannot become a delivery route');
+    $q=$pdo->prepare("UPDATE store_orders SET shipping_address_1='Rua QA 123',shipping_city='São Paulo',shipping_state='SP',shipping_zip='01310-100',shipping_country='BR' WHERE id=?");$q->execute([(int)$market->id_store_order]);
+    [$generated,$message]=$manifests->generate((int)$manifest->id,$carrier,$driver);$assert($generated,$message);
+    $routeItem=$manifests->getItems((int)$manifest->id,$carrier,$driver)[0]??null;
+    $assert($routeItem && $routeItem->shipping_address_1==='Rua QA 123' && $routeItem->shipping_zip==='01310-100','Stored address and CEP appear in deliveries without re-entering them in the manifest');
     [$again]=$repo->collectScannedLabel($carrier,$driver,$ml,$proof);$assert(!$again,'Collection must not advance an existing warehouse package');
     $assert($repo->countCollectedToday($carrier,$driver)===5,'Five unique receipts counted');
     $assert(count($repo->getCollectionHistory($carrier,$driver))===5,'Five auditable collection events');

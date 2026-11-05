@@ -29,7 +29,7 @@ function scanner({ carrier = true, area = '', row = null, reject = false } = {})
     stageAgentChangeToken: value => calls.push(['agentChange', value]),
     packageScanPosition: async () => null,
     incrementReceptionCounter: () => calls.push(['reception']),
-    setTimeout: () => {},
+    setTimeout: callback => callback(),
     fetch: async (url, options) => {
       calls.push(['request', options.body.get('action'), options.body.get('qr_token'), options.body.get('workflow_context')]);
       return { ok: !reject, json: async () => ({ success: !reject, message: reject ? 'Seller not associated' : 'OK', custody_status: 'RECEIVED_AT_HUB' }) };
@@ -55,6 +55,8 @@ test('detailed collection stages a raw QR without requiring a seller DELIVERY as
   const { context, calls } = scanner({ area: 'detailedCollection' });
   await context.openAssignedPackageFromQr(token);
   expect(calls).toContainEqual(['collection', token]);
+  expect(calls).toContainEqual(['resume']);
+  expect(calls).not.toContainEqual(['hide']);
   expect(calls.some(call => call[0] === 'request' || call[1] === 'store_logistics.qr_not_assigned')).toBe(false);
 });
 

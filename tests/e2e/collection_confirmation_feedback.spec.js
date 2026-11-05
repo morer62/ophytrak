@@ -29,7 +29,7 @@ test('partial confirmation keeps only failed labels and shows escaped per-label 
 test('network error preserves all staged labels and re-enables confirmation',async()=>{
   const c=confirmation(null,true);const work=c.run();c.resolve();await work;
   expect(c.tokens).toHaveLength(2);expect(c.timers).toHaveLength(0);expect(c.button.disabled).toBe(false);
-  expect(c.feedback.children[0].textContent).toContain('La lista se conserva');
+  expect(c.feedback.children[0].textContent).toContain('A lista foi preservada');
 });
 test('all successful labels are removed and the page refreshes only after full success',async()=>{
   const c=confirmation({success:true,message:'2 confirmados',packages:[{input:'BR265885228923I'},{input:'BR268644790429G'}],errors:[]});

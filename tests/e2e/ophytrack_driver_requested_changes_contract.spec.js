@@ -11,8 +11,8 @@ test('driver requested controls and profile persistence remain in contract', asy
   const settings = read('src/views/panel/level4/settings/index.twig');
   const settingsController = read('src/views/panel/level4/settings/index.php');
 
-  expect(driver).toContain('<option value="order">Número de pedido</option>');
-  expect(driver).toContain('<option value="remittance">Remesa</option>');
+  expect(driver).toContain('<option value="order">Número do pedido</option>');
+  expect(driver).toContain('<option value="remittance">Remessa</option>');
   expect(driver).toContain('<option value="invoice">Nota fiscal</option>');
   expect(driver).toContain('<option value="custom">Personalizado</option>');
   expect(driver).not.toContain('id="packageQrPhotoInput"');
